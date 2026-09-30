@@ -43,6 +43,8 @@ type LedgerEntryFormProps = {
   defaultAccountId: string | null
   rates: RateSnapshot | null
   receiptsEnabled: boolean
+  // Fecha más antigua permitida (staff); undefined = sin límite.
+  minDate?: string
 }
 
 const DIRECTIONS: { value: MovementDirection; label: string; icon: typeof ArrowUpRightIcon }[] = [
@@ -58,6 +60,7 @@ const LedgerEntryForm = ({
   defaultAccountId,
   rates,
   receiptsEnabled,
+  minDate,
 }: LedgerEntryFormProps) => {
   const amountRef = useRef<HTMLInputElement>(null)
   const [direction, setDirection] = useState<MovementDirection>("expense")
@@ -252,10 +255,16 @@ const LedgerEntryForm = ({
       </FormField>
 
       {showDate ? (
-        <FormField label="Fecha" htmlFor="entry-date" error={errors.date}>
+        <FormField
+          label="Fecha"
+          htmlFor="entry-date"
+          error={errors.date}
+          hint="Con fecha pasada se usan las tasas registradas para ese día."
+        >
           <Input
             id="entry-date"
             type="date"
+            min={minDate}
             max={today}
             value={date || today}
             onChange={(e) => setDate(e.target.value)}

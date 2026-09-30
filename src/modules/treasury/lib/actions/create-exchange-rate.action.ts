@@ -3,9 +3,10 @@
 import { refresh } from "next/cache"
 import { z } from "zod"
 
-import { ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
+import { isRoleIn, ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { authorizeAction } from "@/common/lib/services/session.service"
 import type { ActionState } from "@/common/lib/types/action-state.types"
+import { toCaracasDate } from "@/common/lib/utils/format-date.util"
 import { toUserError } from "@/common/lib/utils/to-user-error.util"
 
 import { TREASURY_MESSAGES } from "../constants/treasury.constants"
@@ -23,6 +24,10 @@ export async function createExchangeRateAction(
   const parsed = exchangeRateSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) {
     return { status: "error", fieldErrors: z.flattenError(parsed.error).fieldErrors }
+  }
+
+  if (parsed.data.rate_date && parsed.data.rate_date !== toCaracasDate() && !isRoleIn(auth.user.role, ROLE_GROUPS.MANAGEMENT)) {
+    return { status: "error", message: "Solo owner y admin cargan tasas de fechas pasadas." }
   }
 
   const { error } = await createExchangeRate(parsed.data)

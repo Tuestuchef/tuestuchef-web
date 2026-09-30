@@ -36,7 +36,7 @@ export async function listRecentRates(limit = 10) {
   return data
 }
 
-// Siempre la de hoy. Corregir = registrar otra (solo owner y admin, por RLS).
+// Hoy por defecto; owner y admin también cargan fechas pasadas. Corregir = registrar otra (RLS).
 export async function createExchangeRate(input: ExchangeRateInput) {
   const supabase = await createSupabaseServerClient()
   return supabase.from("exchange_rates").insert({
@@ -45,5 +45,14 @@ export async function createExchangeRate(input: ExchangeRateInput) {
     binance_usdt: input.binance_usdt,
     usd_usdt: input.usd_usdt ?? 1,
     note: input.note ?? null,
+    ...(input.rate_date ? { rate_date: input.rate_date } : {}),
   })
+}
+
+// Tasas vigentes en una fecha (la de esa fecha o la registrada ese día). null si no hay.
+export async function getRatesForDate(date: string): Promise<ExchangeRate | null> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc("exchange_rate_for_date", { p_date: date })
+  if (error) throw error
+  return data?.id ? data : null
 }

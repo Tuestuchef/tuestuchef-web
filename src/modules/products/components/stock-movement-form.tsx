@@ -1,0 +1,195 @@
+"use client"
+
+import { CalendarIcon, CheckIcon, ChevronsUpDownIcon } from "lucide-react"
+import { useState } from "react"
+
+import ChoiceChips from "@/common/components/choice-chips"
+import FormField from "@/common/components/form-field"
+import StatusAlert from "@/common/components/status-alert"
+import SubmitButton from "@/common/components/submit-button"
+import { Button } from "@/common/components/ui/button"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/common/components/ui/command"
+import { Input } from "@/common/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/common/components/ui/popover"
+import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
+import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
+import { cn } from "@/common/lib/utils"
+
+import { createStockMovementAction } from "../lib/actions/create-stock-movement.action"
+import { MOVEMENT_TYPE_LABELS, type StockMovementType } from "../lib/constants/products.constants"
+import type { StockVariantOption } from "../lib/types/products.types"
+
+type StockMovementFormProps = {
+  variants: StockVariantOption[]
+  allowedTypes: readonly StockMovementType[]
+  today: string
+}
+
+const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3 })
+
+const DIRECTIONS = [
+  { value: "in", label: "Suma (+)" },
+  { value: "out", label: "Resta (−)" },
+] as const
+
+// Entrada de mercancía (compra o producción) y, para owner/admin, ajustes.
+const StockMovementForm = ({ variants, allowedTypes, today }: StockMovementFormProps) => {
+  const { state, onSubmit, pending } = useFormAction(createStockMovementAction)
+  const [variantId, setVariantId] = useState("")
+  const [type, setType] = useState<StockMovementType>(allowedTypes[0])
+  const [direction, setDirection] = useState<"in" | "out">("in")
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [showDate, setShowDate] = useState(false)
+  const [formKey, setFormKey] = useState(0)
+
+  useActionFeedback(state, () => {
+    // Limpia para el siguiente; se mantiene el tipo elegido.
+    setVariantId("")
+    setDirection("in")
+    setShowDate(false)
+    setFormKey((k) => k + 1)
+  })
+
+  const errors = state.fieldErrors ?? {}
+  const selected = variants.find((v) => v.id === variantId)
+  const isAdjustment = type === "adjustment"
+
+  return (
+    <form key={formKey} onSubmit={onSubmit} className="grid gap-4" noValidate>
+      {state.status === "error" && state.message && <StatusAlert tone="error" title={state.message} />}
+
+      <FormField label="Tipo" htmlFor="stock-type" error={errors.movement_type}>
+        <ChoiceChips
+          id="stock-type"
+          label="Tipo de movimiento"
+          value={type}
+          onChange={(value) => setType(value as StockMovementType)}
+          options={allowedTypes.map((t) => ({ value: t, label: MOVEMENT_TYPE_LABELS[t] }))}
+        />
+        <input type="hidden" name="movement_type" value={type} />
+      </FormField>
+
+      <FormField label="Producto" htmlFor="stock-variant" error={errors.variant_id}>
+        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              id="stock-variant"
+              type="button"
+              variant="outline"
+              role="combobox"
+              aria-expanded={pickerOpen}
+              className="h-auto min-h-11 w-full justify-between text-left font-normal md:min-h-9"
+            >
+              {selected ? (
+                <span className="grid min-w-0">
+                  <span className="truncate">{selected.label}</span>
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {selected.sku} · hay {quantityFormat.format(selected.quantity)}
+                  </span>
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Buscar por nombre o SKU</span>
+              )}
+              <ChevronsUpDownIcon className="shrink-0 opacity-50" aria-hidden />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Nombre, color, talla o SKU" />
+              <CommandList>
+                <CommandEmpty>No hay coincidencias.</CommandEmpty>
+                <CommandGroup>
+                  {variants.map((variant) => (
+                    <CommandItem
+                      key={variant.id}
+                      value={`${variant.label} ${variant.sku}`}
+                      onSelect={() => {
+                        setVariantId(variant.id)
+                        setPickerOpen(false)
+                      }}
+                    >
+                      <CheckIcon className={cn(variant.id === variantId ? "opacity-100" : "opacity-0")} aria-hidden />
+                      <span className="grid min-w-0 flex-1">
+                        <span className="truncate">{variant.label}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{variant.sku}</span>
+                      </span>
+                      <span className="text-xs tabular-nums text-muted-foreground">
+                        {quantityFormat.format(variant.quantity)}
+                      </span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        <input type="hidden" name="variant_id" value={variantId} />
+      </FormField>
+
+      {isAdjustment && (
+        <FormField label="Dirección" htmlFor="stock-direction">
+          <ChoiceChips
+            id="stock-direction"
+            label="Dirección del ajuste"
+            value={direction}
+            onChange={(value) => setDirection(value as "in" | "out")}
+            options={DIRECTIONS}
+          />
+        </FormField>
+      )}
+      <input type="hidden" name="direction" value={isAdjustment ? direction : "in"} />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label="Cantidad" htmlFor="stock-quantity" error={errors.quantity}>
+          <Input id="stock-quantity" name="quantity" inputMode="decimal" className="h-11 md:h-9" />
+        </FormField>
+        {!isAdjustment && (
+          <FormField
+            label="Costo unitario (USDT)"
+            htmlFor="stock-cost"
+            error={errors.unit_cost_usdt}
+            hint="Lo que costó cada unidad, en valor real."
+          >
+            <Input id="stock-cost" name="unit_cost_usdt" inputMode="decimal" className="h-11 md:h-9" />
+          </FormField>
+        )}
+      </div>
+
+      <FormField label={isAdjustment ? "Motivo" : "Nota"} htmlFor="stock-note" error={errors.note} optional={!isAdjustment}>
+        <Input
+          id="stock-note"
+          name="note"
+          placeholder={isAdjustment ? "Ej.: conteo físico, prenda dañada" : "Ej.: proveedor, lote"}
+          className="h-11 md:h-9"
+        />
+      </FormField>
+
+      {showDate ? (
+        <FormField label="Fecha" htmlFor="stock-date" error={errors.date}>
+          <Input id="stock-date" name="date" type="date" max={today} defaultValue={today} className="h-11 md:h-9" />
+        </FormField>
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-auto justify-start px-0 text-muted-foreground"
+          onClick={() => setShowDate(true)}
+        >
+          <CalendarIcon aria-hidden />
+          Hoy · cambiar fecha
+        </Button>
+      )}
+
+      <SubmitButton pending={pending}>Registrar {MOVEMENT_TYPE_LABELS[type].toLowerCase()}</SubmitButton>
+    </form>
+  )
+}
+
+export default StockMovementForm

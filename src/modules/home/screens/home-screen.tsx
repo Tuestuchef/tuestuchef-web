@@ -1,4 +1,4 @@
-import { PlusIcon } from "lucide-react"
+import { PlusIcon, ShoppingBagIcon } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/common/components/ui/button"
@@ -39,12 +39,20 @@ const HomeScreen = async ({ user }: HomeScreenProps) => {
         <TodayRateBanner />
       )}
 
-      <Button asChild className="h-14 text-base">
-        <Link href={ROUTES.NEW_MOVEMENT}>
-          <PlusIcon aria-hidden />
-          Registrar gasto o ingreso
-        </Link>
-      </Button>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Button asChild className="h-14 text-base">
+          <Link href={ROUTES.NEW_SALE}>
+            <ShoppingBagIcon aria-hidden />
+            Registrar venta
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="h-14 text-base">
+          <Link href={ROUTES.NEW_MOVEMENT}>
+            <PlusIcon aria-hidden />
+            Registrar gasto o ingreso
+          </Link>
+        </Button>
+      </div>
 
       {upcoming.length > 0 && (
         <Card>

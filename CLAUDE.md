@@ -69,7 +69,7 @@ El sistema se construye en blanco y negro, pero la marca se aplicará más adela
 5. **Stock por movimientos.** El saldo se calcula desde `stock_movements` (venta, compra, ajuste). No editar saldos a mano.
 6. **Un solo modelo de ventas.** Una venta online y una registrada a mano caen en las mismas tablas; solo cambia el campo `channel`.
 7. **Cuentas por moneda:** Bs, USDT, USD efectivo y Zelle. Las conversiones entre ellas guardan su comisión como registro propio.
-8. **Precio por método de pago:** cada producto puede tener precio distinto según el método.
+8. **Precio por método de pago:** cada producto puede tener precio distinto según el método. Los precios se guardan en USD; el monto en Bs de una venta es `precio USD × tasa BCV dólar del día` (por ley), y la venta guarda esa tasa. El valor real sigue usando la tasa Binance.
 9. **Facturación:** al inicio se emite recibo o nota de entrega, no factura fiscal (los requisitos del SENIAT se validan con un contador).
 10. **Cédula del cliente:** dato personal. Guardarlo solo si es necesario y protegido.
 

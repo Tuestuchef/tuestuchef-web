@@ -181,7 +181,8 @@ Los saldos cuadran (−10.000 Bs, +98 USDT), el traspaso neto vale 0 y la comisi
 | --- | --- |
 | `name` | Único (pago móvil, Zelle, USDT, efectivo USD…) |
 | `account_id` | Cuenta donde cae el dinero |
-| `price_currency` | Moneda en que se expresan los precios de ese método (p. ej. pago móvil: precios en USD, se cobra en Bs a tasa BCV) |
+| `rate_kind` | Tasa que convierte el precio en USD: `bcv_usd`, `bcv_eur` o `none`. Obligatoria BCV si la cuenta es en Bs; `none` si es USD o USDT |
+| `price_currency` | Sin uso: los precios de productos son siempre en USD |
 | `sort_order`, `is_active` | |
 
 ### Vistas
@@ -204,31 +205,73 @@ Los saldos cuadran (−10.000 Bs, +98 USDT), el traspaso neto vale 0 y la comisi
 
 ## 2. Products
 
-- **`product_categories`**: `name` (filipinas, delantales, pantalones, estuches, gorros), `is_active`.
-- **`products`**: `product_category_id`, `name`, `description`, `kind` (`finished_good` | `raw_material`; en Fase 1 solo `finished_good`), `fulfillment_type` (`stock` | `made_to_order` | `both`), `unit` (`unit` | `meter` | `kg`), `is_active`.
-- **`product_variants`**: `product_id`, `sku` (único), `size`, `color`, `unit_cost_usdt`, `is_active`.
-- **`product_prices`**: `product_id`, `variant_id` (opcional), `payment_method_id`, `amount` (en `price_currency` del método). Único por (producto, variante, método).
-  - Precio de una variante = su precio propio para ese método si existe; si no, el del producto.
-- **`stock_movements`** (inmutable): `variant_id`, `movement_type` (`purchase`, `production`, `sale`, `sale_reversal`, `adjustment`), `quantity` con signo, `unit_cost_usdt` (obligatorio en `purchase` y `production`), `sale_item_id`, `reverses_movement_id`, `note` (obligatoria en `adjustment`).
-- **Vista `stock_balances`**: existencia por variante = suma de movimientos.
-- Stock negativo bloqueado: quien vende sin stock registrado marca la línea por encargo o hace un ajuste primero. La carga inicial es un ajuste.
+Migración: `20261001000000_products.sql`. Pruebas: `src/common/lib/db/tests/products.test.ts`.
+
+- **Listas editables** (configuración, owner y admin): `product_categories`, `sizes` (con orden; XS–XXL de inicio) y `colors`. Cada una con `name`, `code` (1–6 letras o números, para el SKU), `sort_order` e `is_active`.
+- **`products`** (el modelo): `category_id`, `name`, `description`, `kind` (`finished_good` en Fase 1), `fulfillment_type` (`stock` | `made_to_order` | `both`), `unit`, y atributos opcionales `gender` (`women`/`men`/`unisex`), `closure` (`snap`/`zipper`/`buttons`) y `fit` (`jogger`/`straight`).
+- **`product_variants`** (color × talla, ambos opcionales): `sku` único, `unit_cost_usdt` (se actualiza con la última compra, producción o carga inicial), `min_stock`, `is_active`. Una sola variante por (producto, color, talla).
+  - SKU automático: `CAT-GÉNERO-CIERRE/CORTE-COLOR-TALLA` (ej. `FIL-D-BR-VIN-M`), editable. Con movimientos de stock, SKU, color, talla y producto quedan fijos (trigger).
+- **`product_prices`**: `product_id`, `payment_method_id`, `amount_usd`. Precio **por producto** en USD de referencia por método de pago. Nunca se guarda un precio fijo en Bs: al vender en Bs se calcula `precio USD × tasa BCV dólar del día` (por ley) y la venta guarda esa tasa. El valor real sigue siendo `Bs ÷ tasa Binance`, así que la brecha BCV–paralelo se ve como menor ingreso real, no se esconde. (`payment_methods.price_currency` ya no se usa para productos.)
+- **`product_images`**: `path` en el bucket público (`products/<producto>/<uuid>.jpg|png|webp`), `color_id` opcional, `sort_order`, `is_primary` (una por producto).
+- **`stock_movements`** (inmutable): `variant_id`, `movement_type`, `quantity` con signo, `unit_cost_usdt`, `note`, `sale_item_id`, `occurred_at`.
+  - `initial_count`: solo si la variante no tiene movimientos; se carga por CSV (SKU, cantidad, costo opcional) con vista previa, todo o nada (`load_initial_stock`). Owner y admin.
+  - `purchase` / `production`: entradas con costo obligatorio. Staff puede.
+  - `adjustment`: suma o resta con motivo obligatorio. Solo owner y admin.
+  - `sale` / `sale_reversal`: solo desde el módulo de ventas.
+  - Stock negativo bloqueado. Productos `made_to_order` no llevan stock.
+- **Vista `stock_balances`**: existencia por variante = suma de movimientos; `is_low` cuando `min_stock > 0` y existencia ≤ `min_stock`.
 - Compra de materia prima: egreso en el libro con categoría `cost`. No toca stock en Fase 1.
 - Compra de producto terminado: movimiento `purchase` con su costo, más el egreso en el libro.
 
 ## 3. Customers
 
-- **`customers`**: `first_name`, `last_name`, `email`, `phone`, `instagram`, `notes`.
-- **`customer_private`** (1:1): `customer_id`, `id_document` (cédula). Cualquier rol la registra; solo owner y admin la leen.
+Migración: `20261002000000_customers.sql`. Pruebas: `src/common/lib/db/tests/customers.test.ts`.
+
+- **`customers`**: `first_name` (obligatorio), `last_name`, `phone`, `email`, `instagram`, `notes`, `has_id_document`, `is_active`.
+  - Al menos un medio de contacto (CHECK `customers_contact_required` + Zod).
+  - Datos normalizados antes de guardar: teléfono en E.164 (`0414-123.45.67` → `+584141234567`), email en minúsculas, Instagram sin `@`. Teléfono, email e Instagram son únicos.
+  - No se borran; se desactivan (solo owner y admin). Staff crea y edita.
+  - Si el contacto ya existe, el formulario ofrece abrir ese cliente en vez de crear un duplicado.
+- **`customer_private`** (1:1): `customer_id`, `id_document` (cédula o RIF normalizado, p. ej. `V12345678`). Opcional; será obligatoria solo para facturación fiscal.
+  - Se escribe solo con `set_customer_id_document()`: cualquier rol la registra o corrige; solo owner y admin la leen o la quitan. `customers.has_id_document` indica a staff que existe sin mostrar el número.
+- **Tienda online (Fase 3)**: `findOrCreateCustomer()` en `modules/customers/lib/services/customer-lookup.service.ts` busca por email y luego por teléfono normalizados; si existe asocia la compra, si no lo crea. Devuelve solo el id: los datos de un cliente existente nunca se muestran sin OTP.
+- Una venta puede no tener cliente (venta rápida en persona): `sales.customer_id` es opcional.
 
 ## 4. Sales (inmutable)
 
-- **`sales`**: `number` (correlativo de la nota de entrega), `customer_id` (opcional), `channel` (`in_person`, `whatsapp`, `instagram`, `online_store`), `payment_method_id` (lista de precios usada), `currency` (la de esa lista), `bcv_usd_rate`, `binance_rate`, `usd_usdt_rate`, `delivery_method` (`pickup` | `delivery`), `occurred_at`, `notes`.
-- **`sale_items`**: `sale_id`, `variant_id`, `quantity`, `unit_price` (moneda de la venta), `unit_cost_usdt` (copia del costo de la variante al vender), `source` (`stock` | `made_to_order`, validado contra el `fulfillment_type` del producto).
-  - `stock` genera su `stock_movements`. `made_to_order` no toca stock y arranca en `to_produce`.
-- **`sale_payments`**: `sale_id`, `ledger_entry_id` (único), `payment_method_id`, `applied_amount` (en moneda de la venta). El dinero vive solo en el libro; esta tabla dice a qué venta se aplica. Admite pagos parciales y mixtos.
-- **`sale_item_status_events`**: `sale_item_id`, `status` (`to_produce`, `in_production`, `ready`, `delivered`). El estado actual es el último evento.
-- **`sale_voids`** (1:1): `sale_id`, `reason`. Anular revierte el stock y los pagos en el libro.
-- **Vista `sales_summary`**: total, pagado, saldo y `payment_status` (`pending` | `partial` | `paid` | `voided`), calculados para que la venta siga inmutable.
+Migración: `20261003000000_sales.sql`. Pruebas: `src/common/lib/db/tests/sales.test.ts`.
+
+Total y saldo de cada venta viven en **USD de referencia**, nunca en Bs. Cada pago se convierte con la tasa **del día en que se paga**.
+
+- **`sales`**: `number` (correlativo, se muestra como NE-000123), `customer_id` (opcional: venta rápida), `channel` (`in_person`, `whatsapp`, `instagram`, `online_store`), `price_method_id` (lista de precios usada), `delivery_method` (`pickup` | `delivery`), `subtotal_usd`, descuento (`discount_type` `amount` | `percent`, `discount_value`, `discount_usd`, `discount_reason` obligatorio, `discount_by`), `delivery_fee_usd`, `total_usd` = subtotal − descuento + delivery, tasas del momento (`bcv_usd_rate`, `bcv_eur_rate`, `binance_rate`, `usd_usdt_rate`), `notes`.
+- **`sale_items`**: `variant_id`, `quantity`, `unit_price_usd` (precio del método elegido), `line_total_usd`, `unit_cost_usdt` (copia del costo de la variante), `source` (`stock` | `made_to_order`).
+  - `stock` genera su `stock_movements` (`sale`); si no alcanza, se rechaza toda la venta. `made_to_order` no toca stock.
+  - Productos `stock` solo de inventario, `made_to_order` solo por encargo, `both` cualquiera de los dos (lo elige quien registra).
+  - Sin precio para el método elegido, la venta se bloquea (no hay precios manuales).
+- **`sale_payments`**: cada pago guarda `payment_method_id`, `currency`, `amount`, `rate_kind`, `applied_rate`, `usd_amount` (lo que cubre del saldo), `usdt_value` (valor real), las tasas del momento y `receipt_path`. Su dinero vive en el libro (`ledger_entry_id`, tipo `sale_payment`, categoría de sistema "Ventas"). Admite abonos, pagos en días distintos y pagos mixtos.
+  - Conversión: `bcv_usd` → `usd = Bs ÷ BCV dólar`; `bcv_eur` → `usd = Bs ÷ BCV euro`; `none` → USD tal cual, USDT ÷ `usd_usdt`.
+  - Cobrar en Bs exige la tasa de hoy (registrada hoy o con fecha de hoy). No se puede pagar más que el saldo (margen de redondeo: 0,01 USD).
+- **`sale_item_status_events`**: `sale_item_id`, `status` (`to_produce` → `in_production` → `ready` → `delivered`), quién y cuándo. Solo avanza. Por encargo arranca en `to_produce`; inventario en `ready` o `delivered` si se entregó en el momento. Vista `sale_item_current_status`.
+- **`sale_voids`** (1:1): `reason` obligatorio. Solo owner y admin. Revierte cada pago en el libro y devuelve el stock (`sale_reversal`). Los pagos de venta no se revierten sueltos.
+- **`sales_settings`** (una fila): `staff_max_discount_percent` (por defecto 10). Staff no puede superar ese descuento; owner y admin sí y son quienes lo cambian.
+- **Vistas**: `sales_summary` (total, pagado, saldo, valor real cobrado y `payment_status` `pending` | `partial` | `paid` | `voided`), `sales_daily_totals` (solo owner y admin; staff recibe 0 filas).
+- Todo se escribe con funciones: `create_sale`, `add_sale_payment`, `void_sale`, `set_sale_item_status`. Nadie inserta directo en las tablas.
+- El delivery cobrado es parte de la venta (entra como pago de venta). Lo que se le paga al repartidor es un gasto en Movimientos.
+- Nota de entrega imprimible y resumen por WhatsApp. No es factura fiscal.
+
+## 5. Registros con fecha pasada
+
+Migración: `20261004000000_backdating.sql`. Pruebas: `src/common/lib/db/tests/backdating.test.ts`.
+
+Aplica a ventas, pagos de venta y movimientos del libro (ingresos y gastos).
+
+- `occurred_at` puede ser anterior a `created_at`. Nunca futura.
+- Staff retrocede hasta `sales_settings.staff_max_backdate_days` días (7 por defecto, en Configuración → Ventas). Más atrás, solo owner y admin.
+- Con fecha pasada se usan **siempre** las tasas de esa fecha (`exchange_rate_for_date`): una tasa con `rate_date` = ese día, o la registrada ese día (la foto diaria automática, que cubre fines de semana y feriados sin publicación del BCV). Si no hay, se bloquea con aviso para que owner o admin la cargue. Las tasas enviadas a mano se ignoran.
+- Owner y admin cargan tasas de fechas pasadas en Tasas y cuentas ("Tasa de otra fecha"). No se editan; una corrección es otra fila de la misma fecha, que queda como vigente.
+- Ventas y pagos con fecha distinta al día de registro quedan con `is_backdated` y se marcan "Retroactiva" en /ventas y en el detalle.
+- Un pago no puede ser anterior a su venta. Los pagos registrados junto con una venta retroactiva usan la fecha de la venta.
+- Reversos y traspasos no pasan por esta regla (el reverso copia las tasas del original; el traspaso trae las suyas).
 
 ## Relaciones
 
@@ -240,9 +283,10 @@ accounts ──< ledger_entries >── movement_categories
                ├── transfer_id ──> account_transfers
                ├── reverses_entry_id ──> ledger_entries
                └──< sale_payments >── sales
-accounts ──< payment_methods ──< product_prices >── products / product_variants
+accounts ──< payment_methods ──< product_prices >── products
 
 product_categories ──< products ──< product_variants ──< stock_movements
+products ──< product_images      colors / sizes ──< product_variants
 customers ── customer_private (1:1)
 customers ──< sales ──< sale_items >── product_variants
 sale_items ──< stock_movements          (solo líneas de inventario)
@@ -275,9 +319,9 @@ no cuenta:           capital_contribution, traspasos
 | Usuarios | owner: todos los roles; admin: solo staff | no |
 | Saldos y traspasos | sí | no |
 | Productos, precios | leer y editar | leer |
-| Stock | todo | registra y ve |
-| Clientes | todo | todo, salvo leer la cédula |
-| Ventas | todo, incluido anular | registrar, cobrar, avanzar estados |
+| Stock | todo, incluidos ajustes y carga inicial | ve; registra compras y producción |
+| Clientes | todo, incluido desactivar | crear y editar; registra la cédula pero no la lee; no desactiva |
+| Ventas | todo, incluido anular y ver totales | registrar, cobrar, avanzar estados, ver todas las ventas; descuento hasta el máximo configurado; sin totales |
 
 ## Decisiones
 
@@ -287,7 +331,7 @@ no cuenta:           capital_contribution, traspasos
 | 2026-09-27 | Tipos `other_income` y `capital_contribution` (con persona); `profit_distribution` sale de la utilidad como la reinversión |
 | 2026-09-27 | Tipo `sales` para que los ingresos por ventas también lleven categoría |
 | 2026-09-27 | USD y Zelle valen 1:1 con USDT por defecto; cada movimiento guarda `usd_usdt_rate` |
-| 2026-09-27 | Precio por producto con precio opcional por variante que lo sobrescribe |
+| 2026-09-27 | ~~Precio por producto con precio opcional por variante~~ (reemplazado el 2026-10-01) |
 | 2026-09-27 | Stock negativo bloqueado |
 | 2026-09-27 | Staff registra la tasa de hoy solo si no existe; corregir es de owner y admin |
 | 2026-09-27 | Gasto personal desde cuenta del negocio = `withdrawal` de esa persona |
@@ -297,3 +341,8 @@ no cuenta:           capital_contribution, traspasos
 | 2026-09-30 | Analítica (`/analitica`, owner y admin): utilidad real, ingresos vs egresos 12 meses, salidas por categoría y flujos por persona, desde `analytics_ledger_summary` (RLS). Verde/rojo con tokens `--positive`/`--negative`, siempre con signo y flecha |
 | 2026-09-29 | Tasas automáticas desde DolarAPI cada mañana (BCV USD/EUR y paralelo como USDT); la manual prevalece |
 | 2026-09-27 | Acceso sin contraseña (código por correo) para todos; owner y admin con 2FA TOTP obligatorio (aal2 en RLS); sesión de 30 días |
+| 2026-10-01 | Productos: producto = modelo, variantes color × talla, SKU por códigos (fijo con movimientos), precio por producto en USD de referencia por método de pago, fotos en R2 público, `initial_count` por CSV, `min_stock` por variante, ajustes solo owner y admin |
+| 2026-10-01 | Precios en Bs = precio USD × tasa BCV dólar del día (exigido por ley). El valor real se sigue calculando con la tasa Binance |
+| 2026-10-02 | Clientes: nombre + al menos un contacto (CHECK en base y Zod), contactos normalizados y únicos, cédula opcional en tabla aparte, find-or-create listo para el checkout sin login, ventas sin cliente permitidas |
+| 2026-10-03 | Ventas: total y saldo en USD de referencia; cada pago con su tasa del día y su valor real; `rate_kind` por método; descuento con motivo y tope para staff; delivery como línea de la venta; por encargo sin stock; estados en eventos; anular solo owner y admin; staff sin totales |
+| 2026-10-04 | Registros con fecha pasada: sin fechas futuras, staff hasta N días (7), tasas siempre de esa fecha (bloquea si faltan), owner y admin cargan tasas pasadas, ventas y pagos marcados como retroactivos |

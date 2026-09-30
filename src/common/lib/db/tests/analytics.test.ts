@@ -21,9 +21,14 @@ beforeAll(async () => {
   await createUser(db, { id: OWNER, email: "owner@t.test", role: "owner", name: "Dueña" })
   await createUser(db, { id: STAFF, email: "staff@t.test", role: "staff" })
   const owner = asUser(db, OWNER)
+  // Movimientos con fecha pasada usan las tasas de su fecha: una fila por fecha usada (mismos valores).
   await owner(
-    "insert into public.exchange_rates (rate_date, bcv_usd, bcv_eur, binance_usdt) values ('2026-01-01', 150, 170, 100)"
+    `insert into public.exchange_rates (rate_date, bcv_usd, bcv_eur, binance_usdt)
+     select d::date, 150, 170, 100
+     from unnest(array['2026-01-01', '2026-08-10', '2026-08-11', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-06']) d`
   )
+  // Fechas fijas: se amplía el límite de retroceso de staff para no depender del día en que corre la prueba.
+  await db.query("update public.sales_settings set staff_max_backdate_days = 365")
   const acc = await owner<{ id: string }>(
     "insert into public.accounts (name, currency, kind) values ('Binance', 'USDT', 'crypto_wallet'), ('Banco', 'VES', 'bank') returning id"
   )

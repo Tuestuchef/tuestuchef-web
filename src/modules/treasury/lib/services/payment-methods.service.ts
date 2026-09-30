@@ -23,6 +23,7 @@ export async function savePaymentMethod(input: PaymentMethodInput) {
     name: input.name,
     account_id: input.account_id,
     price_currency: input.price_currency,
+    rate_kind: input.rate_kind,
     sort_order: input.sort_order,
     is_active: input.is_active,
   }

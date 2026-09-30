@@ -1,0 +1,356 @@
+import "server-only"
+
+import type { Currency } from "@/common/lib/constants/currency.constants"
+import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
+import { caracasMonthRange, caracasNoonIso, toCaracasDate } from "@/common/lib/utils/format-date.util"
+import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.service"
+
+import type { PaymentStatus, SaleItemStatus } from "../constants/sales.constants"
+import type { AddPaymentInput, CreateSaleInput } from "../schemas/sales.schema"
+import type {
+  SaleDetail,
+  SaleFormData,
+  SaleListItem,
+  SalesFilters,
+  SalesTotals,
+} from "../types/sales.types"
+
+const variantLabel = (v: { color: { name: string } | null; size: { name: string } | null }) =>
+  [v.color?.name, v.size?.name].filter(Boolean).join(" · ") || "Única"
+
+// Fecha del formulario → instante de la venta o pago (vacío u hoy = ahora).
+const occurredAt = (date?: string) => (date && date !== toCaracasDate() ? caracasNoonIso(date) : undefined)
+
+const fullName = (c: { first_name: string; last_name: string | null } | null) =>
+  c ? [c.first_name, c.last_name].filter(Boolean).join(" ") : null
+
+// Todo lo que necesita la pantalla de venta, en una sola carga.
+export async function getSaleFormData(): Promise<SaleFormData> {
+  const supabase = await createSupabaseServerClient()
+  const [variantsResult, balancesResult, pricesResult, methodsResult, settingsResult, rateStatus] = await Promise.all([
+    supabase
+      .from("product_variants")
+      .select("id, sku, product_id, color:colors(name), size:sizes(name), product:products!inner(name, is_active, fulfillment_type)")
+      .eq("is_active", true)
+      .eq("product.is_active", true)
+      .order("sku"),
+    supabase.from("stock_balances").select("variant_id, quantity"),
+    supabase.from("product_prices").select("product_id, payment_method_id, amount_usd"),
+    supabase
+      .from("payment_methods")
+      .select("id, name, rate_kind, account:accounts(currency)")
+      .eq("is_active", true)
+      .order("sort_order")
+      .order("name"),
+    supabase.from("sales_settings").select("staff_max_discount_percent, staff_max_backdate_days").maybeSingle(),
+    getRateStatus(),
+  ])
+  if (variantsResult.error) throw variantsResult.error
+  if (methodsResult.error) throw methodsResult.error
+
+  const stock = new Map((balancesResult.data ?? []).map((b) => [b.variant_id, Number(b.quantity ?? 0)]))
+  const prices = new Map<string, Record<string, number>>()
+  for (const price of pricesResult.data ?? []) {
+    const byMethod = prices.get(price.product_id) ?? {}
+    byMethod[price.payment_method_id] = Number(price.amount_usd)
+    prices.set(price.product_id, byMethod)
+  }
+
+  const rate = rateStatus.rate
+  return {
+    variants: variantsResult.data.map((v) => ({
+      id: v.id,
+      sku: v.sku,
+      productName: v.product.name,
+      variantLabel: variantLabel(v),
+      fulfillmentType: v.product.fulfillment_type,
+      stock: stock.get(v.id) ?? 0,
+      pricesUsd: prices.get(v.product_id) ?? {},
+    })),
+    methods: methodsResult.data.map((m) => ({
+      id: m.id,
+      name: m.name,
+      currency: (m.account?.currency ?? "USD") as Currency,
+      rateKind: m.rate_kind,
+    })),
+    rates: rate
+      ? {
+          bcvUsd: Number(rate.bcv_usd),
+          bcvEur: Number(rate.bcv_eur),
+          usdUsdt: Number(rate.usd_usdt),
+          isCurrent: rateStatus.hasTodayRate,
+        }
+      : null,
+    staffMaxDiscountPercent: Number(settingsResult.data?.staff_max_discount_percent ?? 10),
+    staffMaxBackdateDays: Number(settingsResult.data?.staff_max_backdate_days ?? 7),
+    today: rateStatus.today,
+  }
+}
+
+export async function createSale(input: CreateSaleInput) {
+  const supabase = await createSupabaseServerClient()
+  return supabase.rpc("create_sale", {
+    p_channel: input.channel,
+    p_price_method_id: input.price_method_id,
+    p_delivery_method: input.delivery_method,
+    p_items: input.items,
+    p_payments: input.payments,
+    p_customer_id: input.customer_id ?? undefined,
+    p_delivery_fee_usd: input.delivery_fee_usd,
+    p_discount_type: input.discount_value ? (input.discount_type ?? undefined) : undefined,
+    p_discount_value: input.discount_value ?? undefined,
+    p_discount_reason: input.discount_reason ?? undefined,
+    p_notes: input.notes ?? undefined,
+    p_delivered: input.delivered,
+    p_occurred_at: occurredAt(input.date),
+  })
+}
+
+export async function addSalePayment(input: AddPaymentInput) {
+  const supabase = await createSupabaseServerClient()
+  return supabase.rpc("add_sale_payment", {
+    p_sale_id: input.sale_id,
+    p_payment_method_id: input.payment_method_id,
+    p_amount: input.amount,
+    p_receipt_path: input.receipt_path,
+    p_occurred_at: occurredAt(input.date),
+  })
+}
+
+export async function voidSale(saleId: string, reason: string) {
+  const supabase = await createSupabaseServerClient()
+  return supabase.rpc("void_sale", { p_sale_id: saleId, p_reason: reason })
+}
+
+export async function setSaleItemStatus(itemId: string, status: SaleItemStatus) {
+  const supabase = await createSupabaseServerClient()
+  return supabase.rpc("set_sale_item_status", { p_sale_item_id: itemId, p_status: status })
+}
+
+export async function updateSalesSettings(settings: { staffMaxDiscountPercent: number; staffMaxBackdateDays: number }) {
+  const supabase = await createSupabaseServerClient()
+  return supabase
+    .from("sales_settings")
+    .update({
+      staff_max_discount_percent: settings.staffMaxDiscountPercent,
+      staff_max_backdate_days: settings.staffMaxBackdateDays,
+    })
+    .eq("id", true)
+    .select("id")
+}
+
+export async function getSalesSettings(): Promise<{ staffMaxDiscountPercent: number; staffMaxBackdateDays: number }> {
+  const supabase = await createSupabaseServerClient()
+  const { data } = await supabase
+    .from("sales_settings")
+    .select("staff_max_discount_percent, staff_max_backdate_days")
+    .maybeSingle()
+  return {
+    staffMaxDiscountPercent: Number(data?.staff_max_discount_percent ?? 10),
+    staffMaxBackdateDays: Number(data?.staff_max_backdate_days ?? 7),
+  }
+}
+
+// Estado actual de cada línea (vista: no se puede incrustar en el select).
+async function getItemStatuses(itemIds: string[]): Promise<Map<string, SaleItemStatus>> {
+  if (!itemIds.length) return new Map()
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("sale_item_current_status")
+    .select("sale_item_id, status")
+    .in("sale_item_id", itemIds)
+  if (error) throw error
+  return new Map(data.flatMap((row) => (row.sale_item_id && row.status ? [[row.sale_item_id, row.status]] : [])))
+}
+
+const SALE_LIST_COLUMNS = `id, number, occurred_at, channel, total_usd, is_backdated, created_at,
+  customer:customers(first_name, last_name),
+  items:sale_items(id, quantity, source, variant:product_variants(sku, product:products(name)))`
+
+export async function listSales(
+  filters: SalesFilters | { customerId: string }
+): Promise<SaleListItem[]> {
+  const supabase = await createSupabaseServerClient()
+  let query = supabase.from("sales").select(SALE_LIST_COLUMNS).order("occurred_at", { ascending: false }).limit(200)
+
+  if ("customerId" in filters) {
+    query = query.eq("customer_id", filters.customerId)
+  } else {
+    const { from, to } = caracasMonthRange(filters.month)
+    query = query.gte("occurred_at", from).lt("occurred_at", to)
+    if (filters.channel) query = query.eq("channel", filters.channel)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  if (!data.length) return []
+
+  const ids = data.map((s) => s.id)
+  const madeToOrderIds = data.flatMap((s) => s.items.filter((i) => i.source === "made_to_order").map((i) => i.id))
+  const [{ data: summaries, error: summaryError }, statuses] = await Promise.all([
+    supabase.from("sales_summary").select("sale_id, balance_usd, payment_status").in("sale_id", ids),
+    getItemStatuses(madeToOrderIds),
+  ])
+  if (summaryError) throw summaryError
+
+  const summary = new Map((summaries ?? []).map((s) => [s.sale_id, s]))
+  // Por encargo que aún no está listo.
+  const inProduction = new Set(
+    data
+      .filter((sale) =>
+        sale.items.some((i) => i.source === "made_to_order" && ["to_produce", "in_production"].includes(statuses.get(i.id) ?? ""))
+      )
+      .map((sale) => sale.id)
+  )
+
+  const rows = data.map((sale) => {
+    const s = summary.get(sale.id)
+    return {
+      id: sale.id,
+      number: sale.number,
+      occurredAt: sale.occurred_at,
+      channel: sale.channel,
+      customerName: fullName(sale.customer),
+      totalUsd: Number(sale.total_usd),
+      balanceUsd: Number(s?.balance_usd ?? 0),
+      paymentStatus: (s?.payment_status ?? "pending") as PaymentStatus,
+      itemsSummary: sale.items
+        .map((i) => `${Number(i.quantity)} × ${i.variant?.product?.name ?? i.variant?.sku ?? "—"}`)
+        .join(", "),
+      pendingProduction: inProduction.has(sale.id),
+      isBackdated: sale.is_backdated,
+      createdAt: sale.created_at,
+    }
+  })
+
+  const status = "customerId" in filters ? undefined : filters.status
+  return status ? rows.filter((r) => r.paymentStatus === status) : rows
+}
+
+// Totales del mes: la vista solo devuelve filas a owner y admin (RLS).
+export async function getSalesTotals(month: string): Promise<SalesTotals | null> {
+  const supabase = await createSupabaseServerClient()
+  const { from, to } = caracasMonthRange(month)
+  const { data, error } = await supabase
+    .from("sales_daily_totals")
+    .select("*")
+    .gte("sale_date", from.slice(0, 10))
+    .lt("sale_date", to.slice(0, 10))
+  if (error) throw error
+  if (!data.length) return null
+  return data.reduce<SalesTotals>(
+    (acc, day) => ({
+      salesCount: acc.salesCount + Number(day.sales_count ?? 0),
+      totalUsd: acc.totalUsd + Number(day.total_usd ?? 0),
+      paidUsd: acc.paidUsd + Number(day.paid_usd ?? 0),
+      balanceUsd: acc.balanceUsd + Number(day.balance_usd ?? 0),
+      collectedUsdt: acc.collectedUsdt + Number(day.collected_usdt ?? 0),
+    }),
+    { salesCount: 0, totalUsd: 0, paidUsd: 0, balanceUsd: 0, collectedUsdt: 0 }
+  )
+}
+
+export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
+  const supabase = await createSupabaseServerClient()
+  const { data: sale, error } = await supabase
+    .from("sales")
+    .select(
+      `*, customer:customers(id, first_name, last_name, phone),
+       price_method:payment_methods(name),
+       author:profiles!sales_created_by_fkey(full_name),
+       discounter:profiles!sales_discount_by_fkey(full_name)`
+    )
+    .eq("id", id)
+    .maybeSingle()
+  if (error) throw error
+  if (!sale) return null
+
+  const [itemsResult, paymentsResult, summaryResult, voidResult] = await Promise.all([
+    supabase
+      .from("sale_items")
+      .select(
+        `id, quantity, unit_price_usd, line_total_usd, source,
+         variant:product_variants(sku, color:colors(name), size:sizes(name), product:products(name))`
+      )
+      .eq("sale_id", id)
+      .order("created_at"),
+    supabase
+      .from("sale_payments")
+      .select(
+        `id, ledger_entry_id, currency, amount, applied_rate, usd_amount, usdt_value, occurred_at, receipt_path, is_backdated,
+         method:payment_methods(name), author:profiles!sale_payments_created_by_fkey(full_name)`
+      )
+      .eq("sale_id", id)
+      .order("occurred_at"),
+    supabase.from("sales_summary").select("paid_usd, balance_usd, payment_status").eq("sale_id", id).maybeSingle(),
+    supabase
+      .from("sale_voids")
+      .select("reason, created_at, author:profiles!sale_voids_created_by_fkey(full_name)")
+      .eq("sale_id", id)
+      .maybeSingle(),
+  ])
+  if (itemsResult.error) throw itemsResult.error
+  if (paymentsResult.error) throw paymentsResult.error
+  const statuses = await getItemStatuses(itemsResult.data.map((i) => i.id))
+
+  return {
+    id: sale.id,
+    number: sale.number,
+    occurredAt: sale.occurred_at,
+    channel: sale.channel,
+    deliveryMethod: sale.delivery_method,
+    priceMethodName: sale.price_method?.name ?? "—",
+    customer: sale.customer
+      ? { id: sale.customer.id, name: fullName(sale.customer) ?? "", phone: sale.customer.phone }
+      : null,
+    subtotalUsd: Number(sale.subtotal_usd),
+    discount:
+      Number(sale.discount_usd) > 0 && sale.discount_type
+        ? {
+            type: sale.discount_type,
+            value: Number(sale.discount_value),
+            usd: Number(sale.discount_usd),
+            reason: sale.discount_reason ?? "",
+            byName: sale.discounter?.full_name ?? null,
+          }
+        : null,
+    deliveryFeeUsd: Number(sale.delivery_fee_usd),
+    totalUsd: Number(sale.total_usd),
+    paidUsd: Number(summaryResult.data?.paid_usd ?? 0),
+    balanceUsd: Number(summaryResult.data?.balance_usd ?? sale.total_usd),
+    paymentStatus: (summaryResult.data?.payment_status ?? "pending") as PaymentStatus,
+    bcvUsdRate: Number(sale.bcv_usd_rate),
+    notes: sale.notes,
+    isBackdated: sale.is_backdated,
+    createdAt: sale.created_at,
+    authorName: sale.author?.full_name ?? null,
+    items: itemsResult.data.map((item) => ({
+      id: item.id,
+      sku: item.variant?.sku ?? "—",
+      productName: item.variant?.product?.name ?? "—",
+      variantLabel: item.variant ? variantLabel(item.variant) : "",
+      quantity: Number(item.quantity),
+      unitPriceUsd: Number(item.unit_price_usd),
+      lineTotalUsd: Number(item.line_total_usd),
+      source: item.source,
+      status: statuses.get(item.id) ?? null,
+    })),
+    payments: paymentsResult.data.map((p) => ({
+      id: p.id,
+      ledgerEntryId: p.ledger_entry_id,
+      methodName: p.method?.name ?? "—",
+      currency: p.currency,
+      amount: Number(p.amount),
+      appliedRate: p.applied_rate === null ? null : Number(p.applied_rate),
+      usdAmount: Number(p.usd_amount),
+      usdtValue: Number(p.usdt_value),
+      occurredAt: p.occurred_at,
+      authorName: p.author?.full_name ?? null,
+      hasReceipt: Boolean(p.receipt_path),
+      isBackdated: p.is_backdated,
+    })),
+    void: voidResult.data
+      ? { reason: voidResult.data.reason, at: voidResult.data.created_at, byName: voidResult.data.author?.full_name ?? null }
+      : null,
+  }
+}

@@ -24,11 +24,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/common/components/ui/select"
-import { CURRENCY_LABELS, type Currency } from "@/common/lib/constants/currency.constants"
 import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
 import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
 
 import { savePaymentMethodAction } from "../lib/actions/save-payment-method.action"
+import { type PaymentRateKind, RATE_KIND_LABELS } from "../lib/constants/treasury.constants"
 import type { Account, PaymentMethod } from "../lib/types/treasury.types"
 
 type PaymentMethodFormDialogProps = {
@@ -39,12 +39,15 @@ type PaymentMethodFormDialogProps = {
 const PaymentMethodFormDialog = ({ accounts, paymentMethod }: PaymentMethodFormDialogProps) => {
   const [open, setOpen] = useState(false)
   const [accountId, setAccountId] = useState(paymentMethod?.account_id ?? "")
-  const [priceCurrency, setPriceCurrency] = useState<string>(paymentMethod?.price_currency ?? "")
+  const [rateKind, setRateKind] = useState<PaymentRateKind>(
+    paymentMethod?.rate_kind && paymentMethod.rate_kind !== "none" ? paymentMethod.rate_kind : "bcv_usd"
+  )
   const { state, onSubmit, pending } = useFormAction(savePaymentMethodAction)
   useActionFeedback(state, () => setOpen(false))
   const errors = state.fieldErrors ?? {}
   const isEdit = Boolean(paymentMethod)
   const selectableAccounts = accounts.filter((a) => a.is_active || a.id === paymentMethod?.account_id)
+  const chargesInBs = accounts.find((a) => a.id === accountId)?.currency === "VES"
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -64,7 +67,7 @@ const PaymentMethodFormDialog = ({ accounts, paymentMethod }: PaymentMethodFormD
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar método de pago" : "Nuevo método de pago"}</DialogTitle>
           <DialogDescription>
-            Cada producto podrá tener un precio distinto por método de pago.
+            Cada producto tiene un precio en USD por método de pago. Si cobra en Bs, se convierte con la tasa BCV del día.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="grid gap-4" noValidate>
@@ -96,26 +99,28 @@ const PaymentMethodFormDialog = ({ accounts, paymentMethod }: PaymentMethodFormD
             </Select>
           </FormField>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          {chargesInBs ? (
             <FormField
-              label="Moneda de los precios"
-              htmlFor="pm-currency"
-              error={errors.price_currency}
-              hint="Ej.: pago móvil con precios en USD que se cobran en Bs."
+              label="Tasa para cobrar en Bs"
+              htmlFor="pm-rate"
+              error={errors.rate_kind}
+              hint="Monto en Bs = precio en USD × esta tasa del día."
             >
-              <Select name="price_currency" value={priceCurrency} onValueChange={setPriceCurrency}>
-                <SelectTrigger id="pm-currency" className="h-11 w-full md:h-9">
-                  <SelectValue placeholder="Elige la moneda" />
+              <Select name="rate_kind" value={rateKind} onValueChange={(v) => setRateKind(v as PaymentRateKind)}>
+                <SelectTrigger id="pm-rate" className="h-11 w-full md:h-9">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(CURRENCY_LABELS) as Currency[]).map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {CURRENCY_LABELS[value]}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="bcv_usd">{RATE_KIND_LABELS.bcv_usd}</SelectItem>
+                  <SelectItem value="bcv_eur">{RATE_KIND_LABELS.bcv_eur}</SelectItem>
                 </SelectContent>
               </Select>
             </FormField>
+          ) : (
+            <input type="hidden" name="rate_kind" value="none" />
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <FormField label="Orden" htmlFor="pm-order" error={errors.sort_order} hint="Menor aparece primero.">
               <Input
                 id="pm-order"

@@ -14,6 +14,7 @@ import { ROUTES } from "@/common/lib/constants/routes.constants"
 
 import AccountBalanceList from "../components/account-balance-list"
 import ExchangeRateDialog from "../components/exchange-rate-dialog"
+import PastRateDialog from "../components/past-rate-dialog"
 import RateSummary from "../components/rate-summary"
 import SyncRatesButton from "../components/sync-rates-button"
 import TransferList from "../components/transfer-list"
@@ -60,6 +61,7 @@ const TreasuryScreen = async ({ transferSaved }: TreasuryScreenProps) => {
           </div>
           <div className="flex flex-wrap gap-2">
             <SyncRatesButton />
+            <PastRateDialog today={rateStatus.today} />
             <ExchangeRateDialog
               label={
                 rateStatus.hasTodayRate

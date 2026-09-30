@@ -18,6 +18,15 @@ export const ACCOUNT_KIND_CURRENCIES: Record<AccountKind, readonly Currency[]> =
   crypto_wallet: ["USDT"],
 }
 
+export type PaymentRateKind = Enums<"payment_rate_kind">
+
+// Con qué tasa se convierte a Bs el precio en USD.
+export const RATE_KIND_LABELS: Record<PaymentRateKind, string> = {
+  bcv_usd: "Tasa BCV dólar",
+  bcv_eur: "Tasa BCV euro",
+  none: "Sin conversión",
+}
+
 export const TREASURY_MESSAGES = {
   RATE_SAVED: "Tasa registrada.",
   ACCOUNT_SAVED: "Cuenta guardada.",

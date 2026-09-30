@@ -15,15 +15,19 @@ type ExchangeRateFormProps = {
   submitLabel?: string
   // Valores actuales: la persona cambia solo la tasa que quiere ajustar.
   defaults?: Partial<Record<"bcv_usd" | "bcv_eur" | "binance_usdt", number>>
+  // Owner y admin: cargar la tasa de una fecha pasada.
+  maxDate?: string
 }
 
-const RATE_FIELDS: { name: ExchangeRateField; label: string; hint?: string }[] = [
+type RateField = Extract<ExchangeRateField, "bcv_usd" | "bcv_eur" | "binance_usdt">
+
+const RATE_FIELDS: { name: RateField; label: string; hint?: string }[] = [
   { name: "binance_usdt", label: "USDT / paralelo (Bs)" },
   { name: "bcv_usd", label: "BCV dólar (Bs)" },
   { name: "bcv_eur", label: "BCV euro (Bs)" },
 ]
 
-const ExchangeRateForm = ({ onSuccess, submitLabel = "Guardar tasa del día", defaults }: ExchangeRateFormProps) => {
+const ExchangeRateForm = ({ onSuccess, submitLabel = "Guardar tasa del día", defaults, maxDate }: ExchangeRateFormProps) => {
   const { state, onSubmit, pending } = useFormAction(createExchangeRateAction)
   useActionFeedback(state, onSuccess)
   const errors = state.fieldErrors ?? {}
@@ -31,6 +35,12 @@ const ExchangeRateForm = ({ onSuccess, submitLabel = "Guardar tasa del día", de
   return (
     <form key={state.submissionId} onSubmit={onSubmit} className="grid gap-4" noValidate>
       {state.status === "error" && state.message && <StatusAlert tone="error" title={state.message} />}
+
+      {maxDate && (
+        <FormField label="Fecha de la tasa" htmlFor="rate-date" error={errors.rate_date}>
+          <Input id="rate-date" name="rate_date" type="date" max={maxDate} required className="h-11 md:h-9" />
+        </FormField>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         {RATE_FIELDS.map((field) => (
@@ -42,7 +52,7 @@ const ExchangeRateForm = ({ onSuccess, submitLabel = "Guardar tasa del día", de
               autoComplete="off"
               placeholder="0,00"
               defaultValue={
-                field.name !== "usd_usdt" && field.name !== "note" && defaults?.[field.name] !== undefined
+                defaults?.[field.name] !== undefined
                   ? String(defaults[field.name]).replace(".", ",")
                   : undefined
               }

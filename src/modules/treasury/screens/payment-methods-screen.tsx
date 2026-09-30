@@ -1,7 +1,7 @@
 import PageHeader from "@/common/components/page-header"
 import StatusBadge from "@/common/components/status-badge"
 import { Card, CardContent } from "@/common/components/ui/card"
-import { CURRENCY_LABELS } from "@/common/lib/constants/currency.constants"
+import { RATE_KIND_LABELS } from "../lib/constants/treasury.constants"
 
 import PaymentMethodFormDialog from "../components/payment-method-form-dialog"
 import { listAccounts } from "../lib/services/accounts.service"
@@ -28,7 +28,8 @@ const PaymentMethodsScreen = async () => {
                   <div className="grid min-w-0 flex-1">
                     <span className="truncate font-medium">{method.name}</span>
                     <span className="text-xs text-muted-foreground">
-                      Llega a {method.account?.name ?? "—"} · Precios en {CURRENCY_LABELS[method.price_currency]}
+                      Llega a {method.account?.name ?? "—"}
+                      {method.rate_kind !== "none" && ` · Cobra en Bs a ${RATE_KIND_LABELS[method.rate_kind].toLowerCase()}`}
                     </span>
                   </div>
                   {!method.is_active && <StatusBadge tone="info">Inactivo</StatusBadge>}

@@ -73,8 +73,8 @@ insert into public.movement_categories (name, type, created_by) values
   ('Reinversión', 'reinvestment', '00000000-0000-4000-8000-000000000001'),
   ('Reparto de utilidades', 'profit_distribution', '00000000-0000-4000-8000-000000000001');
 
-insert into public.payment_methods (name, account_id, price_currency, sort_order, created_by) values
-  ('Pago móvil', '10000000-0000-4000-8000-000000000001', 'USD', 1, '00000000-0000-4000-8000-000000000001'),
-  ('Zelle', '10000000-0000-4000-8000-000000000004', 'USD', 2, '00000000-0000-4000-8000-000000000001'),
-  ('USDT', '10000000-0000-4000-8000-000000000002', 'USDT', 3, '00000000-0000-4000-8000-000000000001'),
-  ('Efectivo USD', '10000000-0000-4000-8000-000000000003', 'USD', 4, '00000000-0000-4000-8000-000000000001');
+insert into public.payment_methods (name, account_id, price_currency, rate_kind, sort_order, created_by) values
+  ('Pago móvil', '10000000-0000-4000-8000-000000000001', 'USD', 'bcv_usd', 1, '00000000-0000-4000-8000-000000000001'),
+  ('Zelle', '10000000-0000-4000-8000-000000000004', 'USD', 'none', 2, '00000000-0000-4000-8000-000000000001'),
+  ('USDT', '10000000-0000-4000-8000-000000000002', 'USDT', 'none', 3, '00000000-0000-4000-8000-000000000001'),
+  ('Efectivo USD', '10000000-0000-4000-8000-000000000003', 'USD', 'none', 4, '00000000-0000-4000-8000-000000000001');

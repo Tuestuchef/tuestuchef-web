@@ -5,6 +5,10 @@ import {
   LandmarkIcon,
   type LucideIcon,
   PackageIcon,
+  PaletteIcon,
+  PercentIcon,
+  RulerIcon,
+  ShapesIcon,
   ShoppingBagIcon,
   TagsIcon,
   UserCogIcon,
@@ -38,12 +42,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     label: "Negocio",
     items: [
       { title: "Inicio", url: ROUTES.HOME, icon: HouseIcon, roles: ROLE_GROUPS.ALL },
+      { title: "Ventas", url: ROUTES.SALES, icon: ShoppingBagIcon, roles: ROLE_GROUPS.ALL },
       { title: "Movimientos", url: ROUTES.MOVEMENTS, icon: ArrowLeftRightIcon, roles: ROLE_GROUPS.ALL },
       { title: "Tasas y cuentas", url: ROUTES.TREASURY, icon: LandmarkIcon, roles: ROLE_GROUPS.MANAGEMENT },
       { title: "Analítica", url: ROUTES.ANALYTICS, icon: ChartColumnIcon, roles: ROLE_GROUPS.MANAGEMENT },
-      { title: "Ventas", url: "/ventas", icon: ShoppingBagIcon, roles: ROLE_GROUPS.ALL, soon: true },
-      { title: "Productos y stock", url: "/productos", icon: PackageIcon, roles: ROLE_GROUPS.ALL, soon: true },
-      { title: "Clientes", url: "/clientes", icon: UsersIcon, roles: ROLE_GROUPS.ALL, soon: true },
+      { title: "Productos y stock", url: ROUTES.PRODUCTS, icon: PackageIcon, roles: ROLE_GROUPS.ALL },
+      { title: "Clientes", url: ROUTES.CUSTOMERS, icon: UsersIcon, roles: ROLE_GROUPS.ALL },
     ],
   },
   {
@@ -51,6 +55,15 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       { title: "Cuentas", url: ROUTES.SETTINGS_ACCOUNTS, icon: WalletIcon, roles: ROLE_GROUPS.MANAGEMENT },
       { title: "Categorías", url: ROUTES.SETTINGS_CATEGORIES, icon: TagsIcon, roles: ROLE_GROUPS.MANAGEMENT },
+      {
+        title: "Categorías de producto",
+        url: ROUTES.SETTINGS_PRODUCT_CATEGORIES,
+        icon: ShapesIcon,
+        roles: ROLE_GROUPS.MANAGEMENT,
+      },
+      { title: "Tallas", url: ROUTES.SETTINGS_SIZES, icon: RulerIcon, roles: ROLE_GROUPS.MANAGEMENT },
+      { title: "Colores", url: ROUTES.SETTINGS_COLORS, icon: PaletteIcon, roles: ROLE_GROUPS.MANAGEMENT },
+      { title: "Ventas", url: ROUTES.SETTINGS_SALES, icon: PercentIcon, roles: ROLE_GROUPS.MANAGEMENT },
       {
         title: "Métodos de pago",
         url: ROUTES.SETTINGS_PAYMENT_METHODS,

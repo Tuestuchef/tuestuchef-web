@@ -3,6 +3,7 @@ import { z } from "zod"
 import {
   optionalPositiveAmountSchema,
   optionalTextSchema,
+  pastOrTodayDateSchema,
   positiveAmountSchema,
 } from "@/common/lib/schemas/form-fields.schema"
 
@@ -13,6 +14,8 @@ export const exchangeRateSchema = z.object({
   // Opcional: por defecto 1 (1 USD = 1 USDT).
   usd_usdt: optionalPositiveAmountSchema("USD → USDT", 8),
   note: optionalTextSchema(200),
+  // Vacío = hoy. Fechas pasadas: solo owner y admin.
+  rate_date: pastOrTodayDateSchema,
 })
 
 export type ExchangeRateInput = z.infer<typeof exchangeRateSchema>

@@ -9,6 +9,8 @@ import TodayRateBanner from "@/modules/treasury/components/today-rate-banner"
 import { listAccounts } from "@/modules/treasury/lib/services/accounts.service"
 import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.service"
 
+import { getSalesSettings } from "@/modules/sales/lib/services/sales.service"
+
 import LedgerEntryForm from "../components/ledger-entry-form"
 import { getLastUsedAccountId, listPeople } from "../lib/services/ledger.service"
 import { listCategoryOptions } from "../lib/services/movement-categories.service"
@@ -17,14 +19,22 @@ type NewMovementScreenProps = {
   user: SessionUser
 }
 
+// Staff: fecha más antigua que puede usar (misma regla que la base).
+const daysBefore = (date: string, days: number) => {
+  const d = new Date(`${date}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - days)
+  return d.toISOString().slice(0, 10)
+}
+
 const NewMovementScreen = async ({ user }: NewMovementScreenProps) => {
   const isManagement = isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)
-  const [accounts, categories, rateStatus, lastAccountId, people] = await Promise.all([
+  const [accounts, categories, rateStatus, lastAccountId, people, settings] = await Promise.all([
     listAccounts({ activeOnly: true }),
     listCategoryOptions(),
     getRateStatus(),
     getLastUsedAccountId(user.id),
     isManagement ? listPeople() : Promise.resolve([]),
+    isManagement ? Promise.resolve(null) : getSalesSettings(),
   ])
 
   const rates = rateStatus.rate
@@ -56,6 +66,7 @@ const NewMovementScreen = async ({ user }: NewMovementScreenProps) => {
         defaultAccountId={lastAccountId}
         rates={rates}
         receiptsEnabled={isStorageEnabled()}
+        minDate={settings && rateStatus.today ? daysBefore(rateStatus.today, settings.staffMaxBackdateDays) : undefined}
       />
     </div>
   )
