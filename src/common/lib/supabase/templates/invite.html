@@ -1,0 +1,22 @@
+<!--
+  Plantilla de invitación de Supabase Auth.
+  Sin colores fijos: el cliente de correo usa sus colores por defecto.
+  El enlace va a /auth/confirm (flujo con token_hash, compatible con SSR).
+  Copiar este mismo contenido en Supabase → Authentication → Emails → Invite user.
+-->
+<h2>Te invitaron al panel de Tuestuchef</h2>
+
+<p>Hola{{ if .Data.full_name }}, {{ .Data.full_name }}{{ end }}.</p>
+
+<p>Te dieron acceso al panel administrativo de Tuestuchef. Entra con este enlace:</p>
+
+<p>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite">Aceptar invitación</a>
+</p>
+
+<p>
+  No necesitas contraseña: las próximas veces entras con tu correo y un código que te enviamos.
+  Si tu rol es dueño o administrador, el panel te pedirá activar una app autenticadora.
+</p>
+
+<p>El enlace vence pronto; si ya no funciona, pide que te inviten de nuevo. Si no esperabas este correo, ignóralo.</p>
