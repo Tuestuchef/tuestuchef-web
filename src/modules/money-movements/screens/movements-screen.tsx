@@ -29,6 +29,7 @@ const MovementsScreen = async ({ user, filters }: MovementsScreenProps) => {
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
       <PageHeader
+        help="movements"
         title="Movimientos"
         description={isManagement ? "Libro de ingresos, gastos y traspasos." : "Los movimientos que registraste."}
         actions={

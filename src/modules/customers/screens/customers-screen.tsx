@@ -14,6 +14,7 @@ const CustomersScreen = async ({ user, search }: { user: SessionUser; search?: s
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-4">
       <PageHeader
+        help="customers"
         title="Clientes"
         description="Datos de contacto e historial de compras."
         actions={<CustomerFormDialog canManage={isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)} />}

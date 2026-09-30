@@ -21,6 +21,7 @@ const StockScreen = async ({ user }: { user: SessionUser }) => {
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-4">
       <PageHeader
+        help="stock"
         title="Stock"
         description={canManage ? "Compras, producción y ajustes." : "Registra compras y producción."}
         actions={

@@ -1,15 +1,15 @@
 import Link from "next/link"
 
+import PageHelp from "@/common/components/page-help"
 import { isRoleIn, ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { isStorageEnabled } from "@/common/lib/services/storage.service"
 import type { SessionUser } from "@/common/lib/types/session.types"
+import { getSalesSettings } from "@/modules/sales/lib/services/sales.service"
 import RateSummary from "@/modules/treasury/components/rate-summary"
 import TodayRateBanner from "@/modules/treasury/components/today-rate-banner"
 import { listAccounts } from "@/modules/treasury/lib/services/accounts.service"
 import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.service"
-
-import { getSalesSettings } from "@/modules/sales/lib/services/sales.service"
 
 import LedgerEntryForm from "../components/ledger-entry-form"
 import { getLastUsedAccountId, listPeople } from "../lib/services/ledger.service"
@@ -47,7 +47,10 @@ const NewMovementScreen = async ({ user }: NewMovementScreenProps) => {
   return (
     <div className="mx-auto grid w-full max-w-xl gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Nuevo movimiento</h1>
+        <div className="flex items-center gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Nuevo movimiento</h1>
+          <PageHelp topic="newMovement" />
+        </div>
         <Link href={ROUTES.MOVEMENTS} className="text-sm text-muted-foreground underline-offset-4 hover:underline">
           Ver movimientos
         </Link>

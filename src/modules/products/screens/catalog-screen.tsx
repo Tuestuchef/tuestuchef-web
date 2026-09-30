@@ -1,29 +1,36 @@
 import PageHeader from "@/common/components/page-header"
 import StatusBadge from "@/common/components/status-badge"
 import { Card, CardContent } from "@/common/components/ui/card"
+import type { HelpTopicKey } from "@/common/lib/constants/help.constants"
 
 import CatalogItemDialog from "../components/catalog-item-dialog"
 import { listCatalog } from "../lib/services/catalog.service"
 import type { CatalogKind } from "../lib/types/products.types"
 
-const COPY: Record<CatalogKind, { title: string; description: string; noun: string; codeHint: string }> = {
+const COPY: Record<
+  CatalogKind,
+  { title: string; description: string; noun: string; codeHint: string; help: HelpTopicKey }
+> = {
   product_categories: {
     title: "Categorías de producto",
     description: "Filipinas, delantales, pantalones, estuches, gorros…",
     noun: "categoría",
     codeHint: "Ej.: FIL",
+    help: "productCategories",
   },
   sizes: {
     title: "Tallas",
     description: "En el orden en que se muestran. La talla es opcional en cada variante.",
     noun: "talla",
     codeHint: "Ej.: XL",
+    help: "sizes",
   },
   colors: {
     title: "Colores",
     description: "Nombre y código para el SKU (ej.: Vinotinta → VIN).",
     noun: "color",
     codeHint: "Ej.: VIN",
+    help: "colors",
   },
 }
 
@@ -36,6 +43,7 @@ const CatalogScreen = async ({ kind }: { kind: CatalogKind }) => {
     <div className="mx-auto grid w-full max-w-2xl gap-4">
       <PageHeader
         title={copy.title}
+        help={copy.help}
         description={copy.description}
         actions={<CatalogItemDialog kind={kind} noun={copy.noun} codeHint={copy.codeHint} />}
       />

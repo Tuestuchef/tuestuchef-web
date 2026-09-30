@@ -13,6 +13,7 @@ const AccountsScreen = async () => {
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
       <PageHeader
+        help="accounts"
         title="Cuentas"
         description="Bs, USDT, dólares en efectivo y Zelle. El saldo se calcula desde los movimientos."
         actions={<AccountFormDialog />}

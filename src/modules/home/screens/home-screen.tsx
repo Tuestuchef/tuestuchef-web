@@ -1,6 +1,7 @@
 import { PlusIcon, ShoppingBagIcon } from "lucide-react"
 import Link from "next/link"
 
+import PageHelp from "@/common/components/page-help"
 import { Button } from "@/common/components/ui/button"
 import {
   Card,
@@ -9,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/common/components/ui/card"
-import { NAV_ITEMS } from "@/common/lib/constants/navigation.constants"
+import { NAV_LINKS } from "@/common/lib/constants/navigation.constants"
 import { ROLE_LABELS } from "@/common/lib/constants/roles.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import type { SessionUser } from "@/common/lib/types/session.types"
@@ -24,12 +25,15 @@ type HomeScreenProps = {
 const HomeScreen = async ({ user }: HomeScreenProps) => {
   const rateStatus = await getRateStatus()
   const firstName = user.fullName.split(" ")[0] || user.email
-  const upcoming = NAV_ITEMS.filter((item) => item.soon && item.roles.includes(user.role))
+  const upcoming = NAV_LINKS.filter((item) => item.soon && item.roles.includes(user.role))
 
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
       <div className="grid gap-1 pt-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Hola, {firstName}</h1>
+        <div className="flex items-center gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Hola, {firstName}</h1>
+          <PageHelp topic="home" />
+        </div>
         <p className="text-sm text-muted-foreground">Rol: {ROLE_LABELS[user.role]}</p>
       </div>
 

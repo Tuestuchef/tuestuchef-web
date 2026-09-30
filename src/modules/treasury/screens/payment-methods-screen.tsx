@@ -13,6 +13,7 @@ const PaymentMethodsScreen = async () => {
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
       <PageHeader
+        help="paymentMethods"
         title="Métodos de pago"
         description="Cómo te pagan los clientes y a qué cuenta llega el dinero."
         actions={<PaymentMethodFormDialog accounts={accounts} />}

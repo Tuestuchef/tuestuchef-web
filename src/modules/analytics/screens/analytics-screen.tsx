@@ -21,6 +21,7 @@ const AnalyticsScreen = async ({ period }: { period: PeriodValue }) => {
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-4 md:gap-6">
       <PageHeader
+        help="analytics"
         title="Analítica"
         description="Utilidad real y a dónde va el dinero, en USDT. Sale del libro de movimientos."
         actions={<PeriodSelect value={period} />}

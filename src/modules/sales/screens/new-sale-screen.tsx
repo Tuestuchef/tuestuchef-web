@@ -11,7 +11,7 @@ const NewSaleScreen = async ({ user }: { user: SessionUser }) => {
 
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-4">
-      <PageHeader title="Nueva venta" />
+      <PageHeader help="newSale" title="Nueva venta" />
       {!data.rates?.isCurrent && <TodayRateBanner />}
       <SaleForm {...data} canManage={isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)} />
     </div>

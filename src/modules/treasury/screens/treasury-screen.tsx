@@ -36,6 +36,7 @@ const TreasuryScreen = async ({ transferSaved }: TreasuryScreenProps) => {
   return (
     <div className="mx-auto grid w-full max-w-4xl gap-4">
       <PageHeader
+        help="treasury"
         title="Tasas y cuentas"
         actions={
           <Button asChild className="h-11 md:h-9">

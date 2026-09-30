@@ -18,6 +18,7 @@ const CategoriesScreen = async () => {
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
       <PageHeader
+        help="categories"
         title="Categorías"
         description="Cada movimiento lleva una categoría. Su tipo define cómo cuenta en la utilidad real."
         actions={<CategoryFormDialog />}

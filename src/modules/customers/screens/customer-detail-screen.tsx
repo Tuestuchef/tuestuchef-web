@@ -46,6 +46,7 @@ const CustomerDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
         </Link>
       </Button>
       <PageHeader
+        help="customer"
         className="pt-0"
         title={name}
         description={

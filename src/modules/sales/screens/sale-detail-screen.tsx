@@ -49,6 +49,7 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
         </Link>
       </Button>
       <PageHeader
+        help="sale"
         className="pt-0"
         title={label}
         description={

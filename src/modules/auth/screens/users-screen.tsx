@@ -21,6 +21,7 @@ const UsersScreen = async ({ user }: UsersScreenProps) => {
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
       <PageHeader
+        help="users"
         title="Usuarios"
         description="Roles fijos: owner ve todo, admin gestiona, staff registra. Los usuarios no se borran: se desactivan."
         actions={<InviteUserDialog roles={roles} enabled={isInviteEnabled()} />}

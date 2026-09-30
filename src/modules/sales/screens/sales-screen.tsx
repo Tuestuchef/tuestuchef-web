@@ -25,6 +25,7 @@ const SalesScreen = async ({ user, filters }: { user: SessionUser; filters: Sale
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
       <PageHeader
+        help="sales"
         title="Ventas"
         description="Notas de entrega, cobros y encargos."
         actions={

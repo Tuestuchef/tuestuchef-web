@@ -60,6 +60,7 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
         </Link>
       </Button>
       <PageHeader
+        help="product"
         className="pt-0"
         title={product.name}
         description={

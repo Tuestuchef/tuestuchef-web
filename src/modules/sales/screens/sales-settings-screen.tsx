@@ -9,7 +9,7 @@ const SalesSettingsScreen = async () => {
 
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-4">
-      <PageHeader title="Ventas" description="Reglas para registrar ventas." />
+      <PageHeader help="salesSettings" title="Ventas" description="Reglas para registrar ventas." />
       <Card>
         <CardContent>
           <SalesSettingsForm {...settings} />

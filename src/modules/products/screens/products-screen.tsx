@@ -25,6 +25,7 @@ const ProductsScreen = async ({ user, filters }: ProductsScreenProps) => {
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-4">
       <PageHeader
+        help="products"
         title="Productos"
         description="Modelos, variantes, precios y existencias."
         actions={

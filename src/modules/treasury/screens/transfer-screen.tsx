@@ -13,6 +13,7 @@ const TransferScreen = async () => {
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-4">
       <PageHeader
+        help="transfer"
         title="Nuevo traspaso"
         description="Mover dinero entre cuentas o cambiar de moneda. La comisión se registra aparte."
       />
