@@ -78,7 +78,8 @@ Invitaciones: Supabase Auth `inviteUserByEmail` con la clave secreta, solo desde
 
 - `source`: `api` (automática, sin autor) o `manual` (con autor). Los usuarios solo registran manuales.
 - **Automática:** cada día a las 6:00 (Caracas) Vercel Cron llama a `/api/cron/exchange-rates` (protegida con `CRON_SECRET`), que lee DolarAPI: BCV oficial USD y EUR, y **paralelo como tasa USDT** (columna `binance_usdt`). `rate_date` = fecha valor del BCV. Owner y admin también pueden pedirla con "Actualizar desde BCV".
-- Una tasa manual del día nunca se reemplaza por la automática; una automática igual a la anterior no se duplica.
+- Una tasa manual registrada hoy no se reemplaza por la automática. Una automática igual a la última no se duplica si esa ya se guardó hoy; si es de otro día se guarda igual, para que cada día tenga su registro (el BCV no publica fines de semana ni feriados).
+- "Tasa de hoy" = la vigente tiene fecha BCV de hoy **o** se guardó hoy.
 - La tasa vigente es la fila más reciente (`rate_date`, luego `created_at`). Corregir = agregar otra fila para el mismo día.
 - Staff puede registrar la tasa de hoy **solo si aún no existe**. Registrar otros días y corregir es de owner y admin.
 

@@ -1,6 +1,7 @@
 import "server-only"
 
 import { createSupabaseAdminClient } from "@/common/lib/db/supabase-admin.client"
+import { toCaracasDate } from "@/common/lib/utils/format-date.util"
 
 import { decideRateSync, type RateSyncDecision } from "../utils/rate-sync.util"
 import { fetchDolarApiRates } from "./dolar-api.service"
@@ -24,12 +25,12 @@ export async function syncExchangeRatesFromApi(): Promise<RateSyncResult> {
 
   const { data: existing, error: readError } = await admin
     .from("exchange_rates")
-    .select("source, bcv_usd, bcv_eur, binance_usdt")
+    .select("source, bcv_usd, bcv_eur, binance_usdt, created_at")
     .eq("rate_date", fetched.rateDate)
     .order("created_at", { ascending: false })
   if (readError) return { ok: false, error: readError.message }
 
-  const decision = decideRateSync(existing, fetched)
+  const decision = decideRateSync(existing, fetched, toCaracasDate())
   if (decision === "insert") {
     const { error } = await admin.from("exchange_rates").insert({
       rate_date: fetched.rateDate,

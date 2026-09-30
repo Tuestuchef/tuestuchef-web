@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.clie
 
 import type { ExchangeRateInput } from "../schemas/exchange-rate.schema"
 import type { ExchangeRate, RateStatus } from "../types/treasury.types"
+import { isRateCurrent } from "../utils/rate-status.util"
 
 export async function getRateStatus(): Promise<RateStatus> {
   const supabase = await createSupabaseServerClient()
@@ -18,7 +19,7 @@ export async function getRateStatus(): Promise<RateStatus> {
   return {
     rate: current,
     today: todayDate,
-    hasTodayRate: current?.rate_date === todayDate,
+    hasTodayRate: isRateCurrent(current, todayDate),
   }
 }
 
