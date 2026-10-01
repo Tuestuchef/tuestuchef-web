@@ -1,6 +1,6 @@
 "use client"
 
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import {
   Select,
@@ -15,9 +15,17 @@ import { PERIODS, type PeriodValue } from "../lib/constants/analytics.constants"
 const PeriodSelect = ({ value }: { value: PeriodValue }) => {
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // Conserva la pestaña (y cualquier otro filtro) al cambiar el período.
+  const select = (next: string) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("periodo", next)
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }
 
   return (
-    <Select value={value} onValueChange={(next) => router.replace(`${pathname}?periodo=${next}`, { scroll: false })}>
+    <Select value={value} onValueChange={select}>
       <SelectTrigger aria-label="Período" className="h-11 w-full sm:w-48 md:h-9">
         <SelectValue />
       </SelectTrigger>

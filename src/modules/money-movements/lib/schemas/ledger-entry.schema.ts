@@ -22,7 +22,8 @@ export const ledgerEntrySchema = z.object({
   amount: positiveAmountSchema("el monto"),
   description: optionalTextSchema(200),
   date: pastOrTodayDateSchema,
-  person_id: optionalUuid,
+  // Persona del equipo (sueldos, retiros, aportes y repartos).
+  team_member_id: optionalUuid,
   receipt_path: receiptPathSchema,
 })
 

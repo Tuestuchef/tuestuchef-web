@@ -238,3 +238,28 @@ El cron de Vercel solo corre en producción. En staging: **Tasas y cuentas → A
 > **Migraciones solo con la CLI** (`npm run db:push`), nunca pegándolas en el SQL Editor ni con otras herramientas: así quedan registradas con la versión de su archivo. Por otro camino quedan con otra versión y el siguiente `db:push` intenta repetirlas.
 
 > Antes de cualquier `db:push`, `npm run db:linked` dice a qué base va. El proyecto queda enlazado a demo por defecto; producción se enlaza solo para publicar y se desenlaza al terminar.
+
+### 6.7 Datos de prueba (seed demo)
+
+`src/common/lib/supabase/seed-demo.sql` carga un mes de operación realista para probar el dashboard: tasas diarias, cuentas y métodos, catálogo con materia prima y recetas, compras (contado, crédito, abonos y una por pagar vencida), producción, ~50 ventas (pagadas, con abonos, por cobrar, con descuento, encargos en producción y una anulada), gastos, sueldos con un adelanto, un retiro, una reinversión, un cambio Bs → USDT con comisión y el aporte a la reserva.
+
+> **Nunca en producción.** No es una migración ni la usa `db:push`; se corre a mano y solo en `tuestuchef-demo`.
+
+Protecciones del propio script:
+
+- No hace nada sin la línea de confirmación (`app.demo_seed = 'tuestuchef-demo'`).
+- No corre si la base ya tiene ventas o compras: no se mezcla con datos reales ni se duplica.
+- Necesita el owner de staging (`npm run create-first-owner:demo`); todo queda a su nombre.
+- Pasa por las mismas funciones que la app (ventas, compras, producción, nómina), con sus reglas y la tasa de cada fecha.
+- Respeta las tasas que ya existan y arma el mes hacia atrás partiendo de la última.
+
+Cómo correrlo:
+
+1. En el panel de Supabase, abre el proyecto **tuestuchef-demo** (confirma el nombre arriba a la izquierda) → **SQL Editor** → New query.
+2. Primera línea:
+   ```sql
+   select set_config('app.demo_seed', 'tuestuchef-demo', false);
+   ```
+3. Debajo, pega el contenido completo de `seed-demo.sql` y ejecuta.
+
+Para volver a cargarlo hay que partir de una base demo sin ventas ni compras (por ejemplo, `supabase db reset --linked` con demo enlazado, después de comprobarlo con `npm run db:linked`, y volver a crear el owner).

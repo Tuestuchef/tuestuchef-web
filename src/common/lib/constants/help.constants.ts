@@ -500,23 +500,40 @@ export const HELP_TOPICS = {
   },
 
   analytics: {
-    title: "Analítica",
-    summary: "Cómo va el negocio en valor real: utilidad, ingresos, egresos y retiros.",
+    title: "Dashboard",
+    summary: "Cómo va el negocio en valor real (USDT), por período. Solo owner y admin.",
     sections: [
       {
-        heading: "Qué ves",
+        heading: "Utilidad real",
         items: [
-          "Utilidad real = ingresos − costos − gastos − comisiones − impuestos − sueldos (incluido el del dueño).",
-          "Ingresos vs. egresos de los últimos 12 meses.",
-          "En qué se va el dinero, por categoría.",
-          "Cuánto recibió cada persona del equipo (sueldos y retiros).",
+          "Ingresos − costos − gastos − comisiones − impuestos − sueldos (incluido el del dueño).",
+          "Ingresos vs. egresos de los últimos 12 meses, a dónde va el dinero y cuánto recibió cada persona.",
         ],
       },
       {
-        heading: "Recuerda",
+        heading: "Asignaciones",
         items: [
-          "Todo está en USDT (valor real), no en Bs ni en dólares BCV.",
-          "La reinversión y la reserva de caja salen de la utilidad; no se restan antes.",
+          "La política dice qué % de la utilidad va a la reserva y a reinversión.",
+          "Se compara con lo que de verdad se transfirió a la cuenta de reserva (USDT) y lo gastado con categoría reinversión.",
+          "Reserva y reinversión salen de la utilidad: nunca se restan antes de calcularla.",
+        ],
+      },
+      {
+        heading: "Flujo de caja",
+        items: ["Por cuenta: saldo al inicio, lo que entró, lo que salió y el saldo al final. Incluye traspasos."],
+      },
+      {
+        heading: "Margen",
+        items: [
+          "Por producto vendido: ingreso real (con descuento y la tasa de cada venta) menos materiales y mano de obra.",
+          "Si una venta no tiene costo registrado, se avisa: ese margen está inflado.",
+        ],
+      },
+      {
+        heading: "Efecto de la tasa",
+        items: [
+          "Ventas en Bs: se cobran a tasa BCV y valen a tasa paralela; la diferencia es pérdida.",
+          "Pagos a proveedores en Bs a tasa BCV: cuestan menos en valor real; la diferencia es ganancia.",
         ],
       },
     ],
@@ -672,6 +689,52 @@ export const HELP_TOPICS = {
       {
         heading: "Recuerda",
         items: ["La materia prima no se vende: no aparece al registrar ventas."],
+      },
+    ],
+  },
+  team: {
+    title: "Equipo",
+    summary: "Quién cobra sueldo, cuánto, lo pagado este mes y los adelantos por descontar. Solo owner y admin.",
+    sections: [
+      {
+        heading: "Qué puedes hacer",
+        items: [
+          "Agregar personas del equipo, tengan o no cuenta en el sistema (p. ej. una costurera).",
+          "Abrir una persona para definir su sueldo, pagarle o darle un adelanto.",
+        ],
+      },
+      {
+        heading: "Recuerda",
+        items: [
+          "Todo dinero que sale para una persona del equipo (incluido el dueño) es sueldo, adelanto o retiro. Nunca \"prestado\".",
+          "Los pagos y adelantos van al libro con categoría Sueldos y restan en la utilidad real.",
+        ],
+      },
+    ],
+  },
+
+  teamMember: {
+    title: "Persona del equipo",
+    summary: "Sueldo, pagos y adelantos de una persona.",
+    sections: [
+      {
+        heading: "Sueldo",
+        items: [
+          "Monto, moneda y frecuencia. Un cambio no edita el anterior: se agrega uno nuevo con su fecha.",
+        ],
+      },
+      {
+        heading: "Pagos y adelantos",
+        items: [
+          "Adelanto: sale dinero y queda pendiente hasta el próximo pago.",
+          "Pagar sueldo: se marcan los adelantos a descontar y se sugiere el neto (sueldo − adelantos).",
+          "En Bs, el equivalente en dólares usa la tasa BCV de la fecha del pago.",
+          "Un error se corrige revirtiendo el movimiento en Movimientos; un adelanto revertido deja de estar pendiente.",
+        ],
+      },
+      {
+        heading: "Cuenta en el sistema",
+        items: ["Si la persona usa el panel, vincúlala con su usuario: sus retiros y sueldos quedan unidos a su cuenta."],
       },
     ],
   },

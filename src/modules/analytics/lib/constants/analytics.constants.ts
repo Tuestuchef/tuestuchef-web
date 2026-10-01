@@ -27,3 +27,15 @@ export const DEDUCTION_TYPES: readonly CategoryType[] = [
 ]
 export const PROFIT_USE_TYPES: readonly CategoryType[] = ["reinvestment", "profit_distribution"]
 export const CONTRIBUTION_TYPES: readonly CategoryType[] = ["capital_contribution"]
+
+// Pestañas del dashboard (?vista=).
+export const DASHBOARD_VIEWS = [
+  { value: "utilidad", label: "Utilidad real" },
+  { value: "caja", label: "Flujo de caja" },
+  { value: "margen", label: "Margen" },
+  { value: "tasa", label: "Efecto de la tasa" },
+] as const
+
+export type DashboardView = (typeof DASHBOARD_VIEWS)[number]["value"]
+
+export const DEFAULT_VIEW: DashboardView = "utilidad"

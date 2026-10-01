@@ -28,6 +28,8 @@ export const ROUTES = {
   SUPPLIER: (id: string) => `/compras/proveedores/${id}`,
   PAYABLES: "/compras/por-pagar",
   RAW_MATERIALS: "/compras/materia-prima",
+  TEAM: "/equipo",
+  TEAM_MEMBER: (id: string) => `/equipo/${id}`,
   CUSTOMERS: "/clientes",
   CUSTOMER: (id: string) => `/clientes/${id}`,
 

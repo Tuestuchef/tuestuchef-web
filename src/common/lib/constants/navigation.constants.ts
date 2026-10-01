@@ -5,6 +5,7 @@ import {
   ShoppingBagIcon,
   TruckIcon,
   UserCogIcon,
+  UsersRoundIcon,
   WalletIcon,
 } from "lucide-react"
 
@@ -79,12 +80,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
     children: [
       { title: "Movimientos", url: ROUTES.MOVEMENTS, roles: ROLE_GROUPS.ALL },
       { title: "Tasas y cuentas", url: ROUTES.TREASURY, roles: ROLE_GROUPS.MANAGEMENT },
-      { title: "Analítica", url: ROUTES.ANALYTICS, roles: ROLE_GROUPS.MANAGEMENT },
+      { title: "Dashboard", url: ROUTES.ANALYTICS, roles: ROLE_GROUPS.MANAGEMENT },
       { title: "Cuentas", url: ROUTES.SETTINGS_ACCOUNTS, roles: ROLE_GROUPS.MANAGEMENT },
       { title: "Categorías de dinero", url: ROUTES.SETTINGS_CATEGORIES, roles: ROLE_GROUPS.MANAGEMENT },
       { title: "Métodos de pago", url: ROUTES.SETTINGS_PAYMENT_METHODS, roles: ROLE_GROUPS.MANAGEMENT },
     ],
   },
+  { title: "Equipo", url: ROUTES.TEAM, icon: UsersRoundIcon, roles: ROLE_GROUPS.MANAGEMENT },
   { title: "Usuarios", url: ROUTES.SETTINGS_USERS, icon: UserCogIcon, roles: ROLE_GROUPS.MANAGEMENT },
 ]
 

@@ -1,3 +1,4 @@
+import type { Currency } from "@/common/lib/constants/currency.constants"
 import type { Enums } from "@/common/lib/db/database.types"
 
 export type CategoryType = Enums<"category_type">
@@ -18,6 +19,9 @@ export type AnalyticsKpis = {
   profit: number
   // Salen de la utilidad: reinversión y reparto.
   profitUses: number
+  // Desglose de los usos: reinversión (gastada) y reparto.
+  reinvestment: number
+  distributions: number
   contributions: number
   // profit / income; null sin ingresos.
   margin: number | null
@@ -50,4 +54,52 @@ export type AnalyticsData = {
   monthly: MonthPoint[]
   outflowsByCategory: CategoryAmount[]
   personFlows: PersonFlows[]
+}
+
+export type DashboardRange = { from: string; to: string }
+
+export type CashFlowRow = {
+  accountId: string
+  name: string
+  currency: Currency
+  isActive: boolean
+  opening: number
+  inflows: number
+  outflows: number
+  closing: number
+  inflowsUsdt: number
+  outflowsUsdt: number
+}
+
+export type ProductSalesMargin = {
+  productId: string
+  productName: string
+  units: number
+  revenueUsd: number
+  revenueUsdt: number
+  materialCostUsdt: number
+  laborCostUsdt: number
+  marginUsdt: number
+  linesWithoutCost: number
+}
+
+export type RateEffectRow = {
+  source: "sale" | "purchase"
+  methodName: string
+  paymentsCount: number
+  nominalUsdt: number
+  realUsdt: number
+  differenceUsdt: number
+}
+
+export type ProfitPolicy = {
+  reserveAccountId: string | null
+  reservePercent: number
+  reinvestmentPercent: number
+}
+
+export type ReserveActivity = {
+  accountName: string
+  transferredUsdt: number
+  balanceUsdt: number
 }

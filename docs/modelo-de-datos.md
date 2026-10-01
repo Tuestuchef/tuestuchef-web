@@ -304,6 +304,30 @@ Migración: `20261006000000_costs.sql`. Pruebas: `src/common/lib/db/tests/costs.
 - **Mano de obra** (`products.labor_cost_usdt`, por unidad): solo para el margen. Nunca entra al costo del inventario ni se resta de la utilidad real (los sueldos ya se restan ahí).
 - **Margen** (`product_margins()`, owner y admin): por variante y método de pago, precio en valor real con las tasas vigentes (Bs: `precio × BCV ÷ Binance`) menos materiales (promedio, o estimado con la receta si aún no hay promedio) y mano de obra. Si la receta no se puede resolver completa, el margen queda vacío en vez de subestimar el costo.
 
+## 8. Equipo y sueldos (Fase 2)
+
+Migración: `20261007000000_team.sql`. Pruebas: `src/common/lib/db/tests/team.test.ts`. Todo es de owner y admin (RLS).
+
+- **`team_members`**: quienes cobran, tengan o no cuenta: nombre, puesto, teléfono, notas, activo y `profile_id` opcional (único). Al aplicar la migración, cada usuario existente se convierte en persona del equipo vinculada a su cuenta. No se borran.
+- **`salary_agreements`** (inmutable, versionado): monto, moneda (VES, USD o USDT), frecuencia (semanal, quincenal, mensual) y `effective_from`. Un cambio es una fila nueva; vigente = el último con fecha de hoy o anterior (vista `current_salary_agreements`).
+- **`payroll_entries`** (inmutable): `payment` o `advance`, con su entrada en el libro (gasto, categoría de tipo `salary`, `team_member_id`), moneda, monto, `usd_amount` (Bs con la tasa BCV de la fecha; USDT ÷ `usd_usdt`) y período.
+- **`payroll_advance_settlements`**: qué adelantos descontó cada pago. Un adelanto se descuenta una sola vez. Vista `pending_salary_advances`: adelantos sin descontar ni revertidos.
+- **Funciones**: `register_salary_advance` y `register_salary_payment` (este descuenta los adelantos pendientes, todos o los elegidos). El libro aplica fecha, tasas de esa fecha y límites como siempre.
+- **Libro**: `ledger_entries.team_member_id` es la persona de sueldos, retiros, aportes y repartos. `person_id` (usuario) se sigue aceptando: si la persona tiene cuenta, ambos se completan solos. Staff no registra movimientos con persona.
+- **Retiros del dueño**: siguen siendo `withdrawal`, ahora eligiendo a la persona del equipo en el formulario de movimientos.
+- **Analítica**: el nombre de la persona sale del equipo, tenga o no cuenta.
+
+## 9. Dashboard (Fase 2)
+
+Migración: `20261008000000_dashboard.sql`. Pruebas: `src/common/lib/db/tests/dashboard.test.ts`. Solo owner y admin: todas las funciones devuelven 0 filas a staff. Pantalla: Finanzas → Dashboard (`/analitica`), con período y pestañas en la URL.
+
+- **Utilidad real**: desde el libro (`analytics_ledger_summary`), igual que antes.
+- **`profit_policy`** (una fila): cuenta de reserva (debe ser USDT), `reserve_percent` y `reinvestment_percent` (juntos ≤ 100%).
+  - Asignaciones = utilidad del período (si es positiva) × %. Se comparan con lo real: lo transferido a la cuenta de reserva en el período (`reserve_activity`, traspasos que entraron; uno anulado resta) y lo gastado con categoría reinversión. Nunca se restan antes de la utilidad.
+- **`cash_flow_by_account(desde, hasta)`**: por cuenta, saldo al inicio, entradas, salidas y saldo al final, en su moneda y en USDT. Incluye traspasos.
+- **`product_sales_margin(desde, hasta)`**: por producto vendido (sin ventas anuladas): unidades, ingreso en USD (con el descuento repartido por línea, sin delivery), ingreso real (× BCV ÷ Binance si la lista de precios cobra en Bs; × usd_usdt si no), costo de materiales (el copiado al vender o el de su producción si es encargo), mano de obra y margen. Avisa las líneas sin costo.
+- **`exchange_rate_effect(desde, hasta)`**: ventas cobradas en Bs (real − nominal, normalmente pérdida) y pagos a proveedores en Bs (nominal − real, normalmente ganancia), donde nominal = USD cubiertos × usd_usdt y real = `usdt_value`.
+
 ## Relaciones
 
 ```
@@ -379,3 +403,5 @@ no cuenta:           capital_contribution, traspasos
 | 2026-10-04 | Registros con fecha pasada: sin fechas futuras, staff hasta N días (7), tasas siempre de esa fecha (bloquea si faltan), owner y admin cargan tasas pasadas, ventas y pagos marcados como retroactivos |
 | 2026-10-05 | Fase 2 · compras: líneas de inventario y de concepto con su categoría; pagos en Bs con tasa BCV o paralela de la fecha, valor real siempre con Binance; staff solo de contado; por pagar y por cobrar como vistas |
 | 2026-10-06 | Fase 2 · costos: promedio ponderado (arranca del costo actual), receta con material específico o del color de la prenda y cantidad por talla, producción y encargos consumen la receta, mano de obra solo para margen |
+| 2026-10-07 | Fase 2 · equipo: team_members con cuenta opcional; sueldos versionados; pagos y adelantos al libro como sueldo; adelantos se descuentan del siguiente pago; solo owner y admin |
+| 2026-10-08 | Fase 2 · dashboard: utilidad real con asignaciones (política vs. real), flujo de caja por cuenta, margen por producto vendido y efecto de la tasa; solo owner y admin |

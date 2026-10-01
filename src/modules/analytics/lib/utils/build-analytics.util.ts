@@ -85,6 +85,8 @@ export function buildAnalytics(rows: SummaryRow[], period: string[], trend: stri
       expenses: round2(expenses),
       profit: round2(profit),
       profitUses: round2(-sumOf(inPeriod, PROFIT_USE_TYPES)),
+      reinvestment: round2(-sumOf(inPeriod, ["reinvestment"])),
+      distributions: round2(-sumOf(inPeriod, ["profit_distribution"])),
       contributions: round2(sumOf(inPeriod, CONTRIBUTION_TYPES)),
       margin: income > 0 ? profit / income : null,
     },

@@ -36,6 +36,7 @@ export async function listEntries(filters: MovementFilters): Promise<LedgerEntry
        account:accounts(name),
        category:movement_categories(name, type),
        person:profiles!ledger_entries_person_id_fkey(full_name),
+       member:team_members!ledger_entries_team_member_id_fkey(full_name),
        author:profiles!ledger_entries_created_by_fkey(full_name)`
     )
     .gte("occurred_at", from)
@@ -74,7 +75,7 @@ export async function listEntries(filters: MovementFilters): Promise<LedgerEntry
     hasReceipt: Boolean(row.receipt_path),
     accountName: row.account?.name ?? "—",
     category: row.category,
-    personName: row.person?.full_name ?? null,
+    personName: row.member?.full_name ?? row.person?.full_name ?? null,
     authorName: row.author?.full_name ?? null,
     transferId: row.transfer_id,
     reversesEntryId: row.reverses_entry_id,
@@ -94,7 +95,7 @@ export async function createEntry(input: LedgerEntryInput) {
       category_id: input.category_id,
       amount: input.direction === "expense" ? -input.amount : input.amount,
       description: input.description ?? null,
-      person_id: input.person_id ?? null,
+      team_member_id: input.team_member_id ?? null,
       receipt_path: input.receipt_path ?? null,
       ...(isBackdated ? { occurred_at: caracasNoonIso(input.date!) } : {}),
     })
@@ -123,17 +124,18 @@ export async function getLastUsedAccountId(userId: string): Promise<string | nul
   return data?.account_id ?? null
 }
 
-// Personas a las que se les puede asignar un sueldo, retiro, aporte o reparto.
+// Personas del equipo (con o sin cuenta) a las que se asigna un sueldo, retiro, aporte o reparto.
+// RLS: solo owner y admin las ven.
 export async function listPeople(): Promise<PersonOption[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, email")
+    .from("team_members")
+    .select("id, full_name")
     .eq("is_active", true)
     .order("full_name")
 
   if (error) throw error
-  return data.map((person) => ({ id: person.id, fullName: person.full_name || person.email || "Sin nombre" }))
+  return data.map((person) => ({ id: person.id, fullName: person.full_name }))
 }
 
 // URL prefirmada del comprobante. Si la persona no puede ver el movimiento, RLS no lo devuelve.

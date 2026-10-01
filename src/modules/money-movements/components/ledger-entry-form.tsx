@@ -129,7 +129,7 @@ const LedgerEntryForm = ({
       <input type="hidden" name="account_id" value={accountId} />
       <input type="hidden" name="category_id" value={categoryId ?? ""} />
       <input type="hidden" name="date" value={showDate ? date : ""} />
-      {needsPerson && <input type="hidden" name="person_id" value={personId} />}
+      {needsPerson && <input type="hidden" name="team_member_id" value={personId} />}
 
       {state.status === "error" && state.message && <StatusAlert tone="error" title={state.message} />}
 
@@ -225,7 +225,7 @@ const LedgerEntryForm = ({
         <FormField
           label="Persona"
           htmlFor="entry-person"
-          error={errors.person_id}
+          error={errors.team_member_id}
           hint="Quién recibe el dinero (o quién lo aporta)."
         >
           <Select value={personId} onValueChange={setPersonId}>

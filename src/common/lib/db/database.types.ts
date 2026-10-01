@@ -184,6 +184,7 @@ export type Database = {
       }
       ledger_entries: {
         Row: {
+          team_member_id: string | null
           account_id: string
           amount: number
           bcv_usd_rate: number
@@ -204,6 +205,7 @@ export type Database = {
           usdt_value: number
         }
         Insert: {
+          team_member_id?: string | null
           account_id: string
           amount: number
           bcv_usd_rate?: number
@@ -224,6 +226,7 @@ export type Database = {
           usdt_value?: number
         }
         Update: {
+          team_member_id?: string | null
           account_id?: string
           amount?: number
           bcv_usd_rate?: number
@@ -244,6 +247,13 @@ export type Database = {
           usdt_value?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "ledger_entries_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ledger_entries_account_id_fkey"
             columns: ["account_id"]
@@ -1849,8 +1859,292 @@ export type Database = {
           },
         ]
       }
+      team_members: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          full_name: string
+          id: string
+          is_active: boolean
+          job_title: string | null
+          notes: string | null
+          phone: string | null
+          profile_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          full_name: string
+          id?: string
+          is_active?: boolean
+          job_title?: string | null
+          notes?: string | null
+          phone?: string | null
+          profile_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          job_title?: string | null
+          notes?: string | null
+          phone?: string | null
+          profile_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salary_agreements: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          currency: Database["public"]["Enums"]["currency"]
+          effective_from: string
+          frequency: Database["public"]["Enums"]["salary_frequency"]
+          id: string
+          notes: string | null
+          team_member_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string
+          currency: Database["public"]["Enums"]["currency"]
+          effective_from: string
+          frequency: Database["public"]["Enums"]["salary_frequency"]
+          id?: string
+          notes?: string | null
+          team_member_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          currency?: Database["public"]["Enums"]["currency"]
+          effective_from?: string
+          frequency?: Database["public"]["Enums"]["salary_frequency"]
+          id?: string
+          notes?: string | null
+          team_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salary_agreements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salary_agreements_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          currency: Database["public"]["Enums"]["currency"]
+          id: string
+          kind: Database["public"]["Enums"]["payroll_entry_kind"]
+          ledger_entry_id: string
+          occurred_at: string
+          period_label: string | null
+          team_member_id: string
+          usd_amount: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string
+          currency: Database["public"]["Enums"]["currency"]
+          id?: string
+          kind: Database["public"]["Enums"]["payroll_entry_kind"]
+          ledger_entry_id: string
+          occurred_at: string
+          period_label?: string | null
+          team_member_id: string
+          usd_amount: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          currency?: Database["public"]["Enums"]["currency"]
+          id?: string
+          kind?: Database["public"]["Enums"]["payroll_entry_kind"]
+          ledger_entry_id?: string
+          occurred_at?: string
+          period_label?: string | null
+          team_member_id?: string
+          usd_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_entries_ledger_entry_id_fkey"
+            columns: ["ledger_entry_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_entries_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_advance_settlements: {
+        Row: {
+          advance_entry_id: string
+          created_at: string
+          payment_entry_id: string
+        }
+        Insert: {
+          advance_entry_id: string
+          created_at?: string
+          payment_entry_id: string
+        }
+        Update: {
+          advance_entry_id?: string
+          created_at?: string
+          payment_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_advance_settlements_advance_entry_id_fkey"
+            columns: ["advance_entry_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_advance_settlements_payment_entry_id_fkey"
+            columns: ["payment_entry_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profit_policy: {
+        Row: {
+          id: boolean
+          reinvestment_percent: number
+          reserve_account_id: string | null
+          reserve_percent: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: boolean
+          reinvestment_percent?: number
+          reserve_account_id?: string | null
+          reserve_percent?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: boolean
+          reinvestment_percent?: number
+          reserve_account_id?: string | null
+          reserve_percent?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profit_policy_reserve_account_id_fkey"
+            columns: ["reserve_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_policy_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
+      current_salary_agreements: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          created_by: string | null
+          currency: Database["public"]["Enums"]["currency"] | null
+          effective_from: string | null
+          frequency: Database["public"]["Enums"]["salary_frequency"] | null
+          id: string | null
+          notes: string | null
+          team_member_id: string | null
+        }
+        Relationships: []
+      }
+      pending_salary_advances: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          created_by: string | null
+          currency: Database["public"]["Enums"]["currency"] | null
+          id: string | null
+          kind: Database["public"]["Enums"]["payroll_entry_kind"] | null
+          ledger_entry_id: string | null
+          occurred_at: string | null
+          period_label: string | null
+          team_member_id: string | null
+          usd_amount: number | null
+        }
+        Relationships: []
+      }
       purchases_summary: {
         Row: {
           balance_usd: number | null
@@ -1973,6 +2267,74 @@ export type Database = {
       }
     }
     Functions: {
+      cash_flow_by_account: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          account_id: string
+          closing: number
+          currency: Database["public"]["Enums"]["currency"]
+          inflows: number
+          inflows_usdt: number
+          is_active: boolean
+          name: string
+          opening: number
+          outflows: number
+          outflows_usdt: number
+        }[]
+      }
+      exchange_rate_effect: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          difference_usdt: number
+          method_name: string
+          nominal_usdt: number
+          payments_count: number
+          real_usdt: number
+          source: string
+        }[]
+      }
+      product_sales_margin: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          labor_cost_usdt: number
+          lines_without_cost: number
+          margin_usdt: number
+          material_cost_usdt: number
+          product_id: string
+          product_name: string
+          revenue_usd: number
+          revenue_usdt: number
+          units: number
+        }[]
+      }
+      reserve_activity: {
+        Args: { p_from: string; p_to: string }
+        Returns: { account_id: string; account_name: string; balance_usdt: number; transferred_usdt: number }[]
+      }
+      register_salary_advance: {
+        Args: {
+          p_account_id: string
+          p_amount: number
+          p_note?: string
+          p_occurred_at?: string
+          p_receipt_path?: string
+          p_team_member_id: string
+        }
+        Returns: string
+      }
+      register_salary_payment: {
+        Args: {
+          p_account_id: string
+          p_amount: number
+          p_note?: string
+          p_occurred_at?: string
+          p_period_label?: string
+          p_receipt_path?: string
+          p_settle_advance_ids?: string[]
+          p_team_member_id: string
+        }
+        Returns: string
+      }
       product_margins: {
         Args: never
         Returns: {
@@ -2209,6 +2571,8 @@ export type Database = {
         | "purchase_payment"
       supplier_rate_kind: "bcv_usd" | "parallel" | "none"
       purchase_line_type: "inventory" | "concept"
+      salary_frequency: "weekly" | "biweekly" | "monthly"
+      payroll_entry_kind: "payment" | "advance"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2282,6 +2646,8 @@ export const Constants = {
       ],
       supplier_rate_kind: ["bcv_usd", "parallel", "none"],
       purchase_line_type: ["inventory", "concept"],
+      salary_frequency: ["weekly", "biweekly", "monthly"],
+      payroll_entry_kind: ["payment", "advance"],
     },
   },
 } as const
