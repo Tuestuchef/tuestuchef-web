@@ -101,5 +101,12 @@ export async function getRatesForDateAction(date: string): Promise<SaleRatesForD
   if (!auth.ok) return null
   if (!z.iso.date().safeParse(date).success) return null
   const rate = await getRatesForDate(date)
-  return rate ? { bcvUsd: Number(rate.bcv_usd), bcvEur: Number(rate.bcv_eur), usdUsdt: Number(rate.usd_usdt) } : null
+  return rate
+    ? {
+        bcvUsd: Number(rate.bcv_usd),
+        bcvEur: Number(rate.bcv_eur),
+        binance: Number(rate.binance_usdt),
+        usdUsdt: Number(rate.usd_usdt),
+      }
+    : null
 }

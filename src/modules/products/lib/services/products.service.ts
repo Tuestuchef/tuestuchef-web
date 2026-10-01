@@ -2,11 +2,14 @@ import "server-only"
 
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 
+import type { ProductKind } from "../constants/products.constants"
 import type { ProductInput } from "../schemas/products.schema"
 import type { ProductDetail, ProductListItem, VariantWithStock } from "../types/products.types"
 import { listProductImages, resolveImageUrl } from "./product-images.service"
 
-export async function listProducts(filters: { search?: string; categoryId?: string } = {}): Promise<ProductListItem[]> {
+export async function listProducts(
+  filters: { search?: string; categoryId?: string; kind?: ProductKind } = {}
+): Promise<ProductListItem[]> {
   const supabase = await createSupabaseServerClient()
   let query = supabase
     .from("products")
@@ -17,6 +20,7 @@ export async function listProducts(filters: { search?: string; categoryId?: stri
        prices:product_prices(amount_usd),
        images:product_images(path, is_primary)`,
     )
+    .eq("kind", filters.kind ?? "finished_good")
     .order("is_active", { ascending: false })
     .order("name")
   if (filters.search) query = query.ilike("name", `%${filters.search}%`)
@@ -123,8 +127,10 @@ export async function saveProduct(input: ProductInput) {
     gender: input.gender,
     closure: input.closure,
     fit: input.fit,
+    labor_cost_usdt: input.labor_cost_usdt,
     is_active: input.is_active,
   }
   if (input.id) return supabase.from("products").update(values).eq("id", input.id).select("id").single()
-  return supabase.from("products").insert(values).select("id").single()
+  // El tipo (terminado o materia prima) solo se fija al crear.
+  return supabase.from("products").insert({ ...values, kind: input.kind }).select("id").single()
 }

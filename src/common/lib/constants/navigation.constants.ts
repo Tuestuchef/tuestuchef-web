@@ -3,6 +3,7 @@ import {
   type LucideIcon,
   PackageIcon,
   ShoppingBagIcon,
+  TruckIcon,
   UserCogIcon,
   WalletIcon,
 } from "lucide-react"
@@ -40,6 +41,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
       { title: "Ventas", url: ROUTES.SALES, roles: ROLE_GROUPS.ALL },
       { title: "Nueva venta", url: ROUTES.NEW_SALE, roles: ROLE_GROUPS.ALL },
       { title: "Clientes", url: ROUTES.CUSTOMERS, roles: ROLE_GROUPS.ALL },
+      { title: "Por cobrar", url: ROUTES.RECEIVABLES, roles: ROLE_GROUPS.MANAGEMENT },
       { title: "Reglas de venta", url: ROUTES.SETTINGS_SALES, roles: ROLE_GROUPS.MANAGEMENT },
     ],
   },
@@ -54,6 +56,19 @@ export const NAV_ITEMS: readonly NavItem[] = [
       { title: "Categorías", url: ROUTES.SETTINGS_PRODUCT_CATEGORIES, roles: ROLE_GROUPS.MANAGEMENT },
       { title: "Tallas", url: ROUTES.SETTINGS_SIZES, roles: ROLE_GROUPS.MANAGEMENT },
       { title: "Colores", url: ROUTES.SETTINGS_COLORS, roles: ROLE_GROUPS.MANAGEMENT },
+    ],
+  },
+  {
+    title: "Compras",
+    url: ROUTES.PURCHASES,
+    icon: TruckIcon,
+    roles: ROLE_GROUPS.ALL,
+    children: [
+      { title: "Compras", url: ROUTES.PURCHASES, roles: ROLE_GROUPS.ALL },
+      { title: "Nueva compra", url: ROUTES.NEW_PURCHASE, roles: ROLE_GROUPS.ALL },
+      { title: "Proveedores", url: ROUTES.SUPPLIERS, roles: ROLE_GROUPS.ALL },
+      { title: "Por pagar", url: ROUTES.PAYABLES, roles: ROLE_GROUPS.MANAGEMENT },
+      { title: "Materia prima", url: ROUTES.RAW_MATERIALS, roles: ROLE_GROUPS.ALL },
     ],
   },
   {

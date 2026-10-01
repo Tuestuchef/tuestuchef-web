@@ -148,11 +148,13 @@ describe("stock", () => {
     expect(await balance("FIL-D-BR-VIN-M")).toBe(10)
   })
 
-  it("staff registra compras y producción (con costo)", async () => {
-    await expect(move(staff, "FIL-D-BR-VIN-M", "purchase", 5)).rejects.toThrow(/costo unitario/)
-    await move(staff, "FIL-D-BR-VIN-M", "purchase", 5, { cost: 12.5 })
-    await move(staff, "FIL-D-BR-VIN-M", "production", 3, { cost: 9 })
-    expect(await balance("FIL-D-BR-VIN-M")).toBe(18)
+  it("staff registra producción (con costo); las compras solo desde el módulo de compras", async () => {
+    await expect(move(staff, "FIL-D-BR-VIN-M", "purchase", 5, { cost: 12.5 })).rejects.toThrow(/módulo de compras/)
+    // Producción: solo con register_production. Sin receta exige el costo unitario.
+    await expect(move(staff, "FIL-D-BR-VIN-M", "production", 3, { cost: 9 })).rejects.toThrow(/Stock → Producción/)
+    await expect(staff("select public.register_production($1, 3)", [ids["FIL-D-BR-VIN-M"]])).rejects.toThrow(/no tiene receta/)
+    await staff("select public.register_production($1, 3, 9)", [ids["FIL-D-BR-VIN-M"]])
+    expect(await balance("FIL-D-BR-VIN-M")).toBe(13)
     const { rows } = await owner<{ unit_cost_usdt: string }>(
       `select unit_cost_usdt from public.product_variants where id = '${ids["FIL-D-BR-VIN-M"]}'`
     )
@@ -166,17 +168,18 @@ describe("stock", () => {
   it("ajuste de owner o admin con motivo obligatorio", async () => {
     await expect(move(owner, "FIL-D-BR-VIN-M", "adjustment", -2)).rejects.toThrow(/motivo/)
     await move(owner, "FIL-D-BR-VIN-M", "adjustment", -2, { note: "Conteo físico" })
-    expect(await balance("FIL-D-BR-VIN-M")).toBe(16)
+    expect(await balance("FIL-D-BR-VIN-M")).toBe(11)
   })
 
   it("stock negativo bloqueado", async () => {
-    await expect(move(owner, "FIL-D-BR-VIN-M", "adjustment", -17, { note: "x" })).rejects.toThrow(/Stock insuficiente/)
+    await expect(move(owner, "FIL-D-BR-VIN-M", "adjustment", -12, { note: "x" })).rejects.toThrow(/Stock insuficiente/)
     await expect(move(owner, "FIL-D-BR-NEG-S", "adjustment", -1, { note: "x" })).rejects.toThrow(/Stock insuficiente/)
-    expect(await balance("FIL-D-BR-VIN-M")).toBe(16)
+    expect(await balance("FIL-D-BR-VIN-M")).toBe(11)
   })
 
   it("signos y ventas reservadas al módulo de ventas", async () => {
-    await expect(move(owner, "FIL-D-BR-VIN-M", "purchase", -1, { cost: 1 })).rejects.toThrow(/Cantidad inválida/)
+    await expect(move(owner, "FIL-D-BR-VIN-M", "initial_count", -1, { cost: 1 })).rejects.toThrow(/Cantidad inválida|ya tiene movimientos/)
+    await expect(move(owner, "FIL-D-BR-VIN-M", "purchase", 1, { cost: 1 })).rejects.toThrow(/módulo de compras/)
     await expect(move(owner, "FIL-D-BR-VIN-M", "sale", -1)).rejects.toThrow(/módulo de ventas/)
   })
 

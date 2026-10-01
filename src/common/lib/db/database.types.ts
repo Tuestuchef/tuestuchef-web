@@ -591,6 +591,7 @@ export type Database = {
       }
       products: {
         Row: {
+          labor_cost_usdt: number
           category_id: string
           closure: Database["public"]["Enums"]["product_closure"] | null
           created_at: string
@@ -608,6 +609,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          labor_cost_usdt?: number
           category_id: string
           closure?: Database["public"]["Enums"]["product_closure"] | null
           created_at?: string
@@ -625,6 +627,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          labor_cost_usdt?: number
           category_id?: string
           closure?: Database["public"]["Enums"]["product_closure"] | null
           created_at?: string
@@ -822,6 +825,8 @@ export type Database = {
       }
       stock_movements: {
         Row: {
+          production_run_id: string | null
+          purchase_item_id: string | null
           created_at: string
           created_by: string
           id: string
@@ -834,6 +839,8 @@ export type Database = {
           variant_id: string
         }
         Insert: {
+          production_run_id?: string | null
+          purchase_item_id?: string | null
           created_at?: string
           created_by?: string
           id?: string
@@ -846,6 +853,8 @@ export type Database = {
           variant_id: string
         }
         Update: {
+          production_run_id?: string | null
+          purchase_item_id?: string | null
           created_at?: string
           created_by?: string
           id?: string
@@ -858,6 +867,13 @@ export type Database = {
           variant_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "stock_movements_purchase_item_id_fkey"
+            columns: ["purchase_item_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_movements_variant_id_fkey"
             columns: ["variant_id"]
@@ -1326,8 +1342,559 @@ export type Database = {
           },
         ]
       }
+      suppliers: {
+        Row: {
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          rif: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          rif?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          rif?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suppliers_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchases: {
+        Row: {
+          bcv_eur_rate: number
+          bcv_usd_rate: number
+          binance_rate: number
+          created_at: string
+          created_by: string
+          due_date: string | null
+          id: string
+          is_backdated: boolean
+          notes: string | null
+          number: number
+          occurred_at: string
+          receipt_path: string | null
+          supplier_id: string
+          total_usd: number
+          usd_usdt_rate: number
+        }
+        Insert: {
+          bcv_eur_rate: number
+          bcv_usd_rate: number
+          binance_rate: number
+          created_at?: string
+          created_by?: string
+          due_date?: string | null
+          id?: string
+          is_backdated?: boolean
+          notes?: string | null
+          number?: number
+          occurred_at?: string
+          receipt_path?: string | null
+          supplier_id: string
+          total_usd: number
+          usd_usdt_rate: number
+        }
+        Update: {
+          bcv_eur_rate?: number
+          bcv_usd_rate?: number
+          binance_rate?: number
+          created_at?: string
+          created_by?: string
+          due_date?: string | null
+          id?: string
+          is_backdated?: boolean
+          notes?: string | null
+          number?: number
+          occurred_at?: string
+          receipt_path?: string | null
+          supplier_id?: string
+          total_usd?: number
+          usd_usdt_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_items: {
+        Row: {
+          category_id: string
+          created_at: string
+          description: string | null
+          id: string
+          line_total_usd: number
+          line_type: Database["public"]["Enums"]["purchase_line_type"]
+          purchase_id: string
+          quantity: number
+          unit_cost_usd: number
+          unit_cost_usdt: number | null
+          variant_id: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          line_total_usd: number
+          line_type: Database["public"]["Enums"]["purchase_line_type"]
+          purchase_id: string
+          quantity: number
+          unit_cost_usd: number
+          unit_cost_usdt?: number | null
+          variant_id?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          line_total_usd?: number
+          line_type?: Database["public"]["Enums"]["purchase_line_type"]
+          purchase_id?: string
+          quantity?: number
+          unit_cost_usd?: number
+          unit_cost_usdt?: number | null
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "movement_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_items_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_payments: {
+        Row: {
+          account_id: string
+          amount: number
+          applied_rate: number | null
+          bcv_eur_rate: number
+          bcv_usd_rate: number
+          binance_rate: number
+          created_at: string
+          created_by: string
+          currency: Database["public"]["Enums"]["currency"]
+          id: string
+          is_backdated: boolean
+          occurred_at: string
+          purchase_id: string
+          rate_kind: Database["public"]["Enums"]["supplier_rate_kind"]
+          receipt_path: string | null
+          usd_amount: number
+          usd_usdt_rate: number
+          usdt_value: number
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          applied_rate?: number | null
+          bcv_eur_rate: number
+          bcv_usd_rate: number
+          binance_rate: number
+          created_at?: string
+          created_by?: string
+          currency: Database["public"]["Enums"]["currency"]
+          id?: string
+          is_backdated?: boolean
+          occurred_at: string
+          purchase_id: string
+          rate_kind: Database["public"]["Enums"]["supplier_rate_kind"]
+          receipt_path?: string | null
+          usd_amount: number
+          usd_usdt_rate: number
+          usdt_value: number
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          applied_rate?: number | null
+          bcv_eur_rate?: number
+          bcv_usd_rate?: number
+          binance_rate?: number
+          created_at?: string
+          created_by?: string
+          currency?: Database["public"]["Enums"]["currency"]
+          id?: string
+          is_backdated?: boolean
+          occurred_at?: string
+          purchase_id?: string
+          rate_kind?: Database["public"]["Enums"]["supplier_rate_kind"]
+          receipt_path?: string | null
+          usd_amount?: number
+          usd_usdt_rate?: number
+          usdt_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_payments_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_payment_entries: {
+        Row: {
+          category_id: string
+          ledger_entry_id: string
+          purchase_id: string
+          purchase_payment_id: string
+        }
+        Insert: {
+          category_id: string
+          ledger_entry_id: string
+          purchase_id: string
+          purchase_payment_id: string
+        }
+        Update: {
+          category_id?: string
+          ledger_entry_id?: string
+          purchase_id?: string
+          purchase_payment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_payment_entries_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "movement_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_payment_entries_ledger_entry_id_fkey"
+            columns: ["ledger_entry_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_payment_entries_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_payment_entries_purchase_payment_id_fkey"
+            columns: ["purchase_payment_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_voids: {
+        Row: {
+          created_at: string
+          created_by: string
+          purchase_id: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          purchase_id: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          purchase_id?: string
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_voids_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_voids_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_recipe_lines: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string
+          quantity: number
+          raw_product_id: string | null
+          raw_variant_id: string | null
+          size_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id: string
+          quantity: number
+          raw_product_id?: string | null
+          raw_variant_id?: string | null
+          size_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string
+          quantity?: number
+          raw_product_id?: string | null
+          raw_variant_id?: string | null
+          size_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_recipe_lines_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_recipe_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_recipe_lines_raw_product_id_fkey"
+            columns: ["raw_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_recipe_lines_raw_variant_id_fkey"
+            columns: ["raw_variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_recipe_lines_size_id_fkey"
+            columns: ["size_id"]
+            isOneToOne: false
+            referencedRelation: "sizes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_recipe_lines_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_runs: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_backdated: boolean
+          note: string | null
+          occurred_at: string
+          quantity: number
+          sale_item_id: string | null
+          unit_cost_usdt: number
+          variant_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_backdated?: boolean
+          note?: string | null
+          occurred_at?: string
+          quantity: number
+          sale_item_id?: string | null
+          unit_cost_usdt: number
+          variant_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_backdated?: boolean
+          note?: string | null
+          occurred_at?: string
+          quantity?: number
+          sale_item_id?: string | null
+          unit_cost_usdt?: number
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_runs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_runs_sale_item_id_fkey"
+            columns: ["sale_item_id"]
+            isOneToOne: false
+            referencedRelation: "sale_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_runs_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
+      purchases_summary: {
+        Row: {
+          balance_usd: number | null
+          due_date: string | null
+          is_voided: boolean | null
+          number: number | null
+          occurred_at: string | null
+          paid_usd: number | null
+          paid_usdt: number | null
+          payment_status: string | null
+          purchase_id: string | null
+          supplier_id: string | null
+          total_usd: number | null
+        }
+        Relationships: []
+      }
+      payables: {
+        Row: {
+          balance_usd: number | null
+          days_overdue: number | null
+          due_date: string | null
+          number: number | null
+          occurred_at: string | null
+          purchase_id: string | null
+          supplier_id: string | null
+          supplier_name: string | null
+          total_usd: number | null
+        }
+        Relationships: []
+      }
+      receivables: {
+        Row: {
+          balance_usd: number | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          days_outstanding: number | null
+          number: number | null
+          occurred_at: string | null
+          sale_id: string | null
+          total_usd: number | null
+        }
+        Relationships: []
+      }
       sales_summary: {
         Row: {
           balance_usd: number | null
@@ -1406,6 +1973,62 @@ export type Database = {
       }
     }
     Functions: {
+      product_margins: {
+        Args: never
+        Returns: {
+          cost_source: string | null
+          labor_cost_usdt: number
+          margin_percent: number | null
+          margin_usdt: number | null
+          material_cost_usdt: number | null
+          method_name: string
+          payment_method_id: string
+          price_usd: number
+          price_usdt: number
+          product_id: string
+          product_name: string
+          sku: string
+          variant_id: string
+        }[]
+      }
+      recipe_requirements: {
+        Args: { p_quantity: number; p_strict?: boolean; p_variant_id: string }
+        Returns: { quantity: number; raw_variant_id: string | null; unit_cost_usdt: number | null }[]
+      }
+      register_production: {
+        Args: {
+          p_note?: string
+          p_occurred_at?: string
+          p_quantity: number
+          p_unit_cost_usdt?: number
+          p_variant_id: string
+        }
+        Returns: string
+      }
+      add_purchase_payment: {
+        Args: {
+          p_account_id: string
+          p_amount: number
+          p_occurred_at?: string
+          p_purchase_id: string
+          p_rate_kind?: Database["public"]["Enums"]["supplier_rate_kind"]
+          p_receipt_path?: string
+        }
+        Returns: string
+      }
+      create_purchase: {
+        Args: {
+          p_due_date?: string
+          p_items: Json
+          p_notes?: string
+          p_occurred_at?: string
+          p_payments?: Json
+          p_receipt_path?: string
+          p_supplier_id: string
+        }
+        Returns: string
+      }
+      void_purchase: { Args: { p_purchase_id: string; p_reason: string }; Returns: undefined }
       exchange_rate_for_date: {
         Args: { p_date: string }
         Returns: Database["public"]["Tables"]["exchange_rates"]["Row"]
@@ -1574,6 +2197,8 @@ export type Database = {
         | "adjustment"
         | "sale"
         | "sale_reversal"
+        | "purchase_reversal"
+        | "consumption"
       ledger_entry_type:
         | "income"
         | "expense"
@@ -1581,6 +2206,9 @@ export type Database = {
         | "transfer_out"
         | "transfer_in"
         | "exchange_fee"
+        | "purchase_payment"
+      supplier_rate_kind: "bcv_usd" | "parallel" | "none"
+      purchase_line_type: "inventory" | "concept"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1633,7 +2261,16 @@ export const Constants = {
       product_gender: ["women", "men", "unisex"],
       product_kind: ["finished_good", "raw_material"],
       product_unit: ["unit", "meter", "kg"],
-      stock_movement_type: ["initial_count", "purchase", "production", "adjustment", "sale", "sale_reversal"],
+      stock_movement_type: [
+        "initial_count",
+        "purchase",
+        "production",
+        "adjustment",
+        "sale",
+        "sale_reversal",
+        "purchase_reversal",
+        "consumption",
+      ],
       ledger_entry_type: [
         "income",
         "expense",
@@ -1641,7 +2278,10 @@ export const Constants = {
         "transfer_out",
         "transfer_in",
         "exchange_fee",
+        "purchase_payment",
       ],
+      supplier_rate_kind: ["bcv_usd", "parallel", "none"],
+      purchase_line_type: ["inventory", "concept"],
     },
   },
 } as const

@@ -10,11 +10,14 @@ import { isRoleIn, ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { isStorageEnabled } from "@/common/lib/services/storage.service"
 import type { SessionUser } from "@/common/lib/types/session.types"
+import { formatUsdt } from "@/common/lib/utils/format-money.util"
 import { listPaymentMethods } from "@/modules/treasury/lib/services/payment-methods.service"
 
 import PriceGrid from "../components/price-grid"
 import ProductFormDialog from "../components/product-form-dialog"
+import MarginTable from "../components/margin-table"
 import ProductImageManager from "../components/product-image-manager"
+import RecipeEditor from "../components/recipe-editor"
 import StockMovementList from "../components/stock-movement-list"
 import VariantCombinationsDialog from "../components/variant-combinations-dialog"
 import VariantFormDialog from "../components/variant-form-dialog"
@@ -24,25 +27,32 @@ import {
   FIT_LABELS,
   FULFILLMENT_LABELS,
   GENDER_LABELS,
+  UNIT_LABELS,
 } from "../lib/constants/products.constants"
 import { listCatalog } from "../lib/services/catalog.service"
 import { getProductDetail } from "../lib/services/products.service"
+import { listMaterialOptions, listProductMargins, listRecipe } from "../lib/services/recipes.service"
 import { listStockMovements } from "../lib/services/stock.service"
 
 const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string }) => {
   const canManage = isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)
-  const [detail, categories, colors, sizes, methods, movements] = await Promise.all([
+  const [detail, categories, colors, sizes, methods, movements, recipe, materials, margins] = await Promise.all([
     getProductDetail(id),
     listCatalog("product_categories"),
     listCatalog("colors"),
     listCatalog("sizes"),
     listPaymentMethods(),
     listStockMovements({ productId: id, limit: 15 }),
+    listRecipe(id),
+    canManage ? listMaterialOptions() : Promise.resolve([]),
+    // Márgenes: solo owner y admin (la función devuelve 0 filas a staff).
+    canManage ? listProductMargins(id) : Promise.resolve([]),
   ])
   if (!detail) notFound()
 
   const { product, variants, prices, images } = detail
   const madeToOrder = product.fulfillment_type === "made_to_order"
+  const isRaw = product.kind === "raw_material"
   const attributes = [
     product.gender && GENDER_LABELS[product.gender],
     product.closure && CLOSURE_LABELS[product.closure],
@@ -54,9 +64,9 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
       <Button asChild variant="ghost" className="h-auto w-fit px-0 text-muted-foreground">
-        <Link href={ROUTES.PRODUCTS}>
+        <Link href={isRaw ? ROUTES.RAW_MATERIALS : ROUTES.PRODUCTS}>
           <ChevronLeftIcon aria-hidden />
-          Productos
+          {isRaw ? "Materia prima" : "Productos"}
         </Link>
       </Button>
       <PageHeader
@@ -67,7 +77,12 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
           <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <span>{product.categoryName}</span>
             {attributes.length > 0 && <span>· {attributes.join(" · ")}</span>}
-            <span>· {FULFILLMENT_LABELS[product.fulfillment_type]}</span>
+            <span>
+              ·{" "}
+              {isRaw
+                ? `Materia prima · por ${UNIT_LABELS[product.unit].toLowerCase()}`
+                : FULFILLMENT_LABELS[product.fulfillment_type]}
+            </span>
             {!product.is_active && <StatusBadge tone="info">Inactivo</StatusBadge>}
           </span>
         }
@@ -98,20 +113,55 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Precios</CardTitle>
-          <CardDescription>En USD de referencia. El monto en Bs se calcula al vender con la tasa BCV del día.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PriceGrid productId={product.id} methods={priceMethods} prices={prices} canManage={canManage} />
-        </CardContent>
-      </Card>
+      {!isRaw && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Precios</CardTitle>
+            <CardDescription>
+              En USD de referencia. El monto en Bs se calcula al vender con la tasa BCV del día.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PriceGrid productId={product.id} methods={priceMethods} prices={prices} canManage={canManage} />
+          </CardContent>
+        </Card>
+      )}
+
+      {!isRaw && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Receta</CardTitle>
+            <CardDescription>
+              Materia prima por prenda. Al producir se descuenta del inventario y define el costo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RecipeEditor productId={product.id} lines={recipe} materials={materials} sizes={sizes} canManage={canManage} />
+          </CardContent>
+        </Card>
+      )}
+
+      {!isRaw && canManage && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Margen</CardTitle>
+            <CardDescription>
+              Precio en valor real (con las tasas de hoy) menos materiales y mano de obra
+              {product.labor_cost_usdt > 0 ? ` (${formatUsdt(product.labor_cost_usdt)} por unidad)` : ""}.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MarginTable rows={margins} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
           <CardTitle>Fotos</CardTitle>
-          <CardDescription>La principal se muestra en la lista. Cada foto puede ir asociada a un color.</CardDescription>
+          <CardDescription>
+            La principal se muestra en la lista. Cada foto puede ir asociada a un color.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ProductImageManager

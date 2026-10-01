@@ -190,6 +190,22 @@ export const HELP_TOPICS = {
         ],
       },
       {
+        heading: "Receta",
+        items: [
+          "Qué materia prima lleva cada prenda: un material específico o \"del mismo color que la prenda\".",
+          "La cantidad puede variar por talla; sin talla, aplica a todas.",
+          "Al producir se descuenta del inventario y el costo de la prenda sale del costo promedio de los materiales.",
+        ],
+      },
+      {
+        heading: "Margen (owner y admin)",
+        items: [
+          "Precio de cada método convertido a valor real (USDT) con las tasas de hoy: en Bs se pierde la diferencia BCV–paralelo.",
+          "Costo = materiales (costo promedio, o estimado con la receta) + mano de obra por unidad.",
+          "La mano de obra solo se usa aquí: nunca se resta de la utilidad real, porque los sueldos ya se restan.",
+        ],
+      },
+      {
         heading: "Fotos",
         items: [
           "Sube varias, ordénalas y elige la principal (la que se ve en la lista).",
@@ -206,16 +222,16 @@ export const HELP_TOPICS = {
       {
         heading: "Tipos de movimiento",
         items: [
-          "Compra: mercancía comprada, con su costo unitario en USDT.",
-          "Producción: prendas fabricadas, con su costo unitario en USDT.",
-          "Ajuste: suma o resta con motivo, p. ej. conteo físico o prenda dañada (owner y admin).",
-          "Las ventas descuentan stock solas; no se registran aquí.",
+          "Producción: descuenta la materia prima de la receta y suma las prendas con su costo. Sin receta, se indica el costo a mano.",
+          "Ajuste: suma o resta con motivo, p. ej. conteo físico, merma o prenda dañada (owner y admin).",
+          "Las compras entran desde Compras, con su proveedor; las ventas descuentan stock solas.",
         ],
       },
       {
         heading: "Recuerda",
         items: [
-          "Los movimientos no se editan ni se borran. Un error se corrige con un ajuste.",
+          "Los movimientos no se editan ni se borran. Un error o la merma real se corrige con un ajuste.",
+          "El costo de cada variante es el promedio ponderado de todo lo que ha entrado.",
           "El stock nunca puede quedar negativo.",
         ],
       },
@@ -502,6 +518,160 @@ export const HELP_TOPICS = {
           "Todo está en USDT (valor real), no en Bs ni en dólares BCV.",
           "La reinversión y la reserva de caja salen de la utilidad; no se restan antes.",
         ],
+      },
+    ],
+  },
+  purchases: {
+    title: "Compras",
+    summary: "Lo que se le compra a los proveedores: materia prima, mercancía y servicios.",
+    sections: [
+      {
+        heading: "Qué puedes hacer",
+        items: [
+          "Filtrar por mes, proveedor y estado de pago.",
+          "Abrir una compra para ver sus líneas y pagos.",
+          "Staff ve solo las compras que registró.",
+        ],
+      },
+      {
+        heading: "Estados",
+        items: [
+          "Pagada: el total está cubierto.",
+          "Abono: se pagó una parte; queda saldo.",
+          "Por pagar: no se ha pagado nada (compra a crédito).",
+          "Vencida: pasó su fecha de vencimiento con saldo pendiente.",
+          "Anulada: se revirtieron los pagos y el inventario.",
+        ],
+      },
+    ],
+  },
+
+  newPurchase: {
+    title: "Nueva compra",
+    summary: "Registra lo que se compró, a quién y cómo se pagó.",
+    sections: [
+      {
+        heading: "Pasos",
+        items: [
+          "Elige el proveedor (o créalo con el botón +).",
+          "Agrega materia prima o mercancía: entra al inventario con su costo.",
+          "Agrega conceptos sin stock: alquiler, maquila, reparaciones, servicios.",
+          "Cada línea lleva su categoría (costo, gasto operativo, reinversión…): así se calcula bien la utilidad.",
+          "Indica cómo se pagó y toca Registrar compra.",
+        ],
+      },
+      {
+        heading: "Pagos en Bs",
+        items: [
+          "Elige la tasa del pago: BCV o paralela, siempre la registrada para esa fecha.",
+          "El valor real del pago siempre se calcula con la tasa paralela (Binance).",
+        ],
+      },
+      {
+        heading: "Crédito (owner y admin)",
+        items: [
+          "'A crédito' o 'Abono o mixto' dejan saldo pendiente con fecha de vencimiento.",
+          "Staff registra solo compras pagadas completas en el momento.",
+        ],
+      },
+      {
+        heading: "Costos",
+        items: [
+          "Los costos se escriben en dólares de referencia y entran al inventario en USDT con la tasa de esa fecha.",
+        ],
+      },
+    ],
+  },
+
+  suppliers: {
+    title: "Proveedores",
+    summary: "A quién le compramos y cuánto le debemos.",
+    sections: [
+      {
+        heading: "Qué puedes hacer",
+        items: [
+          "Crear un proveedor: solo el nombre es obligatorio.",
+          "Ver lo que le debemos a cada uno (owner y admin).",
+          "Abrir un proveedor para ver todas sus compras.",
+        ],
+      },
+      {
+        heading: "Recuerda",
+        items: ["Los proveedores no se borran: se desactivan (owner y admin)."],
+      },
+    ],
+  },
+
+  supplier: {
+    title: "Detalle de proveedor",
+    summary: "Datos de contacto y todas las compras a este proveedor.",
+    sections: [
+      {
+        heading: "Qué puedes hacer",
+        items: [
+          "Llamar o escribir por WhatsApp.",
+          "Ver lo comprado y lo que le debemos (owner y admin).",
+          "Editar o desactivar el proveedor (owner y admin).",
+        ],
+      },
+    ],
+  },
+
+  payables: {
+    title: "Por pagar",
+    summary: "Compras a crédito con saldo pendiente. Solo owner y admin.",
+    sections: [
+      {
+        heading: "Qué ves",
+        items: [
+          "Las vencidas primero, con los días de atraso.",
+          "El saldo en dólares de referencia de cada compra.",
+          "Abre una compra para registrar el pago.",
+        ],
+      },
+      {
+        heading: "Recuerda",
+        items: [
+          "El saldo vive en dólares: un pago en Bs se convierte con la tasa (BCV o paralela) del día en que se paga.",
+        ],
+      },
+    ],
+  },
+
+  receivables: {
+    title: "Por cobrar",
+    summary: "Ventas con saldo pendiente: quién nos debe, cuánto y desde cuándo. Solo owner y admin.",
+    sections: [
+      {
+        heading: "Qué ves",
+        items: [
+          "Cada cliente con el total que debe y su venta pendiente más antigua.",
+          "Las ventas rápidas sin cliente aparecen aparte.",
+          "Abre una venta para registrar el abono.",
+        ],
+      },
+      {
+        heading: "Recuerda",
+        items: ["Se calcula desde las ventas: no hay que registrar nada aparte."],
+      },
+    ],
+  },
+
+  rawMaterials: {
+    title: "Materia prima",
+    summary: "Telas, botones, cierres e insumos: lo que se usa para fabricar.",
+    sections: [
+      {
+        heading: "Qué puedes hacer",
+        items: [
+          "Ver existencias y costo de cada material.",
+          "Crear un material con su unidad (metro, kilo o unidad) y variantes por color (owner y admin).",
+          "Las compras de materia prima se registran en Nueva compra.",
+        ],
+      },
+      {
+        heading: "Recuerda",
+        items: ["La materia prima no se vende: no aparece al registrar ventas."],
       },
     ],
   },

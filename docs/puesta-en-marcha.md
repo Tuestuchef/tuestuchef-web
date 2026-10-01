@@ -48,7 +48,7 @@ El navegador sube el archivo directo a R2 con un `PUT` prefirmado, así que cada
 
 En `tuestuchef-public` la misma política, agregando `"GET"` a `AllowedMethods` (para las fotos de productos).
 
-Si usas previews de Vercel con su propio dominio, agrégalo también a `AllowedOrigins`.
+Staging tiene sus propios buckets con su propio CORS (sección 6.2).
 
 ### Variables
 
@@ -61,7 +61,7 @@ Si usas previews de Vercel con su propio dominio, agrégalo también a `AllowedO
 | `R2_PRIVATE_BUCKET` | `tuestuchef-private` |
 | `R2_PUBLIC_URL` | `https://media.tuestuchef.com` (sin barra final) |
 
-Local: en `.env.local` y reinicia `npm run dev`. Vercel: Project → Settings → Environment Variables (Production y Preview), luego redeploy.
+Local: en `.env.local` y reinicia `npm run dev`. Vercel: Project → Settings → Environment Variables, entorno **Production** (los valores de staging van en **Preview**, ver sección 6), luego redeploy.
 
 Comprobación: en **Nuevo movimiento**, el campo *Comprobante* deja de mostrar el aviso y permite adjuntar. Adjunta una foto, guarda, y en **Movimientos** el clip abre el archivo.
 
@@ -131,3 +131,110 @@ Otro owner no puede quitarle el 2FA desde el panel (todavía). Se hace en Supaba
 npm test        # todo
 npm run db:test # migraciones, RLS e inmutabilidad en Postgres (PGlite), sin Docker
 ```
+
+## 6. Staging
+
+Staging es una copia completa del sistema, con sus propios servicios, para probar cada cambio antes de producción. Nunca comparte datos ni archivos con producción.
+
+| Pieza | Producción | Staging |
+| --- | --- | --- |
+| URL | `https://admin.tuestuchef.com` | `https://staging.tuestuchef.com` |
+| Rama de git | `main` | `staging` |
+| Vercel | entorno *Production* | entorno *Preview* (rama `staging`) |
+| Supabase | `Tuestuchef` (`qldqiemwxtaqkvmskxmr`) | `tuestuchef-demo` (`zfwohweuprtllcozbqdk`) |
+| R2 | `tuestuchef-public`, `tuestuchef-private` | `tuestuchef-staging-public`, `tuestuchef-staging-private` |
+| Fotos | `media.tuestuchef.com` | `media-staging.tuestuchef.com` |
+| Token R2 | `tuestuchef-app` (solo buckets de producción) | `tuestuchef-staging` (solo buckets de staging) |
+| Variables locales | `.env.local` | `.env.staging.local` |
+| Correos | Resend, `acceso@tuestuchef.com` | Resend, mismo remitente; asunto con `[Staging]` |
+
+### 6.1 Supabase (`tuestuchef-demo`)
+
+1. Panel de demo → **Project Settings → Database → Reset database password**. Guárdala en tu gestor de contraseñas.
+2. Enlaza demo y aplica todas las migraciones (te pide esa contraseña):
+   ```bash
+   npm run db:link:demo
+   npm run db:linked   # debe decir DEMO (staging)
+   npm run db:push
+   ```
+3. Repite la sección 3, pasos 3 a 10, en el proyecto demo, con estas diferencias:
+   - *Site URL* = `https://staging.tuestuchef.com`; *Redirect URLs*: `https://staging.tuestuchef.com/auth/confirm` y `http://localhost:3000/auth/confirm`.
+   - Plantillas de correo: el mismo HTML, con el asunto empezando por `[Staging] ` para distinguirlos.
+   - Crea su propia *Secret key* (`tuestuchef-staging-server`). Nunca uses las claves de producción en staging ni al revés.
+4. Crea el owner de staging (usa `.env.staging.local`, ver 6.4):
+   ```bash
+   npm run create-first-owner:demo -- --email tu-correo@... --name "Nombre Apellido"
+   ```
+
+### 6.2 Cloudflare R2
+
+1. **Buckets**: igual que la sección 1, con los nombres `tuestuchef-staging-private` y `tuestuchef-staging-public`.
+2. **Dominio público**: `tuestuchef-staging-public` → Settings → Custom Domains → `media-staging.tuestuchef.com`. Acceso por `r2.dev` deshabilitado.
+3. **Token propio**: R2 → Manage API tokens → Create → nombre `tuestuchef-staging`, *Object Read & Write*, **solo** `tuestuchef-staging-public` y `tuestuchef-staging-private`. Así staging no puede tocar archivos de producción.
+4. **CORS** en ambos buckets de staging (en el público agrega `"GET"`):
+   ```json
+   [
+     {
+       "AllowedOrigins": ["http://localhost:3000", "https://staging.tuestuchef.com"],
+       "AllowedMethods": ["PUT"],
+       "AllowedHeaders": ["content-type"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
+   Los buckets de producción quedan solo con `https://admin.tuestuchef.com` (y `localhost` si desarrollas contra producción, cosa que no se recomienda).
+
+### 6.3 Vercel
+
+1. Crea la rama `staging` en git y súbela (`git push -u origin staging`).
+2. **Settings → Domains** → agrega `staging.tuestuchef.com` → *Connect to an environment* → **Preview** → rama `staging`. En Cloudflare DNS, el CNAME `staging` → `cname.vercel-dns.com` con proxy **apagado** (nube gris), igual que `admin`.
+3. **Settings → Environment Variables**: cada variable con su valor de staging en **Preview** (y el de producción solo en **Production**):
+
+   | Variable | Preview (staging) |
+   | --- | --- |
+   | `NEXT_PUBLIC_SITE_URL` | `https://staging.tuestuchef.com` |
+   | `NEXT_PUBLIC_SUPABASE_URL` | URL de `tuestuchef-demo` |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key de demo |
+   | `SUPABASE_SECRET_KEY` | Secret key de demo |
+   | `R2_ACCOUNT_ID` | el mismo Account ID |
+   | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | las del token `tuestuchef-staging` |
+   | `R2_PUBLIC_BUCKET` | `tuestuchef-staging-public` |
+   | `R2_PRIVATE_BUCKET` | `tuestuchef-staging-private` |
+   | `R2_PUBLIC_URL` | `https://media-staging.tuestuchef.com` |
+   | `CRON_SECRET` | no hace falta (el cron solo corre en producción) |
+
+   Cualquier preview de otra rama también usará staging: nunca puede tocar producción.
+4. **Settings → Deployment Protection**: por defecto los previews piden iniciar sesión en Vercel. Para que el equipo entre a `staging.tuestuchef.com` sin cuenta de Vercel, desactiva la protección para ese dominio (el panel ya exige su propio login con código y 2FA).
+5. Redeploy de la rama `staging`.
+
+### 6.4 Local
+
+`.env.local` apunta a **staging** (para desarrollar sin tocar datos reales). Copia los valores de Preview de la tabla 6.3 con `NEXT_PUBLIC_SITE_URL=http://localhost:3000`. Haz la misma copia en `.env.staging.local` (la usan los scripts de staging, como `create-first-owner:demo`).
+
+### 6.5 Tasas en staging
+
+El cron de Vercel solo corre en producción. En staging: **Tasas y cuentas → Actualizar desde BCV** cuando haga falta, o el seed demo (que carga un mes de tasas).
+
+### 6.6 Flujo de un cambio
+
+1. Se programa en una rama, con su migración en `src/common/lib/supabase/migrations/` y sus pruebas en `src/common/lib/db/tests/`.
+2. `npm run db:test` en verde (PGlite, local).
+3. Migraciones a **demo**:
+   ```bash
+   npm run db:link:demo
+   npm run db:linked   # DEMO (staging)
+   npm run db:push
+   ```
+4. Merge a `staging` → Vercel publica `staging.tuestuchef.com` → se prueba ahí.
+5. Si todo está bien, migraciones a **producción** y merge a `main`:
+   ```bash
+   npm run db:link:prod
+   npm run db:linked   # PRODUCCIÓN
+   npm run db:push
+   npm run db:link:demo   # volver a demo enseguida
+   ```
+   Primero la migración y después el merge: el código nuevo espera las tablas nuevas.
+
+> **Migraciones solo con la CLI** (`npm run db:push`), nunca pegándolas en el SQL Editor ni con otras herramientas: así quedan registradas con la versión de su archivo. Por otro camino quedan con otra versión y el siguiente `db:push` intenta repetirlas.
+
+> Antes de cualquier `db:push`, `npm run db:linked` dice a qué base va. El proyecto queda enlazado a demo por defecto; producción se enlaza solo para publicar y se desenlaza al terminar.

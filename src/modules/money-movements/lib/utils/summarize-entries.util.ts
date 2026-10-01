@@ -7,7 +7,7 @@ export function summarizeEntries(entries: LedgerEntryItem[]): MovementTotals {
   return entries.reduce<MovementTotals>(
     (totals, entry) => {
       if (INCOME_ENTRY_TYPES.includes(entry.entryType)) totals.incomeUsdt += entry.usdtValue
-      else if (entry.entryType === "expense" || entry.entryType === "exchange_fee") {
+      else if (entry.entryType === "expense" || entry.entryType === "purchase_payment" || entry.entryType === "exchange_fee") {
         totals.expenseUsdt -= entry.usdtValue
       }
       return totals

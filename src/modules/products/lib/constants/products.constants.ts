@@ -5,6 +5,7 @@ export type ProductGender = Enums<"product_gender">
 export type ProductClosure = Enums<"product_closure">
 export type ProductFit = Enums<"product_fit">
 export type ProductUnit = Enums<"product_unit">
+export type ProductKind = Enums<"product_kind">
 export type StockMovementType = Enums<"stock_movement_type">
 
 export const FULFILLMENT_LABELS: Record<FulfillmentType, string> = {
@@ -30,11 +31,14 @@ export const MOVEMENT_TYPE_LABELS: Record<StockMovementType, string> = {
   adjustment: "Ajuste",
   sale: "Venta",
   sale_reversal: "Devolución",
+  purchase_reversal: "Compra anulada",
+  consumption: "Consumo en producción",
 }
 
-// Lo que cada rol puede registrar a mano (ventas vienen del módulo de ventas).
-export const STAFF_MOVEMENT_TYPES: readonly StockMovementType[] = ["purchase", "production"]
-export const MANAGEMENT_MOVEMENT_TYPES: readonly StockMovementType[] = ["purchase", "production", "adjustment"]
+// Lo que cada rol puede registrar a mano. Las compras vienen del módulo de compras
+// (con proveedor) y las ventas del módulo de ventas.
+export const STAFF_MOVEMENT_TYPES: readonly StockMovementType[] = ["production"]
+export const MANAGEMENT_MOVEMENT_TYPES: readonly StockMovementType[] = ["production", "adjustment"]
 
 // Fotos de producto (bucket público).
 export const PRODUCT_IMAGE_TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" } as const
@@ -50,5 +54,6 @@ export const PRODUCT_MESSAGES = {
   CATALOG_SAVED: "Guardado.",
   IMAGE_SAVED: "Foto guardada.",
   IMAGE_DELETED: "Foto eliminada.",
+  RECIPE_SAVED: "Receta actualizada.",
   INITIAL_STOCK_LOADED: (count: number) => `Carga inicial lista: ${count} variantes.`,
 } as const

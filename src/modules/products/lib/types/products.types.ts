@@ -5,6 +5,7 @@ import type {
   ProductClosure,
   ProductFit,
   ProductGender,
+  ProductUnit,
   StockMovementType,
 } from "../constants/products.constants"
 
@@ -74,6 +75,9 @@ export type StockVariantOption = {
   sku: string
   label: string
   quantity: number
+  isRawMaterial: boolean
+  // Producción: con receta el costo se calcula solo.
+  hasRecipe: boolean
 }
 
 export type InitialStockPreviewRow = {
@@ -84,4 +88,34 @@ export type InitialStockPreviewRow = {
   productName: string | null
   variantLabel: string | null
   error: string | null
+}
+
+export type RecipeLine = {
+  id: string
+  // Variante o producto de materia prima (para agrupar sus cantidades por talla).
+  materialKey: string
+  materialLabel: string
+  unit: ProductUnit
+  sizeName: string | null
+  quantity: number
+}
+
+export type MaterialOption = {
+  // "variant:<id>" (material específico) o "product:<id>" (mismo color que la prenda).
+  value: string
+  label: string
+  unit: ProductUnit
+}
+
+export type ProductMarginRow = {
+  variantId: string
+  sku: string
+  methodName: string
+  priceUsd: number
+  priceUsdt: number
+  materialCostUsdt: number | null
+  laborCostUsdt: number
+  marginUsdt: number | null
+  marginPercent: number | null
+  costSource: "average" | "recipe" | null
 }

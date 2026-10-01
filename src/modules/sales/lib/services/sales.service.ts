@@ -8,6 +8,7 @@ import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.se
 import type { PaymentStatus, SaleItemStatus } from "../constants/sales.constants"
 import type { AddPaymentInput, CreateSaleInput } from "../schemas/sales.schema"
 import type {
+  ReceivableGroup,
   SaleDetail,
   SaleFormData,
   SaleListItem,
@@ -353,4 +354,37 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
       ? { reason: voidResult.data.reason, at: voidResult.data.created_at, byName: voidResult.data.author?.full_name ?? null }
       : null,
   }
+}
+
+// Cuentas por cobrar agrupadas por cliente (la vista solo devuelve filas a owner y admin).
+export async function listReceivables(): Promise<ReceivableGroup[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.from("receivables").select("*").order("occurred_at")
+  if (error) throw error
+
+  const groups = new Map<string, ReceivableGroup>()
+  for (const row of data) {
+    const key = row.customer_id ?? "none"
+    const group = groups.get(key) ?? {
+      customerId: row.customer_id,
+      customerName: row.customer_name,
+      customerPhone: row.customer_phone,
+      balanceUsd: 0,
+      oldestDays: 0,
+      sales: [],
+    }
+    group.balanceUsd += Number(row.balance_usd ?? 0)
+    group.oldestDays = Math.max(group.oldestDays, Number(row.days_outstanding ?? 0))
+    group.sales.push({
+      saleId: row.sale_id!,
+      number: Number(row.number),
+      occurredAt: row.occurred_at!,
+      totalUsd: Number(row.total_usd),
+      balanceUsd: Number(row.balance_usd),
+      daysOutstanding: Number(row.days_outstanding ?? 0),
+    })
+    groups.set(key, group)
+  }
+  // Primero quien debe hace más tiempo.
+  return [...groups.values()].sort((a, b) => b.oldestDays - a.oldestDays || b.balanceUsd - a.balanceUsd)
 }

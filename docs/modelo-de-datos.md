@@ -273,6 +273,37 @@ Aplica a ventas, pagos de venta y movimientos del libro (ingresos y gastos).
 - Un pago no puede ser anterior a su venta. Los pagos registrados junto con una venta retroactiva usan la fecha de la venta.
 - Reversos y traspasos no pasan por esta regla (el reverso copia las tasas del original; el traspaso trae las suyas).
 
+## 6. Compras, proveedores y cuentas por pagar/cobrar (Fase 2)
+
+Migraciones: `20261005000000_phase2_enums.sql`, `20261005010000_purchases.sql`. Pruebas: `src/common/lib/db/tests/purchases.test.ts`.
+
+- **`suppliers`**: nombre (único), RIF, contacto, teléfono, correo, notas, activo. Todos los ven y crean; solo owner y admin editan o desactivan. No se borran.
+- **Materia prima**: productos con `kind = raw_material` y su unidad (metro, kilo, unidad), con variantes por color. No se vende (trigger en `sale_items`). Se ve en Compras ▸ Materia prima.
+- **`purchases`** (inmutable): `number` (C-000123), proveedor, `total_usd`, `due_date` (solo crédito), tasas de la fecha, notas, comprobante, `occurred_at`, `is_backdated`.
+- **`purchase_items`**: `inventory` (variante, mueve stock con `unit_cost_usdt = costo USD × usd_usdt` de la fecha) o `concept` (servicio, alquiler, maquila…, sin stock). Cada línea lleva su categoría: `cost`, `operating_expense`, `reinvestment` o `tax` (staff: solo las que puede usar).
+- **`purchase_payments`**: moneda, monto, `rate_kind` (`bcv_usd` | `parallel` en Bs; `none` en USD/USDT), tasa aplicada, `usd_amount` (lo que cubre del saldo), `usdt_value` (siempre con Binance), tasas, fecha y `is_backdated`. Las tasas salen de las registradas para esa fecha; nunca se escriben a mano.
+- **`purchase_payment_entries`**: cada pago se reparte en el libro (`entry_type = purchase_payment`) en una entrada por categoría, proporcional a las líneas. Las partes se truncan y la última recibe el resto: suman exactamente lo pagado.
+- **`purchase_voids`**: anular (owner y admin, con motivo) revierte los pagos y saca del stock lo que entró (`purchase_reversal`). Si esa mercancía ya se vendió o se usó, no se puede anular: se corrige con un ajuste.
+- Las compras de stock (`purchase`) solo entran desde `create_purchase`; ya no se registran en la pantalla de Stock.
+- **Permisos**: staff registra compras pagadas completas en el momento y ve solo las suyas. Crédito, abonos (`add_purchase_payment`), anulaciones y saldos: owner y admin.
+- **Vistas**: `purchases_summary` (pagado, saldo, estado), `payables` (por pagar, con días de atraso; owner y admin) y `receivables` (por cobrar, calculada desde `sales_summary` sin duplicar datos; owner y admin).
+
+## 7. Costos, recetas, producción y margen (Fase 2)
+
+Migración: `20261006000000_costs.sql`. Pruebas: `src/common/lib/db/tests/costs.test.ts`.
+
+- **Costo promedio ponderado**: `product_variants.unit_cost_usdt` es el promedio de todo lo que entró con costo (carga inicial, compra, producción, devolución de venta): `(existencia × promedio + cantidad × costo) / nueva existencia`. Las salidas (ventas, consumo, ajustes) no lo cambian. Anular una compra quita su costo del promedio.
+  - **Punto de partida**: al aplicar la migración, el `unit_cost_usdt` que cada variante ya tenía (el último costo, según la regla anterior) es el promedio inicial. No se recalcula hacia atrás.
+  - Las ventas ya guardaban el costo del momento en `sale_items.unit_cost_usdt`: no cambian.
+- **`product_recipe_lines`** (configuración, editable por owner y admin): producto terminado, material (`raw_variant_id` específico o `raw_product_id` = "mismo color que la prenda"), `size_id` opcional y `quantity` por prenda. Por material se usa la cantidad de la talla si existe; si no, la de por defecto.
+  - Si la prenda no tiene color o no existe ese material en su color, la producción se bloquea con un mensaje que dice qué falta.
+- **`production_runs`** (inmutable): prenda, cantidad, costo de materiales por unidad, `sale_item_id` (encargos), nota, fecha.
+  - **`register_production`**: consume la receta (`stock_movements` tipo `consumption`) y suma las prendas (`production`) con el costo de los materiales consumidos. Sin receta se indica el costo a mano. Todo o nada: si falta materia prima, no se registra nada. Staff puede producir.
+  - **Encargos**: al pasar una línea `made_to_order` a "listo" (o directo a "entregado") se consume su receta una sola vez, sin sumar stock de producto terminado. Si falta materia prima, la línea no avanza.
+  - Producción y consumo solo entran por estas funciones. La merma real se corrige con un ajuste de owner o admin con nota.
+- **Mano de obra** (`products.labor_cost_usdt`, por unidad): solo para el margen. Nunca entra al costo del inventario ni se resta de la utilidad real (los sueldos ya se restan ahí).
+- **Margen** (`product_margins()`, owner y admin): por variante y método de pago, precio en valor real con las tasas vigentes (Bs: `precio × BCV ÷ Binance`) menos materiales (promedio, o estimado con la receta si aún no hay promedio) y mano de obra. Si la receta no se puede resolver completa, el margen queda vacío en vez de subestimar el costo.
+
 ## Relaciones
 
 ```
@@ -346,3 +377,5 @@ no cuenta:           capital_contribution, traspasos
 | 2026-10-02 | Clientes: nombre + al menos un contacto (CHECK en base y Zod), contactos normalizados y únicos, cédula opcional en tabla aparte, find-or-create listo para el checkout sin login, ventas sin cliente permitidas |
 | 2026-10-03 | Ventas: total y saldo en USD de referencia; cada pago con su tasa del día y su valor real; `rate_kind` por método; descuento con motivo y tope para staff; delivery como línea de la venta; por encargo sin stock; estados en eventos; anular solo owner y admin; staff sin totales |
 | 2026-10-04 | Registros con fecha pasada: sin fechas futuras, staff hasta N días (7), tasas siempre de esa fecha (bloquea si faltan), owner y admin cargan tasas pasadas, ventas y pagos marcados como retroactivos |
+| 2026-10-05 | Fase 2 · compras: líneas de inventario y de concepto con su categoría; pagos en Bs con tasa BCV o paralela de la fecha, valor real siempre con Binance; staff solo de contado; por pagar y por cobrar como vistas |
+| 2026-10-06 | Fase 2 · costos: promedio ponderado (arranca del costo actual), receta con material específico o del color de la prenda y cantidad por talla, producción y encargos consumen la receta, mano de obra solo para margen |

@@ -58,8 +58,11 @@ const StockMovementForm = ({ variants, allowedTypes, today }: StockMovementFormP
   })
 
   const errors = state.fieldErrors ?? {}
-  const selected = variants.find((v) => v.id === variantId)
   const isAdjustment = type === "adjustment"
+  // Producción: solo productos terminados (la materia prima se compra).
+  const options = isAdjustment ? variants : variants.filter((v) => !v.isRawMaterial)
+  const selected = options.find((v) => v.id === variantId)
+  const needsCost = !isAdjustment && selected !== undefined && !selected.hasRecipe
 
   return (
     <form key={formKey} onSubmit={onSubmit} className="grid gap-4" noValidate>
@@ -106,7 +109,7 @@ const StockMovementForm = ({ variants, allowedTypes, today }: StockMovementFormP
               <CommandList>
                 <CommandEmpty>No hay coincidencias.</CommandEmpty>
                 <CommandGroup>
-                  {variants.map((variant) => (
+                  {options.map((variant) => (
                     <CommandItem
                       key={variant.id}
                       value={`${variant.label} ${variant.sku}`}
@@ -150,23 +153,30 @@ const StockMovementForm = ({ variants, allowedTypes, today }: StockMovementFormP
         <FormField label="Cantidad" htmlFor="stock-quantity" error={errors.quantity}>
           <Input id="stock-quantity" name="quantity" inputMode="decimal" className="h-11 md:h-9" />
         </FormField>
-        {!isAdjustment && (
+        {needsCost && (
           <FormField
             label="Costo unitario (USDT)"
             htmlFor="stock-cost"
             error={errors.unit_cost_usdt}
-            hint="Lo que costó cada unidad, en valor real."
+            hint="Este producto no tiene receta: indica lo que costó cada unidad, en valor real."
           >
             <Input id="stock-cost" name="unit_cost_usdt" inputMode="decimal" className="h-11 md:h-9" />
           </FormField>
         )}
       </div>
 
+      {!isAdjustment && selected?.hasRecipe && (
+        <p className="text-xs text-muted-foreground">
+          Se descuenta la materia prima de la receta y el costo de cada prenda se calcula con el costo promedio de los
+          materiales.
+        </p>
+      )}
+
       <FormField label={isAdjustment ? "Motivo" : "Nota"} htmlFor="stock-note" error={errors.note} optional={!isAdjustment}>
         <Input
           id="stock-note"
           name="note"
-          placeholder={isAdjustment ? "Ej.: conteo físico, prenda dañada" : "Ej.: proveedor, lote"}
+          placeholder={isAdjustment ? "Ej.: conteo físico, merma, prenda dañada" : "Ej.: lote, quién cosió"}
           className="h-11 md:h-9"
         />
       </FormField>

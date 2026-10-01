@@ -23,7 +23,7 @@ const StockScreen = async ({ user }: { user: SessionUser }) => {
       <PageHeader
         help="stock"
         title="Stock"
-        description={canManage ? "Compras, producción y ajustes." : "Registra compras y producción."}
+        description={canManage ? "Producción y ajustes. Las compras van en Compras." : "Registra producción. Las compras van en Compras."}
         actions={
           canManage && (
             <Button asChild variant="outline" className="h-11 md:h-9">

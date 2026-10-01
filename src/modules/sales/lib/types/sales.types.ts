@@ -105,7 +105,7 @@ export type SaleDetail = {
 
 export type SalePaymentWithLedger = SaleDetailPayment & { ledgerEntryId: string }
 
-export type SaleRatesForDate = { bcvUsd: number; bcvEur: number; usdUsdt: number } | null
+export type SaleRatesForDate = { bcvUsd: number; bcvEur: number; binance: number; usdUsdt: number } | null
 
 export type SalesTotals = {
   salesCount: number
@@ -119,4 +119,20 @@ export type SalesFilters = {
   month: string
   channel?: SaleChannel
   status?: PaymentStatus
+}
+
+export type ReceivableGroup = {
+  customerId: string | null
+  customerName: string | null
+  customerPhone: string | null
+  balanceUsd: number
+  oldestDays: number
+  sales: {
+    saleId: string
+    number: number
+    occurredAt: string
+    totalUsd: number
+    balanceUsd: number
+    daysOutstanding: number
+  }[]
 }

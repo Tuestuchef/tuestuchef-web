@@ -16,8 +16,20 @@ const variantLabel = (v: { color: { name: string } | null; size: { name: string 
 
 export async function createStockMovement(input: StockMovementInput) {
   const supabase = await createSupabaseServerClient()
-  const sign = input.movement_type === "adjustment" && input.direction === "out" ? -1 : 1
   const isBackdated = input.date && input.date !== toCaracasDate()
+
+  // Producción: consume la receta y suma las prendas (todo en la base, en una transacción).
+  if (input.movement_type === "production") {
+    return supabase.rpc("register_production", {
+      p_variant_id: input.variant_id,
+      p_quantity: input.quantity,
+      p_unit_cost_usdt: input.unit_cost_usdt,
+      p_note: input.note,
+      p_occurred_at: isBackdated ? caracasNoonIso(input.date!) : undefined,
+    })
+  }
+
+  const sign = input.movement_type === "adjustment" && input.direction === "out" ? -1 : 1
   return supabase.from("stock_movements").insert({
     variant_id: input.variant_id,
     movement_type: input.movement_type,
@@ -31,23 +43,29 @@ export async function createStockMovement(input: StockMovementInput) {
 // Variantes activas de productos con stock (no solo por encargo), para el buscador.
 export async function listStockVariantOptions(): Promise<StockVariantOption[]> {
   const supabase = await createSupabaseServerClient()
-  const [{ data: variants, error }, { data: balances }] = await Promise.all([
+  const [{ data: variants, error }, { data: balances }, { data: recipes }] = await Promise.all([
     supabase
       .from("product_variants")
-      .select("id, sku, color:colors(name), size:sizes(name), product:products!inner(name, is_active, fulfillment_type)")
+      .select(
+        "id, sku, product_id, color:colors(name), size:sizes(name), product:products!inner(name, kind, is_active, fulfillment_type)"
+      )
       .eq("is_active", true)
       .eq("product.is_active", true)
       .neq("product.fulfillment_type", "made_to_order")
       .order("sku"),
     supabase.from("stock_balances").select("variant_id, quantity"),
+    supabase.from("product_recipe_lines").select("product_id"),
   ])
   if (error) throw error
   const quantity = new Map((balances ?? []).map((b) => [b.variant_id, Number(b.quantity ?? 0)]))
+  const withRecipe = new Set((recipes ?? []).map((r) => r.product_id))
   return variants.map((v) => ({
     id: v.id,
     sku: v.sku,
     label: `${v.product.name} — ${variantLabel(v)}`,
     quantity: quantity.get(v.id) ?? 0,
+    isRawMaterial: v.product.kind === "raw_material",
+    hasRecipe: withRecipe.has(v.product_id),
   }))
 }
 

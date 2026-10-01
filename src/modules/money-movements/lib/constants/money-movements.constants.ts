@@ -55,7 +55,7 @@ export const PERSON_CATEGORY_TYPES: readonly CategoryType[] = [
 ]
 
 export const INCOME_ENTRY_TYPES: readonly LedgerEntryType[] = ["income", "sale_payment"]
-export const EXPENSE_ENTRY_TYPES: readonly LedgerEntryType[] = ["expense"]
+export const EXPENSE_ENTRY_TYPES: readonly LedgerEntryType[] = ["expense", "purchase_payment"]
 export const TRANSFER_ENTRY_TYPES: readonly LedgerEntryType[] = ["transfer_out", "transfer_in", "exchange_fee"]
 
 export const ENTRY_TYPE_LABELS: Record<LedgerEntryType, string> = {
@@ -65,6 +65,7 @@ export const ENTRY_TYPE_LABELS: Record<LedgerEntryType, string> = {
   transfer_out: "Traspaso (sale)",
   transfer_in: "Traspaso (entra)",
   exchange_fee: "Comisión de cambio",
+  purchase_payment: "Pago de compra",
 }
 
 // Categorías visibles de inmediato en el registro rápido (el resto tras "Ver todas").

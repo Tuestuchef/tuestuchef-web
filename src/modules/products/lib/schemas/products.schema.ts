@@ -46,11 +46,26 @@ export const productSchema = z.object({
   category_id: z.uuid({ error: "Elige la categoría." }),
   name: z.string().trim().min(2, { error: "Escribe el nombre." }).max(120),
   description: optionalTextSchema(500),
+  // Producto terminado o materia prima. Solo se fija al crear.
+  kind: z.enum(E.product_kind).default("finished_good"),
   fulfillment_type: z.enum(E.fulfillment_type, { error: "Elige cómo se despacha." }),
   unit: z.enum(E.product_unit).default("unit"),
   gender: optionalEnum(E.product_gender),
   closure: optionalEnum(E.product_closure),
   fit: optionalEnum(E.product_fit),
+  // Mano de obra por unidad en USDT: solo para el margen (nunca se resta de la utilidad).
+  labor_cost_usdt: z
+    .string()
+    .optional()
+    .transform((value, ctx) => {
+      if (!value?.trim()) return 0
+      const parsed = parseAmount(value, 6)
+      if (parsed === null || parsed < 0) {
+        ctx.addIssue({ code: "custom", message: "Revisa la mano de obra." })
+        return z.NEVER
+      }
+      return parsed
+    }),
   is_active: booleanFieldSchema.default(true),
 })
 
@@ -113,7 +128,7 @@ export const pricesSchema = z.object({
 export const stockMovementSchema = z
   .object({
     variant_id: z.uuid({ error: "Elige el producto y la variante." }),
-    movement_type: z.enum(["purchase", "production", "adjustment"], { error: "Elige el tipo." }),
+    movement_type: z.enum(["production", "adjustment"], { error: "Elige el tipo." }),
     quantity: positiveAmountSchema("la cantidad", 3),
     // Solo ajustes: suma o resta.
     direction: z.enum(["in", "out"]).default("in"),
@@ -132,14 +147,19 @@ export const stockMovementSchema = z
     note: optionalTextSchema(200),
     date: pastOrTodayDateSchema,
   })
-  .refine((v) => v.movement_type === "adjustment" || v.unit_cost_usdt !== undefined, {
-    error: "Indica el costo unitario en USDT.",
-    path: ["unit_cost_usdt"],
-  })
+  // Producción: el costo sale de la receta; sin receta, la base exige el costo unitario.
   .refine((v) => v.movement_type !== "adjustment" || Boolean(v.note), {
     error: "Indica el motivo del ajuste.",
     path: ["note"],
   })
+
+// Línea de receta: material "variant:<id>" (específico) o "product:<id>" (mismo color que la prenda).
+export const recipeLineSchema = z.object({
+  product_id: z.uuid(),
+  material: z.string().regex(/^(variant|product):[0-9a-f-]{36}$/, { error: "Elige el material." }),
+  size_id: optionalUuid,
+  quantity: positiveAmountSchema("la cantidad", 4),
+})
 
 export const initialStockSchema = z.object({
   csv: z.string().trim().min(1, { error: "Pega o sube el CSV." }).max(200_000),
@@ -170,6 +190,8 @@ export const productImageUpdateSchema = z.object({
 
 export type CatalogItemInput = z.infer<typeof catalogItemSchema>
 export type ProductInput = z.infer<typeof productSchema>
+export type RecipeLineInput = z.infer<typeof recipeLineSchema>
+export type RecipeLineField = keyof RecipeLineInput
 export type VariantInput = z.infer<typeof variantSchema>
 export type StockMovementInput = z.infer<typeof stockMovementSchema>
 export type ProductField = keyof ProductInput

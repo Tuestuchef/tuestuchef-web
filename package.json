@@ -13,12 +13,16 @@
     "db:reset": "supabase db reset --workdir src/common/lib",
     "db:migration": "supabase migration new --workdir src/common/lib",
     "db:push": "supabase db push --workdir src/common/lib",
+    "db:link:demo": "supabase link --project-ref zfwohweuprtllcozbqdk --workdir src/common/lib",
+    "db:link:prod": "supabase link --project-ref qldqiemwxtaqkvmskxmr --workdir src/common/lib",
+    "db:linked": "node -e \"const r=require('fs').readFileSync('src/common/lib/supabase/.temp/project-ref','utf8').trim();console.log(r==='zfwohweuprtllcozbqdk'?'DEMO (staging)':r==='qldqiemwxtaqkvmskxmr'?'PRODUCCIÓN':r)\"",
     "db:types": "supabase gen types typescript --local --workdir src/common/lib > src/common/lib/db/database.types.ts",
     "db:types:remote": "supabase gen types typescript --linked --workdir src/common/lib > src/common/lib/db/database.types.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:test": "vitest run src/common/lib/db/tests",
-    "create-first-owner": "node --env-file=.env.local scripts/create-first-owner.mjs"
+    "create-first-owner": "node --env-file=.env.local scripts/create-first-owner.mjs",
+    "create-first-owner:demo": "node --env-file=.env.staging.local scripts/create-first-owner.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
