@@ -51,7 +51,7 @@ const AdminShellNav = ({ role }: AdminShellNavProps) => {
     if (!item.children) return [item]
     const children = item.children.filter((child) => child.roles.includes(role))
     if (children.length === 0) return []
-    // Un solo enlace visible: va directo, sin submenú (p. ej. Finanzas → Movimientos para staff).
+    // Un solo enlace visible: va directo, sin submenú (p. ej. Tesorería → Movimientos para staff).
     if (children.length === 1) return [{ ...children[0], icon: item.icon }]
     return [{ ...item, children }]
   })

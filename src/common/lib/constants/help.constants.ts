@@ -10,6 +10,8 @@ export type HelpTopic = {
   title: string
   summary: string
   sections: readonly HelpSection[]
+  // Capítulo del manual con la explicación completa (slug).
+  chapter?: string
 }
 
 export const HELP_TOPICS = {
@@ -30,6 +32,7 @@ export const HELP_TOPICS = {
 
   sales: {
     title: "Ventas",
+    chapter: "ventas",
     summary: "Todas las ventas del mes, con su estado de pago y los encargos pendientes.",
     sections: [
       {
@@ -63,6 +66,7 @@ export const HELP_TOPICS = {
 
   newSale: {
     title: "Nueva venta",
+    chapter: "ventas",
     summary: "Registra una venta en una sola pantalla, con o sin cliente.",
     sections: [
       {
@@ -109,6 +113,7 @@ export const HELP_TOPICS = {
 
   sale: {
     title: "Detalle de venta",
+    chapter: "ventas",
     summary: "Todo sobre una venta: productos, pagos, estados y nota de entrega.",
     sections: [
       {
@@ -134,6 +139,7 @@ export const HELP_TOPICS = {
 
   salesSettings: {
     title: "Configuración de ventas",
+    chapter: "ventas",
     summary: "Reglas que limitan lo que staff puede hacer al registrar. Solo owner y admin la ven.",
     sections: [
       {
@@ -342,6 +348,7 @@ export const HELP_TOPICS = {
 
   movements: {
     title: "Movimientos",
+    chapter: "tesoreria",
     summary: "El libro del dinero: cada ingreso, gasto y traspaso que cambia el saldo de una cuenta.",
     sections: [
       {
@@ -365,6 +372,7 @@ export const HELP_TOPICS = {
 
   newMovement: {
     title: "Nuevo movimiento",
+    chapter: "tesoreria",
     summary: "Registra un gasto o un ingreso que no viene de una venta.",
     sections: [
       {
@@ -391,6 +399,7 @@ export const HELP_TOPICS = {
 
   treasury: {
     title: "Tasas y cuentas",
+    chapter: "tesoreria",
     summary: "Las tasas del día y el saldo real de cada cuenta del negocio.",
     sections: [
       {
@@ -415,6 +424,7 @@ export const HELP_TOPICS = {
 
   transfer: {
     title: "Traspaso",
+    chapter: "tesoreria",
     summary: "Mueve dinero entre cuentas o cambia de moneda (p. ej. Bs → USDT).",
     sections: [
       {
@@ -657,6 +667,7 @@ export const HELP_TOPICS = {
 
   receivables: {
     title: "Por cobrar",
+    chapter: "ventas",
     summary: "Ventas con saldo pendiente: quién nos debe, cuánto y desde cuándo. Solo owner y admin.",
     sections: [
       {

@@ -32,6 +32,8 @@ export const ROUTES = {
   TEAM_MEMBER: (id: string) => `/equipo/${id}`,
   CUSTOMERS: "/clientes",
   CUSTOMER: (id: string) => `/clientes/${id}`,
+  MANUAL: "/manual",
+  MANUAL_CHAPTER: (slug: string) => `/manual/${slug}`,
 
   SETTINGS_ACCOUNTS: "/configuracion/cuentas",
   SETTINGS_CATEGORIES: "/configuracion/categorias",

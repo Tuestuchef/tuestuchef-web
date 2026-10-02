@@ -110,3 +110,4 @@ Catálogo pre-generado, imágenes optimizadas y checkout en una sola pantalla: e
 - Cada migración lleva pruebas en `src/common/lib/db/tests/` (RLS e inmutabilidad primero) y pasa `npm run db:test` antes de darla por buena.
 - Antes de crear un módulo nuevo, proponer su estructura y esperar confirmación.
 - Validar con Zod en el servidor todo dato que entre.
+- Cada cambio en un módulo actualiza, en el mismo cambio, su ayuda (`help.constants.ts`) y su capítulo del manual (`src/modules/manual/lib/constants/chapters/`). Un manual desactualizado es peor que no tenerlo.

@@ -1,6 +1,7 @@
 "use client"
 
-import { CircleHelpIcon } from "lucide-react"
+import { BookOpenIcon, CircleHelpIcon } from "lucide-react"
+import Link from "next/link"
 
 import SideDrawerContent from "@/common/components/side-drawer"
 import { Button } from "@/common/components/ui/button"
@@ -13,11 +14,12 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/common/components/ui/drawer"
-import { HELP_TOPICS, type HelpTopicKey } from "@/common/lib/constants/help.constants"
+import { HELP_TOPICS, type HelpTopic, type HelpTopicKey } from "@/common/lib/constants/help.constants"
+import { ROUTES } from "@/common/lib/constants/routes.constants"
 
 // Botón "?" junto al título: explica para qué sirve la pantalla y qué se puede hacer en ella.
 const PageHelp = ({ topic }: { topic: HelpTopicKey }) => {
-  const help = HELP_TOPICS[topic]
+  const help: HelpTopic = HELP_TOPICS[topic]
 
   return (
     <Drawer direction="right">
@@ -44,6 +46,16 @@ const PageHelp = ({ topic }: { topic: HelpTopicKey }) => {
           ))}
         </div>
         <DrawerFooter>
+          {help.chapter && (
+            <DrawerClose asChild>
+              <Button asChild variant="outline" className="h-11 md:h-9">
+                <Link href={ROUTES.MANUAL_CHAPTER(help.chapter)}>
+                  <BookOpenIcon aria-hidden />
+                  Leer el capítulo completo
+                </Link>
+              </Button>
+            </DrawerClose>
+          )}
           <DrawerClose asChild>
             <Button className="h-11 md:h-9">Entendido</Button>
           </DrawerClose>
