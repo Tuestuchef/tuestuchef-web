@@ -30,7 +30,7 @@ const MoneySplit = ({
     <figcaption className="flex flex-wrap items-baseline justify-between gap-2">
       <span className="text-sm font-medium">{title}</span>
       <span className="text-xs text-muted-foreground tabular-nums">
-        {total.label}: {format.format(total.amount)} {unit}
+        {total.label}: {format.format(total.amount)} {total.unit ?? unit}
       </span>
     </figcaption>
     <div className="flex h-10 overflow-hidden rounded-lg border" aria-hidden>

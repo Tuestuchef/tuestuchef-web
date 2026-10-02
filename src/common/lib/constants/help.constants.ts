@@ -154,6 +154,7 @@ export const HELP_TOPICS = {
 
   products: {
     title: "Productos",
+    chapter: "inventario",
     summary: "El catálogo: cada producto es un modelo, y sus variantes son las combinaciones de color y talla.",
     sections: [
       {
@@ -178,6 +179,7 @@ export const HELP_TOPICS = {
 
   product: {
     title: "Detalle de producto",
+    chapter: "inventario",
     summary: "Variantes, precios, fotos y movimientos de stock de un producto.",
     sections: [
       {
@@ -223,6 +225,7 @@ export const HELP_TOPICS = {
 
   stock: {
     title: "Stock",
+    chapter: "inventario",
     summary: "Registra lo que entra y sale del inventario. El saldo se calcula siempre desde estos movimientos.",
     sections: [
       {
@@ -246,6 +249,7 @@ export const HELP_TOPICS = {
 
   initialStock: {
     title: "Carga inicial de stock",
+    chapter: "inventario",
     summary: "Carga las existencias de arranque de muchas variantes a la vez desde un CSV (owner y admin).",
     sections: [
       {
@@ -267,6 +271,7 @@ export const HELP_TOPICS = {
 
   productCategories: {
     title: "Categorías de producto",
+    chapter: "configuracion",
     summary: "Grupos del catálogo: filipinas, delantales, pantalones, estuches, gorros…",
     sections: [
       {
@@ -282,6 +287,7 @@ export const HELP_TOPICS = {
 
   sizes: {
     title: "Tallas",
+    chapter: "configuracion",
     summary: "Lista de tallas disponibles, en el orden en que se muestran.",
     sections: [
       {
@@ -297,6 +303,7 @@ export const HELP_TOPICS = {
 
   colors: {
     title: "Colores",
+    chapter: "configuracion",
     summary: "Lista de colores para las variantes y las fotos.",
     sections: [
       {
@@ -311,6 +318,7 @@ export const HELP_TOPICS = {
 
   customers: {
     title: "Clientes",
+    chapter: "clientes",
     summary: "Datos de contacto de los clientes y su historial de compras.",
     sections: [
       {
@@ -333,6 +341,7 @@ export const HELP_TOPICS = {
 
   customer: {
     title: "Detalle de cliente",
+    chapter: "clientes",
     summary: "Contacto del cliente y todas sus compras.",
     sections: [
       {
@@ -440,6 +449,7 @@ export const HELP_TOPICS = {
 
   accounts: {
     title: "Cuentas",
+    chapter: "configuracion",
     summary: "Las cuentas donde vive el dinero del negocio.",
     sections: [
       {
@@ -454,6 +464,7 @@ export const HELP_TOPICS = {
 
   paymentMethods: {
     title: "Métodos de pago",
+    chapter: "configuracion",
     summary: "Cómo pagan los clientes y a qué cuenta llega el dinero.",
     sections: [
       {
@@ -469,6 +480,7 @@ export const HELP_TOPICS = {
 
   categories: {
     title: "Categorías de dinero",
+    chapter: "configuracion",
     summary: "Clasifican cada ingreso y gasto para calcular la utilidad real.",
     sections: [
       {
@@ -489,6 +501,7 @@ export const HELP_TOPICS = {
 
   users: {
     title: "Usuarios",
+    chapter: "configuracion",
     summary: "Quién entra al sistema y con qué rol.",
     sections: [
       {
@@ -511,6 +524,7 @@ export const HELP_TOPICS = {
 
   analytics: {
     title: "Dashboard",
+    chapter: "resultados",
     summary: "Cómo va el negocio en valor real (USDT), por período. Solo owner y admin.",
     sections: [
       {
@@ -550,6 +564,7 @@ export const HELP_TOPICS = {
   },
   purchases: {
     title: "Compras",
+    chapter: "compras",
     summary: "Lo que se le compra a los proveedores: materia prima, mercancía y servicios.",
     sections: [
       {
@@ -575,6 +590,7 @@ export const HELP_TOPICS = {
 
   newPurchase: {
     title: "Nueva compra",
+    chapter: "compras",
     summary: "Registra lo que se compró, a quién y cómo se pagó.",
     sections: [
       {
@@ -612,6 +628,7 @@ export const HELP_TOPICS = {
 
   suppliers: {
     title: "Proveedores",
+    chapter: "compras",
     summary: "A quién le compramos y cuánto le debemos.",
     sections: [
       {
@@ -631,6 +648,7 @@ export const HELP_TOPICS = {
 
   supplier: {
     title: "Detalle de proveedor",
+    chapter: "compras",
     summary: "Datos de contacto y todas las compras a este proveedor.",
     sections: [
       {
@@ -646,6 +664,7 @@ export const HELP_TOPICS = {
 
   payables: {
     title: "Por pagar",
+    chapter: "compras",
     summary: "Compras a crédito con saldo pendiente. Solo owner y admin.",
     sections: [
       {
@@ -687,6 +706,7 @@ export const HELP_TOPICS = {
 
   rawMaterials: {
     title: "Materia prima",
+    chapter: "inventario",
     summary: "Telas, botones, cierres e insumos: lo que se usa para fabricar.",
     sections: [
       {
@@ -705,6 +725,7 @@ export const HELP_TOPICS = {
   },
   team: {
     title: "Equipo",
+    chapter: "equipo",
     summary: "Quién cobra sueldo, cuánto, lo pagado este mes y los adelantos por descontar. Solo owner y admin.",
     sections: [
       {
@@ -726,6 +747,7 @@ export const HELP_TOPICS = {
 
   teamMember: {
     title: "Persona del equipo",
+    chapter: "equipo",
     summary: "Sueldo, pagos y adelantos de una persona.",
     sections: [
       {

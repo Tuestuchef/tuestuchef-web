@@ -10,6 +10,12 @@ export type RichSegment =
   | { type: "bold"; value: string }
   | { type: "term"; key: GlossaryKey; value: string }
 
+// Nombre del término dentro de una frase: "Valor real (USDT)" → "valor real"; siglas intactas (USDT, BCV).
+const inlineTerm = (term: string) => {
+  const base = term.replace(/\s*\(.*\)$/, "")
+  return /^[A-ZÁÉÍÓÚ][a-záéíóúñ]/.test(base) ? base[0].toLowerCase() + base.slice(1) : base
+}
+
 // **negrita** y [[termino]] / [[termino|texto]]. Un término desconocido se muestra como texto.
 export const parseRichText = (text: RichText): RichSegment[] => {
   const segments: RichSegment[] = []
@@ -21,7 +27,7 @@ export const parseRichText = (text: RichText): RichSegment[] => {
       segments.push({ type: "bold", value: match[1] })
     } else if (match[2] in GLOSSARY) {
       const key = match[2] as GlossaryKey
-      segments.push({ type: "term", key, value: match[3] ?? GLOSSARY[key].term })
+      segments.push({ type: "term", key, value: match[3] ?? inlineTerm(GLOSSARY[key].term) })
     } else {
       segments.push({ type: "text", value: match[3] ?? match[2] })
     }

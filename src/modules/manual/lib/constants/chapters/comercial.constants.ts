@@ -3,22 +3,24 @@ import {
   BookOpenIcon,
   ChartColumnIcon,
   CircleDollarSignIcon,
+  ContactRoundIcon,
   HandCoinsIcon,
   LandmarkIcon,
   PackageIcon,
+  PhoneIcon,
   ReceiptTextIcon,
   ScissorsIcon,
   ShoppingBagIcon,
+  ShieldCheckIcon,
   ShoppingCartIcon,
   TagIcon,
   UserRoundIcon,
-  UsersRoundIcon,
 } from "lucide-react"
 
 import { ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 
-import type { ManualChapter, ManualChapterStub } from "../../types/manual.types"
+import type { ManualChapter } from "../../types/manual.types"
 
 export const SALES_CHAPTER: ManualChapter = {
   slug: "ventas",
@@ -77,7 +79,7 @@ export const SALES_CHAPTER: ManualChapter = {
       blocks: [
         {
           kind: "text",
-          body: "Está pensado para hacerse desde el celular en menos de 20 segundos. Desde **Inicio → Registrar venta** o **Comercial → Nueva venta**:",
+          body: "Está pensado para hacerse desde el celular en menos de 20 segundos. Toca **Registrar venta**, el botón principal arriba del menú (también está en Inicio):",
         },
         {
           kind: "steps",
@@ -122,7 +124,7 @@ export const SALES_CHAPTER: ManualChapter = {
             { label: "Precio por pago móvil", value: "28,00 USD" },
             { label: "Se cobra en Bs (28 × BCV 40)", value: "1.120,00 Bs" },
             { label: "Valor real (1.120 ÷ paralelo 50)", value: "22,40 USDT", total: true },
-            { label: "Diferencia por cobrar en Bs", value: "−5,60 USDT", note: "Se ve en Resultados → Tasa." },
+            { label: "Diferencia por cobrar en Bs", value: "−5,60 USDT", note: "Se ve en Gestión → Resultados → Tasa." },
           ],
           conclusion:
             "La misma filipina **en efectivo a 25 USD vale 25 USDT**: más que por pago móvil, aunque el precio sea menor. Para eso existe el precio por método.",
@@ -131,7 +133,7 @@ export const SALES_CHAPTER: ManualChapter = {
           kind: "money-split",
           title: "Qué parte de los 28 USD llega de verdad",
           unit: "USDT",
-          total: { label: "Precio", amount: 28 },
+          total: { label: "Precio", amount: 28, unit: "USD" },
           parts: [
             { label: "Valor real que entra", amount: 22.4, note: "Lo que puedes comprar con esos Bs." },
             { label: "Se pierde por la tasa", amount: 5.6, note: "Diferencia entre BCV y paralelo." },
@@ -308,14 +310,140 @@ export const SALES_CHAPTER: ManualChapter = {
   ],
 }
 
-// Capítulos del área aún por escribir.
-export const COMERCIAL_STUBS: readonly ManualChapterStub[] = [
-  {
-    slug: "clientes",
-    area: "comercial",
-    title: "Clientes",
-    summary: "La libreta de clientes: contacto, historial de compras y su cédula protegida.",
-    icon: UsersRoundIcon,
-    roles: ROLE_GROUPS.ALL,
-  },
-]
+export const CUSTOMERS_CHAPTER: ManualChapter = {
+  slug: "clientes",
+  area: "comercial",
+  title: "Clientes",
+  summary:
+    "La libreta de clientes del negocio: cómo contactarlos, todo lo que han comprado y lo que deben. Reemplaza los contactos sueltos del teléfono.",
+  icon: ContactRoundIcon,
+  roles: ROLE_GROUPS.ALL,
+  screens: [
+    { title: "Clientes", url: ROUTES.CUSTOMERS, roles: ROLE_GROUPS.ALL },
+    { title: "Por cobrar", url: ROUTES.RECEIVABLES, roles: ROLE_GROUPS.MANAGEMENT },
+  ],
+  related: ["ventas", "configuracion"],
+  sections: [
+    {
+      id: "que-es",
+      heading: "Qué es",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "Parte del área **comercial**. Cada cliente tiene su ficha: nombre, teléfono, correo, Instagram y el historial de sus compras. Es opcional en una venta: sin cliente, la venta es **rápida** (alguien que pasó por la tienda y pagó).",
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "¿Cuándo vale la pena guardar al cliente?",
+          body:
+            "Cuando va a volver, cuando queda debiendo, cuando es un encargo o cuando hay que entregarle algo. Un cliente con ficha permite saber **cuánto compra**, **cuánto debe** y escribirle con un toque.",
+        },
+      ],
+    },
+    {
+      id: "crear",
+      heading: "Cómo se crea un cliente",
+      blocks: [
+        {
+          kind: "steps",
+          items: [
+            { title: "Desde la venta o desde Clientes", body: "En Nueva venta, busca el cliente; si no existe, créalo sin salir de la venta." },
+            { title: "Nombre y un contacto", body: "Nombre y al menos uno: teléfono, correo o Instagram." },
+            {
+              title: "Sin duplicados",
+              body: "Si ese teléfono, correo o Instagram ya existe, el sistema te ofrece abrir ese cliente en vez de crear otro.",
+            },
+            { title: "Cédula, solo si hace falta", body: "Es un dato personal: pídela solo cuando sea necesaria (ver abajo)." },
+          ],
+        },
+      ],
+    },
+    {
+      id: "ficha",
+      heading: "Qué tiene la ficha",
+      blocks: [
+        {
+          kind: "effects",
+          items: [
+            { icon: PhoneIcon, title: "Contacto directo", effect: "Llamar, escribir por WhatsApp o abrir su Instagram con un toque." },
+            { icon: ShoppingBagIcon, title: "Historial", effect: "Todas sus compras, con su estado de pago.", chapter: "ventas" },
+            { icon: HandCoinsIcon, title: "Lo que debe", effect: "Sus ventas con saldo aparecen en Por cobrar, agrupadas por cliente." },
+            { icon: ShieldCheckIcon, title: "Cédula protegida", effect: "Cualquiera la puede registrar, pero solo owner y admin la ven." },
+          ],
+        },
+      ],
+    },
+    {
+      id: "por-cobrar",
+      heading: "Por cobrar: quién nos debe",
+      roles: ROLE_GROUPS.MANAGEMENT,
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "**Comercial → Por cobrar** junta todas las ventas con saldo, **por cliente**: cuánto debe en total y desde cuándo (su deuda más antigua). Las ventas rápidas sin cliente que quedaron debiendo aparecen aparte. No se registra nada aquí: se calcula solo desde las ventas.",
+        },
+        {
+          kind: "example",
+          title: "Lo que se ve en Por cobrar",
+          rows: [
+            { label: "Restaurante La Sazón · 3 ventas", value: "84,00 USD", note: "La más antigua, hace 18 días." },
+            { label: "Valentina Rojas · 1 venta", value: "14,00 USD", note: "Abonó la mitad hace 6 días." },
+            { label: "Ventas rápidas sin cliente", value: "22,00 USD" },
+            { label: "Total por cobrar", value: "120,00 USD", total: true },
+          ],
+          conclusion:
+            "El saldo vive en dólares de referencia. Cuando el cliente paga en Bs, se usa la tasa BCV **del día en que paga**: cuanto más se tarda, más valor real se puede perder.",
+        },
+      ],
+    },
+    {
+      id: "privacidad",
+      heading: "Datos personales",
+      blocks: [
+        {
+          kind: "callout",
+          tone: "warning",
+          title: "La cédula es un dato sensible",
+          body:
+            "Pídela solo cuando haga falta (por ejemplo, para un envío o una nota formal). Staff puede registrarla pero no verla después. Nunca la compartas por mensaje.",
+        },
+        {
+          kind: "text",
+          body: "Los clientes **no se borran**, porque tienen ventas. Owner o admin los desactivan si ya no se usan.",
+        },
+      ],
+    },
+    {
+      id: "conexiones",
+      heading: "Con qué se conecta",
+      blocks: [
+        {
+          kind: "connections",
+          center: { icon: ContactRoundIcon, title: "Clientes" },
+          inputs: [{ icon: ShoppingBagIcon, title: "Ventas", effect: "Cada venta con cliente suma a su historial", chapter: "ventas" }],
+          outputs: [
+            { icon: HandCoinsIcon, title: "Por cobrar", effect: "Lo que debe cada cliente" },
+            { icon: ReceiptTextIcon, title: "Nota de entrega", effect: "Sus datos salen en la nota y en el WhatsApp" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "quien",
+      heading: "Quién puede hacer qué",
+      blocks: [
+        {
+          kind: "roles",
+          items: [
+            { role: "staff", can: "Busca, crea y edita clientes. Registra la cédula pero no la ve." },
+            { role: "admin", can: "Todo lo anterior, ve la cédula, ve Por cobrar y desactiva clientes." },
+            { role: "owner", can: "Igual que admin." },
+          ],
+        },
+      ],
+    },
+  ],
+}

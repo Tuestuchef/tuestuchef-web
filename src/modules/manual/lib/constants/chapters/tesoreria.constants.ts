@@ -160,7 +160,7 @@ export const TREASURY_CHAPTER: ManualChapter = {
         {
           kind: "steps",
           items: [
-            { title: "Registrar un gasto o ingreso", body: "Inicio → **Registrar gasto o ingreso**: tipo, monto, cuenta y categoría." },
+            { title: "Registrar un gasto o ingreso", body: "En el menú, la flecha junto a **Registrar venta** → **Gasto o ingreso** (también está en Inicio): tipo, monto, cuenta y categoría." },
             {
               title: "Elegir bien la categoría",
               body:

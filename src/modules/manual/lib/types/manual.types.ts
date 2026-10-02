@@ -36,6 +36,8 @@ export type ModuleLink = DiagramNode & {
 export type MoneyPart = {
   label: string
   amount: number
+  // Moneda propia si no es la del diagrama (p. ej. el precio en USD frente a partes en USDT).
+  unit?: string
   note?: RichText
 }
 

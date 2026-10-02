@@ -85,7 +85,7 @@ const BusinessMap = ({ readable }: ChapterAccess) => (
         return (
           <li key={step.title} className="relative grid grid-cols-[2rem_1fr] gap-3 pb-3 last:pb-0">
             {index < JOURNEY.length - 1 && (
-              <span aria-hidden className="absolute top-8 bottom-0 left-3.75 w-px bg-border" />
+              <span aria-hidden className="absolute top-8 bottom-0 left-3.5 w-0.5 bg-muted-foreground/40" />
             )}
             <span className="relative z-10 flex size-8 items-center justify-center rounded-full border-2 border-primary bg-background text-xs font-semibold tabular-nums">
               {index + 1}

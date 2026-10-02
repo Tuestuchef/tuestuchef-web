@@ -18,7 +18,7 @@ const ManualScreen = ({ role }: { role: AppRole }) => {
   const terms = Object.values(GLOSSARY).sort((a, b) => a.term.localeCompare(b.term, "es"))
 
   return (
-    <div className="mx-auto grid w-full max-w-4xl gap-6">
+    <div className="mx-auto grid w-full max-w-4xl grid-cols-[minmax(0,1fr)] gap-6">
       <PageHeader
         title="Manual"
         description="Cómo funciona cada parte del sistema, qué cambia cuando la usas y cómo se conecta con las demás."

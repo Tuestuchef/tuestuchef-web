@@ -12,7 +12,7 @@ const Timeline = ({ title, steps, note }: { title?: string; steps: readonly Time
           {index < steps.length - 1 && (
             <span
               aria-hidden
-              className="absolute top-8 bottom-0 left-3.75 w-px bg-border md:top-3.75 md:right-0 md:bottom-auto md:left-8 md:h-px md:w-auto"
+              className="absolute top-8 bottom-0 left-3.5 w-0.5 bg-muted-foreground/40 md:top-3.5 md:right-0 md:bottom-auto md:left-8 md:h-0.5 md:w-auto"
             />
           )}
           <span className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-background text-xs font-semibold tabular-nums">

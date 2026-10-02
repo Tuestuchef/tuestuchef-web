@@ -20,7 +20,7 @@ const ManualChapterScreen = ({ chapter, role }: { chapter: ManualChapter; role: 
   const related = MANUAL_CHAPTERS.filter((c) => chapter.related?.includes(c.slug) && c.roles.includes(role))
 
   return (
-    <article className="mx-auto grid w-full max-w-4xl gap-6">
+    <article className="mx-auto grid w-full max-w-4xl grid-cols-[minmax(0,1fr)] gap-6">
       <header className="grid gap-3 pt-2">
         <Link
           href={ROUTES.MANUAL}
@@ -53,7 +53,7 @@ const ManualChapterScreen = ({ chapter, role }: { chapter: ManualChapter; role: 
 
       {/* Índice del capítulo: en el celular se desliza de lado. */}
       <nav aria-label="En este capítulo" className="sticky top-(--header-height) z-5 -mx-4 border-y bg-background/95 px-4 py-2 backdrop-blur md:-mx-6 md:px-6">
-        <ul className="flex gap-2 overflow-x-auto">
+        <ul className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
           {sections.map((section) => (
             <li key={section.id} className="shrink-0">
               <a
