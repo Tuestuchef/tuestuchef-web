@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Sin conexión · Tuestuchef</title>
+    <style>
+      /* Sin colores fijos: el navegador usa los suyos (claro u oscuro). */
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        margin: 0;
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        box-sizing: border-box;
+      }
+      main {
+        max-width: 420px;
+        display: grid;
+        gap: 12px;
+        text-align: center;
+      }
+      h1 {
+        font-size: 1.25rem;
+        margin: 0;
+      }
+      p {
+        margin: 0;
+        line-height: 1.5;
+      }
+      a {
+        display: inline-block;
+        padding: 12px 20px;
+        border: 1px solid currentColor;
+        border-radius: 8px;
+        text-decoration: none;
+        color: inherit;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sin conexión</h1>
+      <p>Esta pantalla necesita internet. Puedes seguir registrando ventas: se guardan en este teléfono y se envían solas cuando vuelva la señal.</p>
+      <p><a href="/ventas/nueva">Registrar una venta</a></p>
+    </main>
+  </body>
+</html>

@@ -76,7 +76,12 @@ const AdminShellUser = ({ user }: AdminShellUserProps) => {
             <DropdownMenuSeparator />
             <ThemeToggle />
             <DropdownMenuSeparator />
-            <form action={ROUTES.SIGN_OUT} method="post">
+            <form
+              action={ROUTES.SIGN_OUT}
+              method="post"
+              // Las páginas guardadas para usar sin señal son de esta sesión: se borran al salir.
+              onSubmit={() => navigator.serviceWorker?.controller?.postMessage({ type: "clear-pages" })}
+            >
               <DropdownMenuItem asChild>
                 <button type="submit" className="w-full">
                   <LogOutIcon />

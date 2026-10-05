@@ -23,6 +23,7 @@ export const ROUTES = {
   SALE: (id: string) => `/ventas/${id}`,
   SALE_NOTE: (id: string) => `/ventas/${id}/nota`,
   RECEIVABLES: "/ventas/por-cobrar",
+  OFFLINE_SALES: "/ventas/pendientes",
   PURCHASES: "/compras",
   NEW_PURCHASE: "/compras/nueva",
   PURCHASE: (id: string) => `/compras/${id}`,

@@ -3288,6 +3288,109 @@ export type Database = {
           },
         ]
       }
+      offline_sale_refs: {
+        Row: {
+          client_ref: string
+          created_at: string
+          created_by: string
+          sale_id: string
+        }
+        Insert: {
+          client_ref: string
+          created_at?: string
+          created_by?: string
+          sale_id: string
+        }
+        Update: {
+          client_ref?: string
+          created_at?: string
+          created_by?: string
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offline_sale_refs_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offline_sale_refs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offline_sale_rejections: {
+        Row: {
+          attempts: number
+          client_ref: string
+          created_at: string
+          created_by: string
+          error: string
+          id: string
+          occurred_at: string
+          payload: Json
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_sale_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          client_ref: string
+          created_at?: string
+          created_by?: string
+          error: string
+          id?: string
+          occurred_at: string
+          payload: Json
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_sale_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          client_ref?: string
+          created_at?: string
+          created_by?: string
+          error?: string
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_sale_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offline_sale_rejections_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offline_sale_rejections_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offline_sale_rejections_resolved_sale_id_fkey"
+            columns: ["resolved_sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       current_salary_agreements: {
@@ -3509,6 +3612,18 @@ export type Database = {
       }
     }
     Functions: {
+      discard_offline_sale: {
+        Args: { p_rejection_id: string; p_reason: string }
+        Returns: undefined
+      }
+      retry_offline_sale: {
+        Args: { p_rejection_id: string }
+        Returns: Json
+      }
+      sync_offline_sale: {
+        Args: { p_client_ref: string; p_payload: Json }
+        Returns: Json
+      }
       notification_items: {
         Args: { p_kind: Database["public"]["Enums"]["notification_kind"] }
         Returns: { item_key: string; title: string; detail: string; url: string }[]

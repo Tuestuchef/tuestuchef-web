@@ -367,6 +367,13 @@ Migración: `20261008000000_dashboard.sql`. Pruebas: `src/common/lib/db/tests/da
 - **Envío** (`dispatchNotifications`): un correo por persona con una sección por aviso (React Email, sin colores fijos) y un push por aviso a cada dispositivo; los dispositivos vencidos se borran.
 - Corrige `order_settings`: su trigger de auditoría ahora es `set_settings_audit` (tablas de configuración sin `created_by`).
 
+## 14. Ventas sin conexión (Fase 3, paso 5)
+
+- **Cola en el teléfono** (IndexedDB `tuestuchef-offline`): cada venta hecha sin señal guarda un `client_ref` (uuid), los mismos datos de `create_sale` y la hora real (`occurredAt`). El service worker (`public/sw.js`) guarda Nueva venta y sus archivos; las demás pantallas muestran `offline.html`. Al cerrar sesión se borran las páginas guardadas, no la cola.
+- **`sync_offline_sale(client_ref, payload)`**: idempotente. Si el `client_ref` ya existe devuelve `duplicate`; si `create_sale` falla, guarda el intento en `offline_sale_rejections` y devuelve `rejected` (la venta nunca se pierde).
+- **`offline_sale_refs`** (`client_ref` → venta) y **`offline_sale_rejections`** (datos, error, intentos, resolución): cada persona ve las suyas; owner y admin, todas.
+- `retry_offline_sale` y `discard_offline_sale` (con motivo): solo owner y admin. Pantalla: Ventas pendientes (`/ventas/pendientes`).
+
 ## Relaciones
 
 ```
@@ -448,3 +455,4 @@ no cuenta:           capital_contribution, traspasos
 | 2026-10-10 | Fase 3 · pedidos: un pedido es una venta con `orders`; abono por umbral (500 USD → 60%, si no completo) para empezar; etapas que se saltan si no aplican; tela consumida al terminar el corte; entrega completa; cancelación con reembolso en la moneda y cuenta de cada pago (con descuento de materiales después del corte) y bloqueo del cliente; destajo por categoría y etapa; talleres como proveedores |
 | 2026-10-11 | Fase 3 · cierre de mes: bloquea toda fecha del mes cerrado para todos los roles (incluido owner hasta reabrir); reabre solo el owner con motivo; Excel mensual para el contador con exceljs |
 | 2026-10-12 | Fase 3 · avisos: resumen diario a las 7:00 por correo (Resend + React Email) y push (Web Push con VAPID); owner y admin prenden o apagan cada canal y cada aviso, eligen roles y anticipación; registro sin repeticiones por día |
+| 2026-10-13 | Fase 3 · sin conexión: solo Nueva venta funciona sin señal; cola en el teléfono con `client_ref` para no duplicar; al enviarse se revisan todas las reglas con la hora real y lo que no pasa queda en Ventas pendientes para reintentar o descartar |

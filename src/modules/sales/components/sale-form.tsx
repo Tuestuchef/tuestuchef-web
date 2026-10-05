@@ -60,6 +60,7 @@ import {
   usdToMethodAmount,
   volumePercent,
 } from "../lib/utils/sale-math.util"
+import { isNetworkError, queueSale } from "../lib/utils/offline-queue.util"
 import BackdateField from "./backdate-field"
 import ComboPickerDialog, { type ComboSelection } from "./combo-picker-dialog"
 
@@ -267,10 +268,32 @@ const SaleForm = ({
     }
   }
 
+  // Sin conexión: la venta se guarda en el teléfono y se envía sola al volver la señal.
+  const saveOffline = async (sale: Record<string, unknown>) => {
+    const occurredAt = isBackdated ? new Date(`${date}T12:00:00-04:00`).toISOString() : new Date().toISOString()
+    await queueSale({
+      clientRef: crypto.randomUUID(),
+      payload: { sale, occurredAt },
+      label: lines.map((l) => `${l.quantity} × ${l.variant.productName}`).join(", "),
+      totalUsd: total,
+      queuedAt: new Date().toISOString(),
+    })
+    toast.success("Sin conexión: la venta quedó guardada en este teléfono y se enviará sola.")
+    setCart([])
+    setPaymentRows([])
+    setPaymentMode("full")
+    setShowDiscount(false)
+    setDiscountValue("")
+    setDiscountReason("")
+    setCustomer(null)
+    setNotes("")
+    setDeliveryFee("")
+  }
+
   const submit = () => {
     setError(null)
     startTransition(async () => {
-      const result = await createSaleAction({
+      const sale = {
         channel,
         price_method_id: priceMethodId,
         delivery_method: deliveryMethod,
@@ -292,7 +315,19 @@ const SaleForm = ({
         notes: notes.trim() || null,
         delivered,
         date: isBackdated ? date : undefined,
-      })
+      }
+      if (!navigator.onLine) {
+        await saveOffline(sale)
+        return
+      }
+      let result: Awaited<ReturnType<typeof createSaleAction>>
+      try {
+        result = await createSaleAction(sale)
+      } catch (cause) {
+        if (isNetworkError(cause)) await saveOffline(sale)
+        else setError("No se pudo registrar la venta.")
+        return
+      }
       if (!result.ok) {
         setError(result.error)
         return

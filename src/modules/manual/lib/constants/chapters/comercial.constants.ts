@@ -34,6 +34,7 @@ export const SALES_CHAPTER: ManualChapter = {
     { title: "Ventas", url: ROUTES.SALES, roles: ROLE_GROUPS.ALL },
     { title: "Nueva venta", url: ROUTES.NEW_SALE, roles: ROLE_GROUPS.ALL },
     { title: "Por cobrar", url: ROUTES.RECEIVABLES, roles: ROLE_GROUPS.MANAGEMENT },
+    { title: "Ventas pendientes", url: ROUTES.OFFLINE_SALES, roles: ROLE_GROUPS.ALL },
     { title: "Reglas de venta", url: ROUTES.SETTINGS_SALES, roles: ROLE_GROUPS.MANAGEMENT },
   ],
   related: ["tesoreria", "clientes", "inventario", "resultados"],
@@ -105,6 +106,34 @@ export const SALES_CHAPTER: ManualChapter = {
           title: "Si el botón está apagado",
           body:
             "Encima del botón aparece por qué: falta stock, un producto no tiene precio para ese método, el descuento pasa el máximo o falta la tasa de hoy.",
+        },
+      ],
+    },
+    {
+      id: "sin-conexion",
+      heading: "Vender sin señal",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "Si se va el internet, **Nueva venta** sigue abriendo (con los precios y la tasa de la última vez que hubo señal). La venta se guarda en el teléfono y arriba aparece cuántas faltan por enviar. Las demás pantallas muestran un aviso de sin conexión.",
+        },
+        {
+          kind: "timeline",
+          title: "Lo que pasa con una venta sin señal",
+          steps: [
+            { title: "Se guarda en el teléfono", detail: "Con la hora real en que se hizo. El formulario queda listo para la siguiente." },
+            { title: "Vuelve la señal", detail: "Se envía sola (o con Enviar ahora). Si ya se había enviado, no se duplica." },
+            { title: "Se revisa de nuevo", detail: "Stock, cliente bloqueado, tasa de esa fecha y días hacia atrás, como cualquier venta." },
+            { title: "Queda registrada o pendiente", detail: "Si algo no pasa, va a Ventas pendientes con su motivo. Nunca se pierde." },
+          ],
+        },
+        {
+          kind: "callout",
+          tone: "warning",
+          title: "No cierres sesión con ventas por enviar",
+          body:
+            "Las ventas guardadas viven en ese teléfono hasta que se envían. En Ventas pendientes, owner o admin reintentan (por ejemplo, cuando ya hay stock) o descartan con motivo; staff ve solo las suyas.",
         },
       ],
     },

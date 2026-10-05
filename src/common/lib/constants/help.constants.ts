@@ -999,6 +999,29 @@ export const HELP_TOPICS = {
     ],
   },
 
+  offlineSales: {
+    title: "Ventas pendientes",
+    chapter: "ventas",
+    summary: "Ventas hechas sin conexión que no pasaron al enviarse. Nunca se pierden.",
+    sections: [
+      {
+        heading: "Sin conexión",
+        items: [
+          "Sin señal, Nueva venta sigue funcionando con los precios y la tasa de la última vez que tuvo conexión.",
+          "La venta se guarda en el teléfono y se envía sola al volver la señal, con la hora en que de verdad se hizo.",
+          "Al enviarse se revisa todo de nuevo: stock, cliente bloqueado, tasa de esa fecha y días hacia atrás.",
+        ],
+      },
+      {
+        heading: "Si no pasa",
+        items: [
+          "Queda aquí con su motivo. Owner o admin la reintentan (p. ej. cuando ya hay stock) o la descartan con motivo.",
+          "Staff ve solo las suyas.",
+        ],
+      },
+    ],
+  },
+
   team: {
     title: "Equipo",
     chapter: "equipo",

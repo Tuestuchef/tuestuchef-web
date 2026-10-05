@@ -4,6 +4,7 @@ import {
   BookOpenIcon,
   ChartColumnIcon,
   ClipboardListIcon,
+  CloudOffIcon,
   ContactRoundIcon,
   FactoryIcon,
   FileSpreadsheetIcon,
@@ -68,6 +69,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
       { title: "Ventas", url: ROUTES.SALES, icon: ShoppingBagIcon, roles: ROLE_GROUPS.ALL },
       { title: "Clientes", url: ROUTES.CUSTOMERS, icon: ContactRoundIcon, roles: ROLE_GROUPS.ALL },
       { title: "Por cobrar", url: ROUTES.RECEIVABLES, icon: HandCoinsIcon, roles: ROLE_GROUPS.MANAGEMENT },
+      { title: "Ventas pendientes", url: ROUTES.OFFLINE_SALES, icon: CloudOffIcon, roles: ROLE_GROUPS.ALL },
     ],
   },
   {
