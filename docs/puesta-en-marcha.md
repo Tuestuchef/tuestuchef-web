@@ -276,3 +276,46 @@ Cómo correrlo:
 3. Debajo, pega el contenido completo de `seed-demo.sql` y ejecuta.
 
 Para volver a cargarlo hay que partir de una base demo sin ventas ni compras (por ejemplo, `supabase db reset --linked` con demo enlazado, después de comprobarlo con `npm run db:linked`, y volver a crear el owner).
+
+## 7. Respaldos de la base (GitHub Actions → R2)
+
+Cada noche a las 04:00 (Caracas) el workflow `.github/workflows/db-backup.yml` corre `scripts/db-backup.sh`: vuelca la base de **producción** (roles, esquema y datos, incluidos los usuarios), la comprime, la **cifra** (AES-256 con una frase de paso, porque tiene datos personales) y la sube a un bucket propio de R2. Se guardan **30 días**.
+
+> GitHub solo corre los workflows programados desde la rama principal: empieza a funcionar cuando el cambio llega a `main`.
+
+### 7.1 Bucket y token (Cloudflare)
+
+1. Crea el bucket **`tuestuchef-backups`** (privado, sin dominio público).
+2. En el bucket, **Settings → Object lifecycle rules**: borrar objetos con prefijo `daily/` a los **31 días** (por si falla el borrado que hace el script).
+3. **R2 → Manage API tokens → Create**: permiso *Object Read & Write* **solo** para `tuestuchef-backups`. Es un token distinto al de la app: la app no puede leer ni borrar respaldos.
+
+### 7.2 Secretos (GitHub → Settings → Environments → `Production`)
+
+| Secreto | Valor |
+|---|---|
+| `SUPABASE_DB_URL` | Supabase (producción) → Connect → **Session pooler** (puerto 5432, con la contraseña de la base). GitHub no tiene IPv6 para la conexión directa. |
+| `BACKUP_PASSPHRASE` | Frase larga (p. ej. `openssl rand -base64 32`). **Guárdala también fuera de GitHub** (gestor de contraseñas del owner): sin ella los respaldos no se pueden abrir. |
+| `R2_ACCOUNT_ID` | El mismo de la app. |
+| `R2_BACKUP_ACCESS_KEY_ID` y `R2_BACKUP_SECRET_ACCESS_KEY` | Del token del paso 3. |
+
+Opcional: la variable `R2_BACKUP_BUCKET` si el bucket tiene otro nombre.
+
+### 7.3 Probar y vigilar
+
+- **Actions → Respaldo de la base → Run workflow** lo corre al momento. El resumen muestra el archivo, su tamaño, el SHA-256 y cuántos respaldos hay.
+- El script falla (y GitHub avisa por correo) si el volcado no trae las tablas o los usuarios.
+- Los archivos de R2 (fotos y comprobantes) no entran en este respaldo: R2 ya los guarda con redundancia y la base solo guarda su ruta.
+
+### 7.4 Restaurar
+
+Siempre en un **proyecto de Supabase nuevo y vacío**, nunca encima de producción en uso. Requiere `gpg`, `tar` y `psql`.
+
+1. Descarga el archivo de `tuestuchef-backups/daily/AAAA/MM/` desde el panel de R2.
+2. Crea el proyecto nuevo y copia su cadena de conexión (Session pooler).
+3. Restaura (`CONFIRM_RESTORE` debe ser el ref que aparece en la cadena de conexión; si no coincide, no hace nada):
+   ```bash
+   BACKUP_PASSPHRASE='...' TARGET_DB_URL='postgresql://...' CONFIRM_RESTORE=ref-del-proyecto-nuevo bash scripts/db-restore.sh tuestuchef-AAAA-MM-DDTHHMMZ.tar.gz.gpg
+   ```
+4. Apunta las variables de Vercel (`NEXT_PUBLIC_SUPABASE_URL` y las claves) al proyecto nuevo y configura Auth igual que en la sección 3 (correo con código, MFA, URLs).
+
+**Simulacro:** una vez por trimestre, restaura el último respaldo en un proyecto temporal, revisa que estén las ventas del día anterior y bórralo. Un respaldo que nunca se probó no es un respaldo.

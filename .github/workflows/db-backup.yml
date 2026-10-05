@@ -1,0 +1,39 @@
+# Respaldo nocturno de la base de producción a Cloudflare R2 (cifrado, 30 días).
+# Secretos y puesta en marcha: docs/puesta-en-marcha.md, sección 7.
+name: Respaldo de la base
+
+on:
+  schedule:
+    # 08:00 UTC = 04:00 en Caracas, cuando no hay nadie registrando.
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: Production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Respaldar y subir a R2
+        run: bash scripts/db-backup.sh
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: ${{ vars.R2_BACKUP_BUCKET || 'tuestuchef-backups' }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_BACKUP_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_BACKUP_SECRET_ACCESS_KEY }}
+          RETENTION_DAYS: "30"
