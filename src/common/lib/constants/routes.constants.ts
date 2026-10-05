@@ -39,6 +39,7 @@ export const ROUTES = {
   PRODUCTION_ASSIGNMENTS: "/produccion/asignaciones",
   PRODUCTION_MATERIALS: "/produccion/materiales",
   BUSINESS_RULES: "/reglas-de-negocio",
+  MY_NOTIFICATIONS: "/avisos",
   CUSTOMERS: "/clientes",
   CUSTOMER: (id: string) => `/clientes/${id}`,
   MANUAL: "/manual",
@@ -54,6 +55,7 @@ export const ROUTES = {
   SETTINGS_SALES: "/configuracion/ventas",
   SETTINGS_ORDERS: "/configuracion/pedidos",
   SETTINGS_PIECE_RATES: "/configuracion/tarifas",
+  SETTINGS_NOTIFICATIONS: "/configuracion/avisos",
 
   RECEIPT: (entryId: string) => `/api/receipts/${entryId}`,
   CUSTOMIZATION_LOGO: (customizationId: string) => `/api/logos/${customizationId}`,
@@ -67,6 +69,7 @@ export const PUBLIC_ROUTES: readonly string[] = [
   ROUTES.SIGN_OUT,
   ROUTES.AUTH_CONFIRM,
   "/api/cron/exchange-rates",
+  "/api/cron/notifications",
 ]
 
 // Parámetro con la ruta a la que volver tras iniciar sesión.

@@ -962,6 +962,43 @@ export const HELP_TOPICS = {
     ],
   },
 
+  notificationSettings: {
+    title: "Avisos",
+    chapter: "configuracion",
+    summary: "Qué recordatorios se envían, por qué canal y a quién. Solo owner y admin.",
+    sections: [
+      {
+        heading: "Cómo funciona",
+        items: [
+          "Cada mañana a las 7:00 se junta lo pendiente de cada aviso prendido y se manda: un correo por persona y un push por aviso.",
+          "Apagar un canal (correo o push) detiene todos los avisos por esa vía; apagar un aviso lo detiene en todos los canales.",
+          "En cada aviso eliges los canales, qué roles lo reciben y, en cobros y pagos, con cuántos días.",
+          "Lo ya enviado en el día no se repite.",
+        ],
+      },
+      {
+        heading: "Probar",
+        items: ["'Enviarme una prueba' te manda ahora, solo a ti, lo pendiente de cada aviso prendido."],
+      },
+    ],
+  },
+
+  myNotifications: {
+    title: "Mis avisos",
+    chapter: "configuracion",
+    summary: "Activa los avisos en tu teléfono o computadora y ve lo que te llegó.",
+    sections: [
+      {
+        heading: "Activar el push",
+        items: [
+          "Toca 'Activar avisos en este dispositivo' y acepta el permiso del navegador. Hazlo en cada dispositivo.",
+          "En iPhone, primero instala el panel en la pantalla de inicio (Compartir → Agregar a inicio) y ábrelo desde ahí.",
+          "Qué avisos te llegan depende de tu rol; owner y admin lo configuran.",
+        ],
+      },
+    ],
+  },
+
   team: {
     title: "Equipo",
     chapter: "equipo",

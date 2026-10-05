@@ -36,6 +36,7 @@ export const SETTINGS_CHAPTER: ManualChapter = {
     { title: "Usuarios", url: ROUTES.SETTINGS_USERS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Reglas de venta", url: ROUTES.SETTINGS_SALES, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Pedidos y personalización", url: ROUTES.SETTINGS_ORDERS, roles: ROLE_GROUPS.MANAGEMENT },
+    { title: "Avisos", url: ROUTES.SETTINGS_NOTIFICATIONS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Cuentas", url: ROUTES.SETTINGS_ACCOUNTS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Métodos de pago", url: ROUTES.SETTINGS_PAYMENT_METHODS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Categorías de dinero", url: ROUTES.SETTINGS_CATEGORIES, roles: ROLE_GROUPS.MANAGEMENT },
@@ -220,6 +221,34 @@ export const SETTINGS_CHAPTER: ManualChapter = {
               title: "Reglas del negocio",
               effect: "Todos las leen en Ayuda; owner y admin las escriben. Unas las aplica el sistema solo.",
             },
+          ],
+        },
+      ],
+    },
+    {
+      id: "avisos",
+      heading: "Avisos",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "Cada mañana a las 7:00 el sistema junta lo que necesita atención y lo manda: **un correo por persona** con una sección por aviso, y **un push por aviso** a cada dispositivo donde la persona lo activó (en **Mis avisos**).",
+        },
+        {
+          kind: "effects",
+          items: [
+            { icon: CalendarClockIcon, title: "Pedidos y talleres atrasados", effect: "Lo que pasó su fecha prometida o estimada.", chapter: "pedidos" },
+            { icon: CoinsIcon, title: "Tasa del día", effect: "Si a las 7:00 todavía no hay tasa de hoy.", chapter: "tesoreria" },
+            { icon: LandmarkIcon, title: "Cobros y pagos", effect: "Deudas de clientes con N días y compras por vencer o vencidas.", chapter: "compras" },
+            { icon: TagsIcon, title: "Stock bajo", effect: "Variantes en su stock mínimo.", chapter: "inventario" },
+          ],
+        },
+        {
+          kind: "steps",
+          items: [
+            { title: "Prender o apagar", body: "En **Configuración → Avisos**, owner y admin apagan un canal completo (correo o push) o cualquier aviso." },
+            { title: "Elegir quién y cuándo", body: "En cada aviso: canales, qué roles lo reciben y, en cobros y pagos, con cuántos días." },
+            { title: "Probar", body: "'Enviarme una prueba' manda ahora, solo a ti, lo pendiente de cada aviso prendido." },
           ],
         },
       ],

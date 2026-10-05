@@ -1,5 +1,6 @@
 import {
   ArrowRightLeftIcon,
+  BellIcon,
   BookOpenIcon,
   ChartColumnIcon,
   ClipboardListIcon,
@@ -118,6 +119,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
           { title: "Reglas de venta", url: ROUTES.SETTINGS_SALES, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Pedidos y personalización", url: ROUTES.SETTINGS_ORDERS, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Tarifas a destajo", url: ROUTES.SETTINGS_PIECE_RATES, roles: ROLE_GROUPS.MANAGEMENT },
+          { title: "Avisos", url: ROUTES.SETTINGS_NOTIFICATIONS, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Cuentas", url: ROUTES.SETTINGS_ACCOUNTS, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Métodos de pago", url: ROUTES.SETTINGS_PAYMENT_METHODS, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Categorías de dinero", url: ROUTES.SETTINGS_CATEGORIES, roles: ROLE_GROUPS.MANAGEMENT },
@@ -131,6 +133,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   {
     label: "Ayuda",
     items: [
+      { title: "Mis avisos", url: ROUTES.MY_NOTIFICATIONS, icon: BellIcon, roles: ROLE_GROUPS.ALL },
       { title: "Manual", url: ROUTES.MANUAL, icon: BookOpenIcon, roles: ROLE_GROUPS.ALL },
       { title: "Reglas del negocio", url: ROUTES.BUSINESS_RULES, icon: ScaleIcon, roles: ROLE_GROUPS.ALL },
     ],

@@ -357,6 +357,16 @@ Migración: `20261008000000_dashboard.sql`. Pruebas: `src/common/lib/db/tests/da
 - `close_period`: owner y admin, solo meses terminados. `reopen_period`: solo owner, con motivo.
 - **Excel del mes** (`/api/exports/AAAA-MM`, owner y admin): resumen de utilidad real, ventas, pagos recibidos, compras, movimientos y sueldos; se lee con la sesión (RLS).
 
+## 13. Avisos (Fase 3, paso 4)
+
+- **`notification_channel_settings`** (una fila): correo y push prendidos o apagados para todo.
+- **`notification_settings`** (uno por aviso: `late_orders`, `late_workshops`, `missing_rate`, `receivables_due`, `payables_due`, `low_stock`): prendido, correo, push, roles que lo reciben y `lead_days` (días de deuda para cobros; días antes del vencimiento para pagos). Solo owner y admin ven y editan.
+- **`push_subscriptions`**: dispositivos de cada persona (cada una ve y maneja solo los suyos).
+- **`notification_log`**: cada envío por persona, aviso, canal y clave del día (único: no se repite si el cron corre dos veces). Cada persona ve lo suyo; owner y admin, todo.
+- **`notification_items(kind)`**: lo pendiente de un aviso; solo la llama el servidor con la clave de servicio. Los pedidos abiertos no cuentan como cobros pendientes (cobran al entregar).
+- **Envío** (`dispatchNotifications`): un correo por persona con una sección por aviso (React Email, sin colores fijos) y un push por aviso a cada dispositivo; los dispositivos vencidos se borran.
+- Corrige `order_settings`: su trigger de auditoría ahora es `set_settings_audit` (tablas de configuración sin `created_by`).
+
 ## Relaciones
 
 ```
@@ -437,3 +447,4 @@ no cuenta:           capital_contribution, traspasos
 | 2026-10-09 | Fase 3 · combos con precio propio y piezas como líneas hijas a precio 0; personalización con precio en USD igual para todos los métodos (a BCV en Bs); descuento al mayor automático por piezas, con tramos para productos y para personalización, aparte del manual |
 | 2026-10-10 | Fase 3 · pedidos: un pedido es una venta con `orders`; abono por umbral (500 USD → 60%, si no completo) para empezar; etapas que se saltan si no aplican; tela consumida al terminar el corte; entrega completa; cancelación con reembolso en la moneda y cuenta de cada pago (con descuento de materiales después del corte) y bloqueo del cliente; destajo por categoría y etapa; talleres como proveedores |
 | 2026-10-11 | Fase 3 · cierre de mes: bloquea toda fecha del mes cerrado para todos los roles (incluido owner hasta reabrir); reabre solo el owner con motivo; Excel mensual para el contador con exceljs |
+| 2026-10-12 | Fase 3 · avisos: resumen diario a las 7:00 por correo (Resend + React Email) y push (Web Push con VAPID); owner y admin prenden o apagan cada canal y cada aviso, eligen roles y anticipación; registro sin repeticiones por día |

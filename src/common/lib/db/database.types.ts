@@ -3127,6 +3127,167 @@ export type Database = {
           },
         ]
       }
+      notification_channel_settings: {
+        Row: {
+          email_enabled: boolean
+          id: boolean
+          push_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          email_enabled?: boolean
+          id?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          email_enabled?: boolean
+          id?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_channel_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_settings: {
+        Row: {
+          email_enabled: boolean
+          enabled: boolean
+          kind: Database["public"]["Enums"]["notification_kind"]
+          lead_days: number
+          push_enabled: boolean
+          roles: Database["public"]["Enums"]["app_role"][]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          email_enabled?: boolean
+          enabled?: boolean
+          kind: Database["public"]["Enums"]["notification_kind"]
+          lead_days?: number
+          push_enabled?: boolean
+          roles?: Database["public"]["Enums"]["app_role"][]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          email_enabled?: boolean
+          enabled?: boolean
+          kind?: Database["public"]["Enums"]["notification_kind"]
+          lead_days?: number
+          push_enabled?: boolean
+          roles?: Database["public"]["Enums"]["app_role"][]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          profile_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          profile_id?: string
+          user_agent?: string | null
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          profile_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_log: {
+        Row: {
+          body: string
+          channel: Database["public"]["Enums"]["notification_channel"]
+          created_at: string
+          dedupe_key: string
+          error: string | null
+          id: string
+          kind: Database["public"]["Enums"]["notification_kind"]
+          profile_id: string
+          status: Database["public"]["Enums"]["notification_status"]
+          title: string
+          url: string | null
+        }
+        Insert: {
+          body: string
+          channel: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          dedupe_key: string
+          error?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["notification_kind"]
+          profile_id: string
+          status: Database["public"]["Enums"]["notification_status"]
+          title: string
+          url?: string | null
+        }
+        Update: {
+          body?: string
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          dedupe_key?: string
+          error?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["notification_kind"]
+          profile_id?: string
+          status?: Database["public"]["Enums"]["notification_status"]
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_log_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       current_salary_agreements: {
@@ -3348,6 +3509,10 @@ export type Database = {
       }
     }
     Functions: {
+      notification_items: {
+        Args: { p_kind: Database["public"]["Enums"]["notification_kind"] }
+        Returns: { item_key: string; title: string; detail: string; url: string }[]
+      }
       is_period_closed: {
         Args: { p_date: string }
         Returns: boolean
@@ -3684,6 +3849,9 @@ export type Database = {
       }
     }
     Enums: {
+      notification_status: "sent" | "failed"
+      notification_channel: "email" | "push"
+      notification_kind: "late_orders" | "late_workshops" | "missing_rate" | "receivables_due" | "payables_due" | "low_stock"
       period_close_action: "close" | "reopen"
       order_override_kind: "start_without_deposit" | "deliver_with_balance"
       customer_block_action: "block" | "unblock"
@@ -3756,6 +3924,9 @@ export type Enums<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"]
 export const Constants = {
   public: {
     Enums: {
+      notification_status: ["sent", "failed"],
+      notification_channel: ["email", "push"],
+      notification_kind: ["late_orders", "late_workshops", "missing_rate", "receivables_due", "payables_due", "low_stock"],
       period_close_action: ["close", "reopen"],
       order_override_kind: ["start_without_deposit", "deliver_with_balance"],
       customer_block_action: ["block", "unblock"],

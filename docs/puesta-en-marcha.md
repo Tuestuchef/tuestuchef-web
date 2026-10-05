@@ -125,6 +125,19 @@ Otro owner no puede quitarle el 2FA desde el panel (todavía). Se hace en Supaba
 - En Vercel agrega `CRON_SECRET` (y `SUPABASE_SECRET_KEY`, que ya usa el login). El cron solo corre en producción.
 - Localmente no hay cron: usa **Tasas y cuentas → Actualizar desde BCV**.
 
+## 4.1 Avisos (correo y push)
+
+El resumen diario sale a las 7:00 (hora de Caracas) desde `/api/cron/notifications` (Vercel Cron, `vercel.json`, protegido con `CRON_SECRET`).
+
+- **Correo**: usa `RESEND_API_KEY` (la misma de los correos de acceso). Remitente en `NOTIFICATIONS_EMAIL_FROM` (si falta, `AUTH_EMAIL_FROM`); su dominio debe estar verificado en Resend.
+- **Push**: genera las claves una sola vez y guárdalas como variables:
+  ```bash
+  npx web-push generate-vapid-keys
+  ```
+  `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (pública), `VAPID_PRIVATE_KEY` (secreta, solo servidor) y `VAPID_SUBJECT=mailto:correo@del-negocio`. Usa claves distintas en staging y en producción. En iPhone el push solo funciona con el panel instalado en la pantalla de inicio.
+- Sin estas variables el canal queda apagado aunque esté prendido en Configuración → Avisos (la pantalla lo indica).
+- Owner y admin prenden o apagan cada canal y cada aviso en **Configuración → Avisos**, con un botón para enviarse una prueba.
+
 ## 5. Pruebas
 
 ```bash
