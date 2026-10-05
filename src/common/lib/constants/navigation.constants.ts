@@ -118,7 +118,8 @@ export const NAV_SECTIONS: readonly NavSection[] = [
         icon: SettingsIcon,
         roles: ROLE_GROUPS.MANAGEMENT,
         children: [
-          { title: "Datos del negocio", url: ROUTES.SETTINGS_BUSINESS, roles: ROLE_GROUPS.MANAGEMENT },
+          { title: "Datos de la empresa", url: ROUTES.SETTINGS_BUSINESS, roles: ROLE_GROUPS.MANAGEMENT },
+          { title: "Presupuestos", url: ROUTES.SETTINGS_QUOTES, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Reglas de venta", url: ROUTES.SETTINGS_SALES, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Pedidos y personalización", url: ROUTES.SETTINGS_ORDERS, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Tarifas a destajo", url: ROUTES.SETTINGS_PIECE_RATES, roles: ROLE_GROUPS.MANAGEMENT },

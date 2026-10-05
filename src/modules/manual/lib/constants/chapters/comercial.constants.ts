@@ -411,10 +411,14 @@ export const CUSTOMERS_CHAPTER: ManualChapter = {
           kind: "steps",
           items: [
             { title: "Desde la venta o desde Clientes", body: "En Nueva venta, busca el cliente; si no existe, créalo sin salir de la venta." },
-            { title: "Nombre y un contacto", body: "Nombre y al menos uno: teléfono, correo o Instagram." },
+            { title: "Persona: nombre y un contacto", body: "Nombre y al menos uno: teléfono, correo o Instagram." },
+            {
+              title: "Empresa: la razón social",
+              body: "Para restaurantes, escuelas u hoteles elige **Empresa**: basta con la razón social. RIF, persona de contacto, teléfono, correo y dirección son opcionales.",
+            },
             {
               title: "Sin duplicados",
-              body: "Si ese teléfono, correo o Instagram ya existe, el sistema te ofrece abrir ese cliente en vez de crear otro.",
+              body: "Si ese teléfono, correo, Instagram o RIF ya existe, el sistema te ofrece abrir ese cliente en vez de crear otro.",
             },
             { title: "Cédula, solo si hace falta", body: "Es un dato personal: pídela solo cuando sea necesaria (ver abajo)." },
           ],

@@ -7,12 +7,13 @@ import type { CustomerInput } from "../schemas/customers.schema"
 import type { CustomerDetail, CustomerListItem, DuplicateCustomer } from "../types/customers.types"
 import { findCustomersByContact } from "./customer-lookup.service"
 
-const LIST_COLUMNS = "id, first_name, last_name, phone, email, instagram, is_active, has_id_document, blocked_at, blocked_reason"
+const LIST_COLUMNS =
+  "id, kind, first_name, last_name, legal_name, phone, email, instagram, is_active, has_id_document, blocked_at, blocked_reason"
 
 // Quita lo que rompería el filtro de PostgREST.
 const sanitize = (value: string) => value.replace(/[,()%*"\\]/g, " ").trim()
 
-// Busca por nombre, apellido, correo, Instagram o dígitos del teléfono (0414… o 414…).
+// Busca por nombre, apellido, razón social, RIF, correo, Instagram o dígitos del teléfono (0414… o 414…).
 export async function listCustomers({ search }: { search?: string } = {}): Promise<CustomerListItem[]> {
   const supabase = await createSupabaseServerClient()
   let query = supabase
@@ -28,6 +29,8 @@ export async function listCustomers({ search }: { search?: string } = {}): Promi
     const filters = [
       `first_name.ilike.%${term}%`,
       `last_name.ilike.%${term}%`,
+      `legal_name.ilike.%${term}%`,
+      `tax_id.ilike.%${term.toUpperCase().replace(/[\s.-]/g, "")}%`,
       `email.ilike.%${term}%`,
       `instagram.ilike.%${term.replace(/^@/, "")}%`,
     ]
@@ -71,8 +74,13 @@ export async function saveCustomer(input: CustomerInput, { canManage }: { canMan
   if (duplicate) return { ok: false, duplicate }
 
   const values = {
+    kind: input.kind,
     first_name: input.first_name,
     last_name: input.last_name,
+    legal_name: input.legal_name,
+    tax_id: input.tax_id,
+    contact_person: input.contact_person,
+    address: input.address,
     phone: input.phone,
     email: input.email,
     instagram: input.instagram,

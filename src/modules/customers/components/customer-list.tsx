@@ -27,8 +27,12 @@ const CustomerList = ({ customers, searching }: { customers: CustomerListItem[];
             <div className="grid min-w-0 flex-1 gap-0.5">
               <span className="flex flex-wrap items-center gap-1.5 font-medium">
                 {[customer.first_name, customer.last_name].filter(Boolean).join(" ")}
+                {customer.kind === "company" && <StatusBadge tone="info">Empresa</StatusBadge>}
                 {!customer.is_active && <StatusBadge tone="info">Inactivo</StatusBadge>}
               </span>
+              {customer.kind === "company" && customer.legal_name && customer.legal_name !== customer.first_name && (
+                <span className="truncate text-xs text-muted-foreground">{customer.legal_name}</span>
+              )}
               <span className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                 {customer.phone && (
                   <span className="inline-flex items-center gap-1">

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   formatPhone,
+  formatTaxId,
   normalizeEmail,
   normalizeIdDocument,
   normalizeInstagram,
@@ -64,5 +65,15 @@ describe("formatPhone", () => {
   it("formatea números venezolanos", () => {
     expect(formatPhone("+584141234567")).toBe("0414-123.45.67")
     expect(formatPhone("+13055551234")).toBe("+13055551234")
+  })
+})
+
+describe("formatTaxId", () => {
+  it("separa el dígito verificador del RIF", () => {
+    expect(formatTaxId("J123456789")).toBe("J-12345678-9")
+  })
+
+  it("una cédula queda con guion", () => {
+    expect(formatTaxId("V12345678")).toBe("V-12345678")
   })
 })

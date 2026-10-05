@@ -34,7 +34,8 @@ export const SETTINGS_CHAPTER: ManualChapter = {
   roles: ROLE_GROUPS.MANAGEMENT,
   screens: [
     { title: "Usuarios", url: ROUTES.SETTINGS_USERS, roles: ROLE_GROUPS.MANAGEMENT },
-    { title: "Datos del negocio", url: ROUTES.SETTINGS_BUSINESS, roles: ROLE_GROUPS.MANAGEMENT },
+    { title: "Datos de la empresa", url: ROUTES.SETTINGS_BUSINESS, roles: ROLE_GROUPS.MANAGEMENT },
+    { title: "Presupuestos", url: ROUTES.SETTINGS_QUOTES, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Reglas de venta", url: ROUTES.SETTINGS_SALES, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Pedidos y personalización", url: ROUTES.SETTINGS_ORDERS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Avisos", url: ROUTES.SETTINGS_NOTIFICATIONS, roles: ROLE_GROUPS.MANAGEMENT },
@@ -96,12 +97,12 @@ export const SETTINGS_CHAPTER: ManualChapter = {
     },
     {
       id: "negocio",
-      heading: "Datos del negocio",
+      heading: "Datos de la empresa",
       blocks: [
         {
           kind: "text",
           body:
-            "En **Configuración → Datos del negocio** van el correo, teléfono, WhatsApp, Instagram, dirección y RIF que ven los clientes. Salen en el encabezado de la **nota de entrega**; lo que quede vacío no se muestra.",
+            "En **Configuración → Datos de la empresa** van la **imagen del encabezado** (el logo de los presupuestos), el nombre comercial, la razón social, el RIF, el correo, teléfono, WhatsApp, Instagram, sitio web y dirección que ven los clientes. Salen en los **presupuestos** y en la **nota de entrega**; lo que quede vacío no se muestra.",
         },
         {
           kind: "callout",
@@ -109,6 +110,25 @@ export const SETTINGS_CHAPTER: ManualChapter = {
           title: "El correo de contacto no es el remitente",
           body:
             "Cambiarlo no afecta los códigos de acceso ni los avisos: esos salen de un remitente fijo en la configuración del servidor. Si pones un correo @tuestuchef.com, créalo antes en el reenvío de Cloudflare para que llegue a una bandeja.",
+        },
+      ],
+    },
+    {
+      id: "presupuestos",
+      heading: "Presupuestos",
+      blocks: [
+        {
+          kind: "steps",
+          items: [
+            { title: "Numeración", body: "Prefijo y dígitos (TLT + 5 dígitos = TLT00001). El siguiente número **solo sube**: nunca se repite uno emitido." },
+            { title: "Vigencia", body: "Días hasta el vencimiento que trae cada presupuesto (por defecto 7)." },
+            {
+              title: "Listas de precios",
+              body: "La de un método en USD y la de un método en Bs. Si un presupuesto muestra ambas monedas, cada una sale de su lista (Bs a la tasa BCV de la fecha), nunca una convertida de la otra.",
+            },
+            { title: "IVA e IGTF", body: "Tasa de IVA y si viene marcado (se suma al total). La nota de IGTF es solo texto." },
+            { title: "Condiciones", body: "Texto por defecto de vigencia, entrega, abono, métodos de pago y personalización; cada presupuesto lo puede ajustar." },
+          ],
         },
       ],
     },

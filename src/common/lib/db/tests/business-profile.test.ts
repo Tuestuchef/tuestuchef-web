@@ -41,6 +41,15 @@ describe("datos del negocio", () => {
     expect((await profile()).email).toBe("contacto@tuestuchef.com")
   })
 
+  it("guarda nombre comercial, razón social, web e imagen de encabezado", async () => {
+    expect((await owner<{ trade_name: string }>("select trade_name from public.business_profile")).rows[0].trade_name).toBe("Tuestuchef")
+    await owner(
+      "update public.business_profile set legal_name = 'Tuestuchef C.A.', website = 'https://tuestuchef.com', header_image_path = 'brand/header/0b6e2f2c-6f43-4bb4-9b54-1f5a8d3c9e10.png'"
+    )
+    await expect(owner("update public.business_profile set website = 'tuestuchef.com'")).rejects.toThrow(/check/)
+    await expect(owner("update public.business_profile set header_image_path = 'https://cdn/x.png'")).rejects.toThrow(/check/)
+  })
+
   it("valida los formatos", async () => {
     await expect(owner("update public.business_profile set email = 'no-es-correo'")).rejects.toThrow(/check/)
     await expect(owner("update public.business_profile set phone = '0414-1234567'")).rejects.toThrow(/check/)

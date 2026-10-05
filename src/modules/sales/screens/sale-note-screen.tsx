@@ -9,8 +9,7 @@ import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatDate } from "@/common/lib/utils/format-date.util"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import { getBusinessProfile } from "@/modules/business/lib/services/business-profile.service"
-import { formatTaxId } from "@/modules/business/lib/utils/format-tax-id.util"
-import { formatPhone } from "@/modules/customers/lib/utils/normalize-contact.util"
+import { formatPhone, formatTaxId } from "@/modules/customers/lib/utils/normalize-contact.util"
 
 import PrintButton from "../components/print-button"
 import { formatSaleNumber, ITEM_STATUS_LABELS } from "../lib/constants/sales.constants"
@@ -49,7 +48,11 @@ const SaleNoteScreen = async ({ id }: { id: string }) => {
             <p className="text-xs text-muted-foreground">{brandConfig.slogan}</p>
             {contactLine.length > 0 && <p className="text-xs text-muted-foreground">{contactLine.join(" · ")}</p>}
             {business.address && <p className="text-xs text-muted-foreground">{business.address}</p>}
-            {business.taxId && <p className="text-xs text-muted-foreground">RIF {formatTaxId(business.taxId)}</p>}
+            {(business.legalName || business.taxId) && (
+              <p className="text-xs text-muted-foreground">
+                {[business.legalName, business.taxId && `RIF ${formatTaxId(business.taxId)}`].filter(Boolean).join(" · ")}
+              </p>
+            )}
           </div>
           <div className="grid justify-items-end gap-0.5 text-right">
             <span className="text-sm font-semibold">Nota de entrega</span>

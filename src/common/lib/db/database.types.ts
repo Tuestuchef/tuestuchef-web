@@ -416,6 +416,11 @@ export type Database = {
       }
       customers: {
         Row: {
+          kind: Database["public"]["Enums"]["customer_kind"]
+          legal_name: string | null
+          tax_id: string | null
+          contact_person: string | null
+          address: string | null
           blocked_at: string | null
           blocked_reason: string | null
           created_at: string
@@ -433,6 +438,11 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          kind?: Database["public"]["Enums"]["customer_kind"]
+          legal_name?: string | null
+          tax_id?: string | null
+          contact_person?: string | null
+          address?: string | null
           blocked_at?: string | null
           blocked_reason?: string | null
           created_at?: string
@@ -450,6 +460,11 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          kind?: Database["public"]["Enums"]["customer_kind"]
+          legal_name?: string | null
+          tax_id?: string | null
+          contact_person?: string | null
+          address?: string | null
           blocked_at?: string | null
           blocked_reason?: string | null
           created_at?: string
@@ -3498,6 +3513,10 @@ export type Database = {
       }
       business_profile: {
         Row: {
+          trade_name: string | null
+          legal_name: string | null
+          website: string | null
+          header_image_path: string | null
           address: string | null
           email: string | null
           id: boolean
@@ -3509,6 +3528,10 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          trade_name?: string | null
+          legal_name?: string | null
+          website?: string | null
+          header_image_path?: string | null
           address?: string | null
           email?: string | null
           id?: boolean
@@ -3520,6 +3543,10 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          trade_name?: string | null
+          legal_name?: string | null
+          website?: string | null
+          header_image_path?: string | null
           address?: string | null
           email?: string | null
           id?: boolean
@@ -3536,6 +3563,82 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_settings: {
+        Row: {
+          default_currencies: Database["public"]["Enums"]["quote_currencies"]
+          default_terms: string
+          default_usd_price_method_id: string | null
+          default_ves_price_method_id: string | null
+          id: boolean
+          igtf_note: string
+          igtf_note_default: boolean
+          next_number: number
+          number_padding: number
+          number_prefix: string
+          updated_at: string
+          updated_by: string | null
+          validity_days: number
+          vat_default_enabled: boolean
+          vat_percent: number
+        }
+        Insert: {
+          default_currencies?: Database["public"]["Enums"]["quote_currencies"]
+          default_terms?: string
+          default_usd_price_method_id?: string | null
+          default_ves_price_method_id?: string | null
+          id?: boolean
+          igtf_note?: string
+          igtf_note_default?: boolean
+          next_number?: number
+          number_padding?: number
+          number_prefix?: string
+          updated_at?: string
+          updated_by?: string | null
+          validity_days?: number
+          vat_default_enabled?: boolean
+          vat_percent?: number
+        }
+        Update: {
+          default_currencies?: Database["public"]["Enums"]["quote_currencies"]
+          default_terms?: string
+          default_usd_price_method_id?: string | null
+          default_ves_price_method_id?: string | null
+          id?: boolean
+          igtf_note?: string
+          igtf_note_default?: boolean
+          next_number?: number
+          number_padding?: number
+          number_prefix?: string
+          updated_at?: string
+          updated_by?: string | null
+          validity_days?: number
+          vat_default_enabled?: boolean
+          vat_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_settings_default_usd_price_method_id_fkey"
+            columns: ["default_usd_price_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_settings_default_ves_price_method_id_fkey"
+            columns: ["default_ves_price_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
             referencedColumns: ["id"]
           },
         ]
@@ -4121,6 +4224,8 @@ export type Database = {
       }
     }
     Enums: {
+      quote_currencies: "usd" | "ves" | "both"
+      customer_kind: "person" | "company"
       message_status: "opened" | "queued" | "sent" | "delivered" | "read" | "failed"
       message_channel: "wa_link" | "wa_api"
       message_kind: "sale_note" | "payment_reminder" | "order_confirmed" | "order_ready" | "order_cancelled"
@@ -4199,6 +4304,8 @@ export type Enums<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"]
 export const Constants = {
   public: {
     Enums: {
+      quote_currencies: ["usd", "ves", "both"],
+      customer_kind: ["person", "company"],
       message_status: ["opened", "queued", "sent", "delivered", "read", "failed"],
       message_channel: ["wa_link", "wa_api"],
       message_kind: ["sale_note", "payment_reminder", "order_confirmed", "order_ready", "order_cancelled"],

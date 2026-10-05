@@ -333,9 +333,10 @@ export const HELP_TOPICS = {
       {
         heading: "Qué puedes hacer",
         items: [
-          "Buscar por nombre, teléfono, correo o Instagram.",
-          "Crear un cliente: nombre y al menos un teléfono, correo o Instagram.",
-          "Si el contacto ya existe, se te ofrece abrir ese cliente en vez de duplicarlo.",
+          "Buscar por nombre, razón social, RIF, teléfono, correo o Instagram.",
+          "Crear una persona: nombre y al menos un teléfono, correo o Instagram.",
+          "Crear una empresa (restaurante, escuela, hotel): basta con la razón social. RIF, persona de contacto, teléfono y dirección son opcionales.",
+          "Si el contacto o el RIF ya existen, se te ofrece abrir ese cliente en vez de duplicarlo.",
         ],
       },
       {
@@ -357,7 +358,7 @@ export const HELP_TOPICS = {
         heading: "Qué puedes hacer",
         items: [
           "Llamar, escribir por WhatsApp o abrir su Instagram.",
-          "Editar sus datos.",
+          "Editar sus datos. Una empresa muestra también su razón social, RIF y persona de contacto (el RIF lo ve todo el equipo; la cédula de una persona, solo owner y admin).",
           "Desactivarlo (owner y admin). Los clientes no se borran porque tienen ventas.",
         ],
       },
@@ -996,14 +997,16 @@ export const HELP_TOPICS = {
   },
 
   businessProfile: {
-    title: "Datos del negocio",
+    title: "Datos de la empresa",
     chapter: "configuracion",
-    summary: "El contacto que ven los clientes: correo, teléfono, WhatsApp, Instagram, dirección y RIF. Solo owner y admin.",
+    summary:
+      "Lo que ven los clientes: imagen del encabezado, nombre comercial, razón social, RIF, contacto, web y dirección. Solo owner y admin.",
     sections: [
       {
         heading: "Dónde sale",
         items: [
-          "En el encabezado de la nota de entrega. Lo que quede vacío no se muestra.",
+          "En el encabezado de los presupuestos y de la nota de entrega. Lo que quede vacío no se muestra.",
+          "La imagen del encabezado (PNG o JPG de hasta 2 MB) va arriba a la izquierda de los presupuestos. Sin imagen, se usa el logo de la marca.",
           "Los teléfonos se escriben como quieras (0414-123.45.67) y se guardan siempre igual.",
         ],
       },
@@ -1013,6 +1016,33 @@ export const HELP_TOPICS = {
           "Cambiar el correo de contacto no cambia el remitente de los correos del sistema (códigos de acceso y avisos): ese va en la configuración del servidor.",
           "Si pones un correo @tuestuchef.com, debe existir para recibir (reenvío en Cloudflare).",
         ],
+      },
+    ],
+  },
+
+  quoteSettings: {
+    title: "Configuración de presupuestos",
+    chapter: "configuracion",
+    summary: "Numeración, vigencia, listas de precios, IVA y condiciones por defecto de los presupuestos. Solo owner y admin.",
+    sections: [
+      {
+        heading: "Numeración",
+        items: [
+          "Prefijo y dígitos: TLT + 5 dígitos da TLT00001.",
+          "El siguiente número solo puede subir: así nunca se repite uno ya emitido.",
+        ],
+      },
+      {
+        heading: "Precios e impuestos",
+        items: [
+          "Cada presupuesto usa la lista de precios de un método de pago. Aquí eliges la de USD y la de Bs que vienen marcadas.",
+          "Si se muestran ambas monedas, cada una sale de su lista: el monto en Bs usa el precio del método en Bs a la tasa BCV de la fecha.",
+          "El IVA se suma al total cuando se marca; aquí van la tasa y si viene marcado. La nota de IGTF es solo texto.",
+        ],
+      },
+      {
+        heading: "Condiciones",
+        items: ["El texto por defecto (vigencia, entrega, abono, métodos de pago, personalización) se puede ajustar en cada presupuesto."],
       },
     ],
   },

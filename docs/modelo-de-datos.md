@@ -381,10 +381,15 @@ Migración: `20261008000000_dashboard.sql`. Pruebas: `src/common/lib/db/tests/da
 - `log_outbound_message`: lo usan todos los roles (el recordatorio de pago, solo owner y admin); la plantilla debe estar prendida y el cliente sale de la venta. `set_outbound_message_status`: solo el servidor con la clave de servicio (para los webhooks de la API).
 - **Envío**: el servidor arma el texto desde la base (nunca desde el navegador), lo registra y el proveedor devuelve el enlace wa.me (`whatsapp-provider.service`). Con la API de WhatsApp Business se agrega otro proveedor que envía directo, sin cambiar las pantallas.
 
-## 16. Datos del negocio
+## 16. Datos de la empresa
 
-- **`business_profile`** (una fila): correo, teléfono y WhatsApp (E.164), Instagram (usuario sin @), dirección y RIF (letra + números). Todos leen (staff imprime la nota de entrega); owner y admin editan (`set_settings_audit`). Antes estaba en `brand.config.ts`, que queda solo para nombre, logos y tipografías.
+- **`business_profile`** (una fila): nombre comercial, razón social, RIF (letra + números), correo, teléfono y WhatsApp (E.164), Instagram (usuario sin @), sitio web (`https://`), dirección e imagen del encabezado (ruta `brand/header/<uuid>.png|jpg` en el bucket público). Todos leen (staff imprime notas y presupuestos); owner y admin editan (`set_settings_audit`). Antes estaba en `brand.config.ts`, que queda solo para nombre, logos y tipografías. Pantalla: Configuración → Datos de la empresa (`/configuracion/empresa`; `/configuracion/negocio` redirige).
 - Los remitentes de correo (`AUTH_EMAIL_FROM`, `NOTIFICATIONS_EMAIL_FROM`) y `VAPID_SUBJECT` siguen en variables de entorno.
+
+## 17. Presupuestos (en construcción)
+
+- **Clientes persona o empresa** (`customers.kind`): una empresa solo exige la razón social (`legal_name`); su RIF (`tax_id`, único) lo ve todo el equipo porque va en los presupuestos, y tiene persona de contacto. Una persona sigue con nombre y al menos un contacto, y su cédula en `customer_private` (solo owner y admin). `address` sirve para ambos. En una empresa, `first_name` es el nombre con el que se la conoce (o la razón social).
+- **`quote_settings`** (una fila): prefijo y dígitos de la numeración (TLT00001) y el siguiente número, que solo sube; vigencia por defecto (7 días); monedas por defecto (USD, Bs o ambas); lista de precios por defecto de un método en USD y de uno en Bs (cada moneda sale de su propia lista); IVA (tasa, inicial 16%, y si viene marcado: se suma al total); nota de IGTF (solo texto); condiciones por defecto. Todos leen; owner y admin editan.
 
 ## Relaciones
 
@@ -471,3 +476,4 @@ no cuenta:           capital_contribution, traspasos
 | 2026-10-14 | Fase 3 · WhatsApp: cinco plantillas editables con datos entre llaves; enlaces wa.me con vista previa editable; registro de cada mensaje con canal, estado e id de proveedor listo para la API de WhatsApp Business; reembolso en el mensaje en la moneda de cada pago |
 | 2026-10-15 | Respaldos: volcado nocturno de producción (roles, esquema y datos con usuarios) con GitHub Actions, cifrado AES-256 con frase de paso y subido a un bucket R2 propio con token aparte; 30 días; restauración solo en un proyecto nuevo, con el ref como confirmación |
 | 2026-10-16 | Datos del negocio: el contacto de recibos pasa de brand.config.ts a la tabla business_profile, editable por owner y admin; los remitentes de correo siguen en variables de entorno |
+| 2026-10-17 | Presupuestos, paso 1: clientes persona o empresa (empresa: solo razón social; RIF visible al equipo); Datos de la empresa con imagen de encabezado en el bucket público; configuración de presupuestos con numeración TLT que solo sube, listas de precios por moneda, IVA opcional sobre el total e IGTF como nota |

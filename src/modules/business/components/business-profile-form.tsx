@@ -7,11 +7,10 @@ import { Input } from "@/common/components/ui/input"
 import { Textarea } from "@/common/components/ui/textarea"
 import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
 import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
-import { formatPhone } from "@/modules/customers/lib/utils/normalize-contact.util"
+import { formatPhone, formatTaxId } from "@/modules/customers/lib/utils/normalize-contact.util"
 
 import { saveBusinessProfileAction } from "../lib/actions/business-profile.action"
 import type { BusinessProfile } from "../lib/types/business.types"
-import { formatTaxId } from "../lib/utils/format-tax-id.util"
 
 const BusinessProfileForm = ({ profile }: { profile: BusinessProfile }) => {
   const { state, onSubmit, pending } = useFormAction(saveBusinessProfileAction)
@@ -21,6 +20,17 @@ const BusinessProfileForm = ({ profile }: { profile: BusinessProfile }) => {
   return (
     <form onSubmit={onSubmit} className="grid gap-4" noValidate>
       {state.status === "error" && state.message && <StatusAlert tone="error" title={state.message} />}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label="Nombre comercial" htmlFor="bp-trade-name" error={errors.trade_name} optional>
+          <Input id="bp-trade-name" name="trade_name" defaultValue={profile.tradeName ?? ""} className="h-11 md:h-9" />
+        </FormField>
+        <FormField label="RIF" htmlFor="bp-tax-id" error={errors.tax_id} optional>
+          <Input id="bp-tax-id" name="tax_id" placeholder="J-12345678-9" defaultValue={profile.taxId ? formatTaxId(profile.taxId) : ""} className="h-11 md:h-9" />
+        </FormField>
+      </div>
+      <FormField label="Razón social" htmlFor="bp-legal-name" error={errors.legal_name} optional>
+        <Input id="bp-legal-name" name="legal_name" defaultValue={profile.legalName ?? ""} className="h-11 md:h-9" />
+      </FormField>
       <FormField label="Correo de contacto" htmlFor="bp-email" error={errors.email} optional hint="El que ven los clientes. No cambia el remitente de los correos del sistema.">
         <Input id="bp-email" name="email" type="email" inputMode="email" autoComplete="off" defaultValue={profile.email ?? ""} className="h-11 md:h-9" />
       </FormField>
@@ -36,8 +46,8 @@ const BusinessProfileForm = ({ profile }: { profile: BusinessProfile }) => {
         <FormField label="Instagram" htmlFor="bp-instagram" error={errors.instagram} optional hint="Usuario o enlace del perfil.">
           <Input id="bp-instagram" name="instagram" placeholder="@tuestuchef" defaultValue={profile.instagram ? `@${profile.instagram}` : ""} className="h-11 md:h-9" />
         </FormField>
-        <FormField label="RIF" htmlFor="bp-tax-id" error={errors.tax_id} optional>
-          <Input id="bp-tax-id" name="tax_id" placeholder="J-12345678-9" defaultValue={profile.taxId ? formatTaxId(profile.taxId) : ""} className="h-11 md:h-9" />
+        <FormField label="Sitio web" htmlFor="bp-website" error={errors.website} optional>
+          <Input id="bp-website" name="website" inputMode="url" placeholder="tuestuchef.com" defaultValue={profile.website ?? ""} className="h-11 md:h-9" />
         </FormField>
       </div>
       <FormField label="Dirección" htmlFor="bp-address" error={errors.address} optional>

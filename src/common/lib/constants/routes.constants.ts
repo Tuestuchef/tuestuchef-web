@@ -58,7 +58,8 @@ export const ROUTES = {
   SETTINGS_PIECE_RATES: "/configuracion/tarifas",
   SETTINGS_NOTIFICATIONS: "/configuracion/avisos",
   SETTINGS_MESSAGES: "/configuracion/mensajes",
-  SETTINGS_BUSINESS: "/configuracion/negocio",
+  SETTINGS_BUSINESS: "/configuracion/empresa",
+  SETTINGS_QUOTES: "/configuracion/presupuestos",
 
   RECEIPT: (entryId: string) => `/api/receipts/${entryId}`,
   CUSTOMIZATION_LOGO: (customizationId: string) => `/api/logos/${customizationId}`,

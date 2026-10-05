@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useState } from "react"
 
 import ActiveSwitchField from "@/common/components/active-switch-field"
+import ChoiceChips from "@/common/components/choice-chips"
 import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import SubmitButton from "@/common/components/submit-button"
@@ -24,8 +25,14 @@ import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
 import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
 
 import { saveCustomerAction } from "../lib/actions/save-customer.action"
+import { CUSTOMER_KIND_LABELS } from "../lib/constants/customers.constants"
 import type { CustomerDetail } from "../lib/types/customers.types"
-import { formatPhone } from "../lib/utils/normalize-contact.util"
+import { formatPhone, formatTaxId } from "../lib/utils/normalize-contact.util"
+
+const KIND_OPTIONS = [
+  { value: "person", label: CUSTOMER_KIND_LABELS.person },
+  { value: "company", label: CUSTOMER_KIND_LABELS.company },
+] as const
 
 type CustomerFormDialogProps = {
   customer?: CustomerDetail
@@ -35,9 +42,11 @@ type CustomerFormDialogProps = {
   trigger?: React.ReactNode
 }
 
-// Crear o editar un cliente. Solo el nombre y un medio de contacto son obligatorios.
+// Crear o editar un cliente. Persona: nombre y un medio de contacto. Empresa: solo la razón social.
 const CustomerFormDialog = ({ customer, canManage, onSaved, trigger }: CustomerFormDialogProps) => {
   const [open, setOpen] = useState(false)
+  const [kind, setKind] = useState<"person" | "company">(customer?.kind ?? "person")
+  const isCompany = kind === "company"
   const { state, onSubmit, pending } = useFormAction(saveCustomerAction)
   useActionFeedback(state, () => {
     setOpen(false)
@@ -65,10 +74,14 @@ const CustomerFormDialog = ({ customer, canManage, onSaved, trigger }: CustomerF
       <DialogContent className="max-h-[90svh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{customer ? "Editar cliente" : "Nuevo cliente"}</DialogTitle>
-          <DialogDescription>Nombre y al menos un teléfono, correo o Instagram.</DialogDescription>
+          <DialogDescription>
+            {isCompany ? "Para una empresa basta con la razón social." : "Nombre y al menos un teléfono, correo o Instagram."}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="grid gap-4" noValidate>
           {customer && <input type="hidden" name="id" value={customer.id} />}
+          <input type="hidden" name="kind" value={kind} />
+          <ChoiceChips label="Tipo de cliente" options={KIND_OPTIONS} value={kind} onChange={(value) => setKind(value as typeof kind)} />
 
           {duplicate ? (
             <StatusAlert tone="warning" title={state.message ?? "Ese cliente ya existe."}>
@@ -100,28 +113,55 @@ const CustomerFormDialog = ({ customer, canManage, onSaved, trigger }: CustomerF
             state.status === "error" && state.message && <StatusAlert tone="error" title={state.message} />
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FormField label="Nombre" htmlFor="customer-first-name" error={errors.first_name}>
-              <Input
-                id="customer-first-name"
-                name="first_name"
-                autoComplete="off"
-                defaultValue={customer?.first_name}
-                className="h-11 md:h-9"
-              />
-            </FormField>
-            <FormField label="Apellido" htmlFor="customer-last-name" error={errors.last_name} optional>
-              <Input
-                id="customer-last-name"
-                name="last_name"
-                autoComplete="off"
-                defaultValue={customer?.last_name ?? ""}
-                className="h-11 md:h-9"
-              />
-            </FormField>
-          </div>
+          {isCompany ? (
+            <>
+              <FormField label="Razón social" htmlFor="customer-legal-name" error={errors.legal_name} hint="Como aparece en su RIF.">
+                <Input id="customer-legal-name" name="legal_name" autoComplete="off" defaultValue={customer?.legal_name ?? ""} className="h-11 md:h-9" />
+              </FormField>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField label="Nombre comercial" htmlFor="customer-first-name" error={errors.first_name} optional hint="Como lo conocen. Si no, se usa la razón social.">
+                  <Input id="customer-first-name" name="first_name" autoComplete="off" defaultValue={customer?.kind === "company" ? customer.first_name : ""} className="h-11 md:h-9" />
+                </FormField>
+                <FormField label="RIF" htmlFor="customer-tax-id" error={errors.tax_id} optional>
+                  <Input
+                    id="customer-tax-id"
+                    name="tax_id"
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    placeholder="J-12345678-9"
+                    defaultValue={customer?.tax_id ? formatTaxId(customer.tax_id) : ""}
+                    className="h-11 md:h-9"
+                  />
+                </FormField>
+              </div>
+              <FormField label="Persona de contacto" htmlFor="customer-contact-person" error={errors.contact_person} optional>
+                <Input id="customer-contact-person" name="contact_person" autoComplete="off" defaultValue={customer?.contact_person ?? ""} className="h-11 md:h-9" />
+              </FormField>
+            </>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField label="Nombre" htmlFor="customer-first-name" error={errors.first_name}>
+                <Input
+                  id="customer-first-name"
+                  name="first_name"
+                  autoComplete="off"
+                  defaultValue={customer?.kind === "person" ? customer.first_name : ""}
+                  className="h-11 md:h-9"
+                />
+              </FormField>
+              <FormField label="Apellido" htmlFor="customer-last-name" error={errors.last_name} optional>
+                <Input
+                  id="customer-last-name"
+                  name="last_name"
+                  autoComplete="off"
+                  defaultValue={customer?.last_name ?? ""}
+                  className="h-11 md:h-9"
+                />
+              </FormField>
+            </div>
+          )}
 
-          <FormField label="Teléfono" htmlFor="customer-phone" error={errors.phone} hint="Ej.: 0414-123.45.67">
+          <FormField label="Teléfono" htmlFor="customer-phone" error={errors.phone} optional={isCompany} hint="Ej.: 0414-123.45.67">
             <Input
               id="customer-phone"
               name="phone"
@@ -133,7 +173,7 @@ const CustomerFormDialog = ({ customer, canManage, onSaved, trigger }: CustomerF
             />
           </FormField>
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField label="Correo" htmlFor="customer-email" error={errors.email}>
+            <FormField label="Correo" htmlFor="customer-email" error={errors.email} optional={isCompany}>
               <Input
                 id="customer-email"
                 name="email"
@@ -144,7 +184,7 @@ const CustomerFormDialog = ({ customer, canManage, onSaved, trigger }: CustomerF
                 className="h-11 md:h-9"
               />
             </FormField>
-            <FormField label="Instagram" htmlFor="customer-instagram" error={errors.instagram}>
+            <FormField label="Instagram" htmlFor="customer-instagram" error={errors.instagram} optional={isCompany}>
               <Input
                 id="customer-instagram"
                 name="instagram"
@@ -157,25 +197,31 @@ const CustomerFormDialog = ({ customer, canManage, onSaved, trigger }: CustomerF
             </FormField>
           </div>
 
-          <FormField
-            label="Cédula"
-            htmlFor="customer-id-document"
-            error={errors.id_document}
-            optional
-            hint={
-              customer?.has_id_document && !canManage
-                ? "Ya tiene cédula registrada. Escribe otra solo para corregirla."
-                : "Ej.: V-12.345.678. Solo owner y admin pueden verla."
-            }
-          >
-            <Input
-              id="customer-id-document"
-              name="id_document"
-              autoComplete="off"
-              autoCapitalize="characters"
-              defaultValue={canManage ? (customer?.idDocument ?? "") : ""}
-              className="h-11 md:h-9"
-            />
+          {!isCompany && (
+            <FormField
+              label="Cédula"
+              htmlFor="customer-id-document"
+              error={errors.id_document}
+              optional
+              hint={
+                customer?.has_id_document && !canManage
+                  ? "Ya tiene cédula registrada. Escribe otra solo para corregirla."
+                  : "Ej.: V-12.345.678. Solo owner y admin pueden verla."
+              }
+            >
+              <Input
+                id="customer-id-document"
+                name="id_document"
+                autoComplete="off"
+                autoCapitalize="characters"
+                defaultValue={canManage ? (customer?.idDocument ?? "") : ""}
+                className="h-11 md:h-9"
+              />
+            </FormField>
+          )}
+
+          <FormField label="Dirección" htmlFor="customer-address" error={errors.address} optional>
+            <Input id="customer-address" name="address" autoComplete="off" defaultValue={customer?.address ?? ""} className="h-11 md:h-9" />
           </FormField>
 
           <FormField label="Notas" htmlFor="customer-notes" error={errors.notes} optional>

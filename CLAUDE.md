@@ -34,7 +34,7 @@ El sistema se construye en blanco y negro, pero la marca se aplicará más adela
 
 - **Sin colores fijos.** Prohibido usar colores directos (`bg-black`, `text-[#333]`, hex en componentes). Todo va por tokens semánticos de shadcn (`bg-background`, `text-foreground`, `bg-primary`, `border`, etc.), definidos como variables CSS en un solo archivo (`globals.css`).
 - **Tema en escala de grises ahora.** Las variables (`--primary`, `--accent`, `--ring`, `--chart-1..5`, `--sidebar-*`) se definen en grises. Para aplicar la marca solo se cambian esos valores.
-- **Configuración de marca centralizada** en `src/common/lib/config/brand.config.ts`: nombre comercial, eslogan, rutas de logo (completo, isotipo, versión clara y oscura), favicon y tipografías. Los datos de contacto para recibos y correos (correo, teléfono, WhatsApp, Instagram, dirección, RIF) viven en la base (`business_profile`) y owner/admin los editan en Configuración → Datos del negocio.
+- **Configuración de marca centralizada** en `src/common/lib/config/brand.config.ts`: nombre comercial, eslogan, rutas de logo (completo, isotipo, versión clara y oscura), favicon y tipografías. Los datos de contacto para recibos y correos (correo, teléfono, WhatsApp, Instagram, dirección, RIF) viven en la base (`business_profile`) y owner/admin los editan en Configuración → Datos de la empresa.
 - **Placeholders de logo:**
   - Componente `BrandLogo` en `src/common/components/` con variantes (`full`, `icon`) que lee `brand.config.ts`.
   - Mientras no exista logo, muestra un placeholder (monograma o iniciales sobre un recuadro gris).

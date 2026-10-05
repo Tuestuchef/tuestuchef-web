@@ -8,7 +8,8 @@ import type { ContactField, ContactInput, DuplicateCustomer } from "../types/cus
 
 type Client = SupabaseClient<Database>
 
-const CONTACT_FIELDS: readonly ContactField[] = ["phone", "email", "instagram"]
+// Datos que identifican a un cliente: no se repiten entre clientes.
+const CONTACT_FIELDS: readonly ContactField[] = ["phone", "email", "instagram", "tax_id"]
 
 // Los valores llegan normalizados (sin comas ni paréntesis); las comillas los protegen en el filtro.
 const contactFilter = (contact: ContactInput) =>
@@ -25,7 +26,7 @@ export async function findCustomersByContact(
   const filter = contactFilter(contact)
   if (!filter) return []
 
-  let query = client.from("customers").select("id, first_name, last_name, phone, email, instagram").or(filter)
+  let query = client.from("customers").select("id, first_name, last_name, phone, email, instagram, tax_id").or(filter)
   if (excludeId) query = query.neq("id", excludeId)
   const { data, error } = await query
   if (error) throw error

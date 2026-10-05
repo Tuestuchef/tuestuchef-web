@@ -1,4 +1,15 @@
-import { AtSignIcon, ChevronLeftIcon, IdCardIcon, MailIcon, MessageCircleIcon, PhoneIcon } from "lucide-react"
+import {
+  AtSignIcon,
+  Building2Icon,
+  ChevronLeftIcon,
+  FileTextIcon,
+  IdCardIcon,
+  MailIcon,
+  MapPinIcon,
+  MessageCircleIcon,
+  PhoneIcon,
+  UserRoundIcon,
+} from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
@@ -18,7 +29,7 @@ import { listSales } from "@/modules/sales/lib/services/sales.service"
 import CustomerBlockDialog from "../components/customer-block-dialog"
 import CustomerFormDialog from "../components/customer-form-dialog"
 import { getCustomer, listCustomerBlockEvents } from "../lib/services/customers.service"
-import { formatPhone, whatsappUrl } from "../lib/utils/normalize-contact.util"
+import { formatPhone, formatTaxId, whatsappUrl } from "../lib/utils/normalize-contact.util"
 
 const Row = ({ icon: Icon, label, children }: { icon: typeof PhoneIcon; label: string; children: React.ReactNode }) => (
   <div className="flex items-start gap-3 py-2.5">
@@ -56,6 +67,7 @@ const CustomerDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
         description={
           <span className="flex flex-wrap items-center gap-1.5">
             Cliente desde {formatDate(customer.created_at)}
+            {customer.kind === "company" && <StatusBadge tone="info">Empresa</StatusBadge>}
             {!customer.is_active && <StatusBadge tone="info">Inactivo</StatusBadge>}
             {customer.blocked_at && <StatusBadge tone="error">Bloqueado</StatusBadge>}
           </span>
@@ -88,6 +100,21 @@ const CustomerDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
 
       <Card>
         <CardContent className="divide-y">
+          {customer.kind === "company" && (
+            <>
+              <Row icon={Building2Icon} label="Razón social">
+                {customer.legal_name}
+              </Row>
+              <Row icon={FileTextIcon} label="RIF">
+                {customer.tax_id ? formatTaxId(customer.tax_id) : <span className="text-muted-foreground">No registrado</span>}
+              </Row>
+              {customer.contact_person && (
+                <Row icon={UserRoundIcon} label="Persona de contacto">
+                  {customer.contact_person}
+                </Row>
+              )}
+            </>
+          )}
           {customer.phone && (
             <Row icon={PhoneIcon} label="Teléfono">
               <span className="flex flex-wrap items-center gap-2">
@@ -122,15 +149,22 @@ const CustomerDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
               </a>
             </Row>
           )}
-          <Row icon={IdCardIcon} label="Cédula">
-            {canManage ? (
-              (customer.idDocument ?? <span className="text-muted-foreground">No registrada</span>)
-            ) : customer.has_id_document ? (
-              <StatusBadge tone="success">Registrada</StatusBadge>
-            ) : (
-              <span className="text-muted-foreground">No registrada</span>
-            )}
-          </Row>
+          {customer.kind === "person" && (
+            <Row icon={IdCardIcon} label="Cédula">
+              {canManage ? (
+                (customer.idDocument ?? <span className="text-muted-foreground">No registrada</span>)
+              ) : customer.has_id_document ? (
+                <StatusBadge tone="success">Registrada</StatusBadge>
+              ) : (
+                <span className="text-muted-foreground">No registrada</span>
+              )}
+            </Row>
+          )}
+          {customer.address && (
+            <Row icon={MapPinIcon} label="Dirección">
+              {customer.address}
+            </Row>
+          )}
           {customer.notes && <p className="py-2.5 text-sm whitespace-pre-line">{customer.notes}</p>}
         </CardContent>
       </Card>
