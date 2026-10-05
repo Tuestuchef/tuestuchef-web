@@ -995,6 +995,28 @@ export const HELP_TOPICS = {
     ],
   },
 
+  businessProfile: {
+    title: "Datos del negocio",
+    chapter: "configuracion",
+    summary: "El contacto que ven los clientes: correo, teléfono, WhatsApp, Instagram, dirección y RIF. Solo owner y admin.",
+    sections: [
+      {
+        heading: "Dónde sale",
+        items: [
+          "En el encabezado de la nota de entrega. Lo que quede vacío no se muestra.",
+          "Los teléfonos se escriben como quieras (0414-123.45.67) y se guardan siempre igual.",
+        ],
+      },
+      {
+        heading: "Recuerda",
+        items: [
+          "Cambiar el correo de contacto no cambia el remitente de los correos del sistema (códigos de acceso y avisos): ese va en la configuración del servidor.",
+          "Si pones un correo @tuestuchef.com, debe existir para recibir (reenvío en Cloudflare).",
+        ],
+      },
+    ],
+  },
+
   messageTemplates: {
     title: "Mensajes de WhatsApp",
     chapter: "configuracion",

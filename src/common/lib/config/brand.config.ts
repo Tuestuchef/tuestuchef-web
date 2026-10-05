@@ -43,15 +43,8 @@ export const brandConfig = {
     heading: "Geist",
   },
 
-  // Datos para recibos y correos. Completar con los datos reales.
-  contact: {
-    email: "",
-    phone: "",
-    whatsapp: "",
-    instagram: "",
-    address: "",
-    taxId: "",
-  },
+  // El contacto (correo, teléfono, RIF…) no va aquí: owner y admin lo editan en
+  // Configuración → Datos del negocio (tabla business_profile).
 } as const
 
 export type BrandConfig = typeof brandConfig

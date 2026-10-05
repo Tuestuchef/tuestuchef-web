@@ -34,6 +34,7 @@ export const SETTINGS_CHAPTER: ManualChapter = {
   roles: ROLE_GROUPS.MANAGEMENT,
   screens: [
     { title: "Usuarios", url: ROUTES.SETTINGS_USERS, roles: ROLE_GROUPS.MANAGEMENT },
+    { title: "Datos del negocio", url: ROUTES.SETTINGS_BUSINESS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Reglas de venta", url: ROUTES.SETTINGS_SALES, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Pedidos y personalización", url: ROUTES.SETTINGS_ORDERS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Avisos", url: ROUTES.SETTINGS_NOTIFICATIONS, roles: ROLE_GROUPS.MANAGEMENT },
@@ -90,6 +91,24 @@ export const SETTINGS_CHAPTER: ManualChapter = {
             { icon: CalendarClockIcon, title: "Sesión de 30 días", effect: "En cada dispositivo; después se pide el código otra vez." },
             { icon: UserXIcon, title: "Desactivar, no borrar", effect: "Un usuario desactivado no puede pedir ni usar códigos." },
           ],
+        },
+      ],
+    },
+    {
+      id: "negocio",
+      heading: "Datos del negocio",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "En **Configuración → Datos del negocio** van el correo, teléfono, WhatsApp, Instagram, dirección y RIF que ven los clientes. Salen en el encabezado de la **nota de entrega**; lo que quede vacío no se muestra.",
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "El correo de contacto no es el remitente",
+          body:
+            "Cambiarlo no afecta los códigos de acceso ni los avisos: esos salen de un remitente fijo en la configuración del servidor. Si pones un correo @tuestuchef.com, créalo antes en el reenvío de Cloudflare para que llegue a una bandeja.",
         },
       ],
     },

@@ -381,6 +381,11 @@ Migración: `20261008000000_dashboard.sql`. Pruebas: `src/common/lib/db/tests/da
 - `log_outbound_message`: lo usan todos los roles (el recordatorio de pago, solo owner y admin); la plantilla debe estar prendida y el cliente sale de la venta. `set_outbound_message_status`: solo el servidor con la clave de servicio (para los webhooks de la API).
 - **Envío**: el servidor arma el texto desde la base (nunca desde el navegador), lo registra y el proveedor devuelve el enlace wa.me (`whatsapp-provider.service`). Con la API de WhatsApp Business se agrega otro proveedor que envía directo, sin cambiar las pantallas.
 
+## 16. Datos del negocio
+
+- **`business_profile`** (una fila): correo, teléfono y WhatsApp (E.164), Instagram (usuario sin @), dirección y RIF (letra + números). Todos leen (staff imprime la nota de entrega); owner y admin editan (`set_settings_audit`). Antes estaba en `brand.config.ts`, que queda solo para nombre, logos y tipografías.
+- Los remitentes de correo (`AUTH_EMAIL_FROM`, `NOTIFICATIONS_EMAIL_FROM`) y `VAPID_SUBJECT` siguen en variables de entorno.
+
 ## Relaciones
 
 ```
@@ -465,3 +470,4 @@ no cuenta:           capital_contribution, traspasos
 | 2026-10-13 | Fase 3 · sin conexión: solo Nueva venta funciona sin señal; cola en el teléfono con `client_ref` para no duplicar; al enviarse se revisan todas las reglas con la hora real y lo que no pasa queda en Ventas pendientes para reintentar o descartar |
 | 2026-10-14 | Fase 3 · WhatsApp: cinco plantillas editables con datos entre llaves; enlaces wa.me con vista previa editable; registro de cada mensaje con canal, estado e id de proveedor listo para la API de WhatsApp Business; reembolso en el mensaje en la moneda de cada pago |
 | 2026-10-15 | Respaldos: volcado nocturno de producción (roles, esquema y datos con usuarios) con GitHub Actions, cifrado AES-256 con frase de paso y subido a un bucket R2 propio con token aparte; 30 días; restauración solo en un proyecto nuevo, con el ref como confirmación |
+| 2026-10-16 | Datos del negocio: el contacto de recibos pasa de brand.config.ts a la tabla business_profile, editable por owner y admin; los remitentes de correo siguen en variables de entorno |

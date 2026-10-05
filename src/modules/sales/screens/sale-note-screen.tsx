@@ -8,6 +8,9 @@ import { brandConfig } from "@/common/lib/config/brand.config"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatDate } from "@/common/lib/utils/format-date.util"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
+import { getBusinessProfile } from "@/modules/business/lib/services/business-profile.service"
+import { formatTaxId } from "@/modules/business/lib/utils/format-tax-id.util"
+import { formatPhone } from "@/modules/customers/lib/utils/normalize-contact.util"
 
 import PrintButton from "../components/print-button"
 import { formatSaleNumber, ITEM_STATUS_LABELS } from "../lib/constants/sales.constants"
@@ -16,11 +19,16 @@ import { getSaleDetail } from "../lib/services/sales.service"
 const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3 })
 const usd = (value: number) => formatMoney(value, "USD")
 
-// Nota de entrega imprimible (no es factura fiscal). Usa la marca de brand.config.
+// Nota de entrega imprimible (no es factura fiscal). Marca de brand.config; contacto de Datos del negocio.
 const SaleNoteScreen = async ({ id }: { id: string }) => {
-  const sale = await getSaleDetail(id)
+  const [sale, business] = await Promise.all([getSaleDetail(id), getBusinessProfile()])
   if (!sale) notFound()
-  const { contact } = brandConfig
+  const contactLine = [
+    business.phone && formatPhone(business.phone),
+    business.whatsapp && business.whatsapp !== business.phone && `WhatsApp ${formatPhone(business.whatsapp)}`,
+    business.email,
+    business.instagram && `@${business.instagram}`,
+  ].filter(Boolean)
 
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-4">
@@ -39,9 +47,9 @@ const SaleNoteScreen = async ({ id }: { id: string }) => {
           <div className="grid gap-1">
             <BrandLogo variant="full" />
             <p className="text-xs text-muted-foreground">{brandConfig.slogan}</p>
-            {(contact.phone || contact.email) && (
-              <p className="text-xs text-muted-foreground">{[contact.phone, contact.email].filter(Boolean).join(" · ")}</p>
-            )}
+            {contactLine.length > 0 && <p className="text-xs text-muted-foreground">{contactLine.join(" · ")}</p>}
+            {business.address && <p className="text-xs text-muted-foreground">{business.address}</p>}
+            {business.taxId && <p className="text-xs text-muted-foreground">RIF {formatTaxId(business.taxId)}</p>}
           </div>
           <div className="grid justify-items-end gap-0.5 text-right">
             <span className="text-sm font-semibold">Nota de entrega</span>

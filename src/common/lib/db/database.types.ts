@@ -3496,6 +3496,50 @@ export type Database = {
           },
         ]
       }
+      business_profile: {
+        Row: {
+          address: string | null
+          email: string | null
+          id: boolean
+          instagram: string | null
+          phone: string | null
+          tax_id: string | null
+          updated_at: string
+          updated_by: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          email?: string | null
+          id?: boolean
+          instagram?: string | null
+          phone?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          email?: string | null
+          id?: boolean
+          instagram?: string | null
+          phone?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_profile_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       current_salary_agreements: {
