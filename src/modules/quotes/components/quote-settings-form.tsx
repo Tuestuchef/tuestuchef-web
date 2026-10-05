@@ -99,11 +99,11 @@ const QuoteSettingsForm = ({ settings, priceLists }: QuoteSettingsFormProps) => 
           <ChoiceChips label="Monedas por defecto" options={CURRENCY_OPTIONS} value={currencies} onChange={(v) => setCurrencies(v as QuoteCurrencies)} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="Lista de precios en USD" htmlFor="qs-usd-list" error={errors.default_usd_price_method_id} hint="Precios de un método de pago en dólares.">
+          <FormField label="Lista de precios en USD" htmlFor="qs-usd-list" error={errors.default_usd_price_method_id} hint="Un método que cobra en divisas (efectivo, Zelle, USDT).">
             <input type="hidden" name="default_usd_price_method_id" value={usdList === NONE ? "" : usdList} />
             {listSelect("qs-usd-list", usdList, setUsdList, "USD")}
           </FormField>
-          <FormField label="Lista de precios en Bs" htmlFor="qs-ves-list" error={errors.default_ves_price_method_id} hint="Precios de un método en Bs, a la tasa BCV de la fecha.">
+          <FormField label="Lista de precios en Bs" htmlFor="qs-ves-list" error={errors.default_ves_price_method_id} hint="Un método que cobra en Bs (pago móvil), a la tasa BCV del día.">
             <input type="hidden" name="default_ves_price_method_id" value={vesList === NONE ? "" : vesList} />
             {listSelect("qs-ves-list", vesList, setVesList, "VES")}
           </FormField>

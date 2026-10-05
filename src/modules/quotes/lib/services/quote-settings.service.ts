@@ -32,17 +32,18 @@ export const getQuoteSettings = cache(async (): Promise<QuoteSettings> => {
   }
 })
 
-// Métodos de pago activos: cada uno es una lista de precios en su moneda.
+// Métodos de pago activos: cada uno es una lista de precios. Todos los precios están en USD; la
+// moneda de la lista es la que cobra el método: con tasa BCV cobra en Bs, sin tasa en divisas.
 export async function listPriceLists(): Promise<PriceListOption[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("payment_methods")
-    .select("id, name, price_currency")
+    .select("id, name, rate_kind")
     .eq("is_active", true)
     .order("sort_order")
     .order("name")
   if (error) throw error
-  return data.map((m) => ({ id: m.id, name: m.name, currency: m.price_currency }))
+  return data.map((m) => ({ id: m.id, name: m.name, currency: m.rate_kind === "none" ? "USD" : "VES" }))
 }
 
 export async function updateQuoteSettings(input: QuoteSettingsInput) {

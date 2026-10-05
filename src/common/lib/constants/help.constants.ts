@@ -1076,7 +1076,8 @@ export const HELP_TOPICS = {
       {
         heading: "PDF",
         items: [
-          "Vista previa del PDF y Descargar PDF: el mismo documento que recibe el cliente.",
+          "Abrir PDF: lo muestra completo sin descargarlo (en el teléfono, con su visor). En computadora también hay vista previa dentro de la página.",
+          "Descargar PDF: guarda el archivo. Es el mismo documento que recibe el cliente.",
           "En borrador el PDF lleva la marca \"BORRADOR\". Al enviarlo se guarda el PDF oficial y ya no cambia.",
         ],
       },
@@ -1102,8 +1103,8 @@ export const HELP_TOPICS = {
       {
         heading: "Precios e impuestos",
         items: [
-          "Cada presupuesto usa la lista de precios de un método de pago. Aquí eliges la de USD y la de Bs que vienen marcadas.",
-          "Si se muestran ambas monedas, cada una sale de su lista: el monto en Bs usa el precio del método en Bs a la tasa BCV de la fecha.",
+          "Cada presupuesto usa la lista de precios de un método de pago. Aquí eliges las que vienen marcadas: la de USD es de un método que cobra en divisas (efectivo, Zelle, USDT) y la de Bs de uno que cobra en Bs (pago móvil).",
+          "Si se muestran ambas monedas, cada una sale de su lista: el monto en Bs usa el precio de esa lista a la tasa BCV del día.",
           "El IVA se suma al total cuando se marca; aquí van la tasa y si viene marcado. La nota de IGTF es solo texto.",
         ],
       },

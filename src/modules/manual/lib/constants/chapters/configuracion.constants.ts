@@ -124,7 +124,7 @@ export const SETTINGS_CHAPTER: ManualChapter = {
             { title: "Vigencia", body: "Días hasta el vencimiento que trae cada presupuesto (por defecto 7)." },
             {
               title: "Listas de precios",
-              body: "La de un método en USD y la de un método en Bs. Si un presupuesto muestra ambas monedas, cada una sale de su lista (Bs a la tasa BCV de la fecha), nunca una convertida de la otra.",
+              body: "La de USD es la de un método que cobra en divisas (efectivo, Zelle, USDT); la de Bs, la de uno que cobra en Bs (pago móvil). Si un presupuesto muestra ambas monedas, cada una sale de su lista (Bs a la tasa BCV del día), nunca una convertida de la otra.",
             },
             { title: "IVA e IGTF", body: "Tasa de IVA y si viene marcado (se suma al total). La nota de IGTF es solo texto." },
             { title: "Condiciones", body: "Texto por defecto de vigencia, entrega, abono, métodos de pago y personalización; cada presupuesto lo puede ajustar." },

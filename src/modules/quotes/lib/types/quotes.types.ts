@@ -25,8 +25,8 @@ export type QuoteSettings = {
   updatedByName: string | null
 }
 
-// Lista de precios = un método de pago con su moneda de precio.
-export type PriceListOption = { id: string; name: string; currency: "USD" | "VES" | "USDT" }
+// Lista de precios = un método de pago. currency: la moneda que cobra (Bs si tiene tasa BCV).
+export type PriceListOption = { id: string; name: string; currency: "USD" | "VES" }
 
 export type QuoteSettingsField =
   | "number_prefix"

@@ -62,7 +62,7 @@ beforeAll(async () => {
   ).id
   ids.mobile = (
     await one(
-      owner<{ id: string }>("insert into public.payment_methods (name, account_id, price_currency, rate_kind) values ('Pago móvil', $1, 'VES', 'bcv_usd') returning id", [ves.id])
+      owner<{ id: string }>("insert into public.payment_methods (name, account_id, price_currency, rate_kind) values ('Pago móvil', $1, 'USD', 'bcv_usd') returning id", [ves.id])
     )
   ).id
 

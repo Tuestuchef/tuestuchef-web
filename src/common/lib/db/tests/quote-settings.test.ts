@@ -25,7 +25,7 @@ beforeAll(async () => {
     await owner<{ id: string }>("insert into public.payment_methods (name, account_id, price_currency, rate_kind) values ('Efectivo', $1, 'USD', 'none') returning id", [usd.id])
   ).rows[0].id
   ids.mobile = (
-    await owner<{ id: string }>("insert into public.payment_methods (name, account_id, price_currency, rate_kind) values ('Pago móvil', $1, 'VES', 'bcv_usd') returning id", [ves.id])
+    await owner<{ id: string }>("insert into public.payment_methods (name, account_id, price_currency, rate_kind) values ('Pago móvil', $1, 'USD', 'bcv_usd') returning id", [ves.id])
   ).rows[0].id
 })
 
@@ -46,10 +46,10 @@ describe("configuración de presupuestos", () => {
     await expect(owner("update public.quote_settings set next_number = 100")).rejects.toThrow(/solo puede aumentar/)
   })
 
-  it("cada lista por defecto es de un método de su moneda", async () => {
+  it("la lista en USD es de un método sin tasa (divisas) y la de Bs de uno con tasa BCV", async () => {
     await owner("update public.quote_settings set default_usd_price_method_id = $1, default_ves_price_method_id = $2", [ids.cash, ids.mobile])
-    await expect(owner("update public.quote_settings set default_usd_price_method_id = $1", [ids.mobile])).rejects.toThrow(/dólares/)
-    await expect(owner("update public.quote_settings set default_ves_price_method_id = $1", [ids.cash])).rejects.toThrow(/bolívares/)
+    await expect(owner("update public.quote_settings set default_usd_price_method_id = $1", [ids.mobile])).rejects.toThrow(/cobra en divisas/)
+    await expect(owner("update public.quote_settings set default_ves_price_method_id = $1", [ids.cash])).rejects.toThrow(/cobra en Bs/)
   })
 
   it("el prefijo solo lleva mayúsculas, números o guion", async () => {
