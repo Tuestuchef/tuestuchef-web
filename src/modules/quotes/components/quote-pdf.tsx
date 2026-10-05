@@ -49,7 +49,7 @@ const s = StyleSheet.create({
   totalRow: { flexDirection: "row", justifyContent: "space-between" },
   grandTotal: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", borderTopWidth: 1, borderTopColor: t.border, paddingTop: 6 },
   grandValue: { fontSize: 13, fontFamily: "Helvetica-Bold" },
-  terms: { marginTop: 18, paddingTop: 10, borderTopWidth: 1, borderTopColor: t.border, gap: 3, lineHeight: 1.35 },
+  terms: { marginTop: 18, paddingTop: 10, borderTopWidth: 1, borderTopColor: t.border, gap: 3 },
   footer: { position: "absolute", bottom: 24, left: 40, right: 40, flexDirection: "row", justifyContent: "space-between", fontSize: 7.5, color: t["muted-foreground"] },
   watermark: {
     position: "absolute",

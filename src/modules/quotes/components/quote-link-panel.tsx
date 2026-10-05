@@ -70,7 +70,7 @@ const QuoteLinkPanel = ({ id, link, revoked, views }: QuoteLinkPanelProps) => {
       <p className="text-xs text-muted-foreground">
         {views.count === 0
           ? "El cliente todavía no lo ha abierto."
-          : `Abierto ${views.count} ${views.count === 1 ? "vez" : "veces"}${views.lastAtLabel ? ` · la última, ${views.lastAtLabel}` : ""}.`}
+          : `Abierto ${views.count} ${views.count === 1 ? "vez" : "veces"}${views.lastAtLabel ? ` · la última: ${views.lastAtLabel}` : ""}`}
       </p>
     </div>
   )
