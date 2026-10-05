@@ -12,6 +12,7 @@ import { getBusinessProfile, resolvePublicImageUrl } from "@/modules/business/li
 
 import QuoteActions from "../components/quote-actions"
 import QuoteDocument from "../components/quote-document"
+import QuotePdfButtons from "../components/quote-pdf-buttons"
 import QuoteStatusBadge from "../components/quote-status-badge"
 import { QUOTE_STATUS_LABELS } from "../lib/constants/quotes.constants"
 import { getQuoteDetail } from "../lib/services/quotes.service"
@@ -55,6 +56,8 @@ const QuoteDetailScreen = async ({ id }: { id: string }) => {
       )}
 
       <QuoteActions id={quote.id} status={quote.effectiveStatus} isLatest={!quote.supersededBy} />
+
+      <QuotePdfButtons id={quote.id} code={quote.code} />
 
       <QuoteDocument quote={quote} business={business} headerImageUrl={headerImageUrl} draft={quote.status === "draft"} />
 

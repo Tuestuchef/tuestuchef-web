@@ -100,6 +100,24 @@ export const QUOTES_CHAPTER: ManualChapter = {
       ],
     },
     {
+      id: "pdf",
+      heading: "El PDF",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "Arriba va la **imagen del encabezado** (la de Configuración → Datos de la empresa, u otra solo para ese presupuesto) con los datos de la empresa, el número, la fecha, el vencimiento y el total; luego el cliente, la tabla de artículos, los totales y las condiciones. Sin imagen, sale el monograma de la marca.",
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "El PDF enviado no cambia",
+          body:
+            "En borrador, el PDF lleva la marca **BORRADOR** y se genera al momento. Al enviarlo se guarda el **PDF oficial** en el archivo privado de la empresa: es exactamente lo que recibió el cliente, aunque después cambien precios, datos o la imagen.",
+        },
+      ],
+    },
+    {
       id: "quien",
       heading: "Quién puede qué",
       blocks: [

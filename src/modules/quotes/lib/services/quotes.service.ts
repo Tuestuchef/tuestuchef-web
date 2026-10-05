@@ -213,6 +213,7 @@ export async function getQuoteDetail(id: string): Promise<QuoteDetail | null> {
     supersededBy: q.superseded_by,
     duplicatedFrom: q.duplicated_from,
     orderSaleId: q.order_sale_id,
+    pdfPath: q.pdf_path,
     items,
     events: (eventsResult.data ?? []).map((e) => ({
       id: e.id,

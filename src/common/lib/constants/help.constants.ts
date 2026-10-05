@@ -1049,6 +1049,7 @@ export const HELP_TOPICS = {
           "Productos con color y talla, combos y personalización. Los nombres y el logo se piden en el pedido.",
           "Descuento por línea o del presupuesto, siempre con motivo; staff tiene el mismo límite que en ventas.",
           "IVA opcional sobre el total. La nota de IGTF es solo texto.",
+          "Imagen del encabezado: por defecto la de Datos de la empresa; puedes subir otra solo para este presupuesto.",
         ],
       },
       {
@@ -1070,6 +1071,13 @@ export const HELP_TOPICS = {
           "Enviado: marcar aceptado o rechazado cuando el cliente responda.",
           "Nueva versión: para cambiar uno enviado, rechazado o vencido. Mismo número con -v2; el anterior queda reemplazado.",
           "Duplicar: un presupuesto nuevo con el mismo contenido y precios de hoy.",
+        ],
+      },
+      {
+        heading: "PDF",
+        items: [
+          "Vista previa del PDF y Descargar PDF: el mismo documento que recibe el cliente.",
+          "En borrador el PDF lleva la marca \"BORRADOR\". Al enviarlo se guarda el PDF oficial y ya no cambia.",
         ],
       },
       {

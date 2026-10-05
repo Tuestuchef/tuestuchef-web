@@ -140,6 +140,8 @@ export type QuoteDetail = {
   supersededBy: string | null
   duplicatedFrom: string | null
   orderSaleId: string | null
+  // PDF oficial congelado al enviarlo (bucket privado). null en borradores.
+  pdfPath: string | null
   items: QuoteItem[]
   events: QuoteStatusEvent[]
 }

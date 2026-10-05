@@ -9,6 +9,8 @@ import {
 
 const E = Constants.public.Enums
 
+export const QUOTE_HEADER_PATH_PATTERN = /^quotes\/header\/[0-9a-f-]{36}\.(png|jpg)$/
+
 // Opcional normalizado: vacío → null, inválido → error.
 const normalized = (normalize: (value: string) => string | null | undefined, message: string) =>
   z
@@ -83,6 +85,11 @@ export const saveQuoteSchema = z
     discount_value: z.number().positive().max(1_000_000).nullish(),
     discount_reason: optionalText(300),
     terms: optionalText(3000),
+    header_image_path: z
+      .string()
+      .nullish()
+      .transform((value) => value || null)
+      .pipe(z.string().regex(QUOTE_HEADER_PATH_PATTERN, { error: "Imagen inválida." }).nullable()),
     items: z.array(itemSchema).min(1, { error: "Agrega al menos un producto." }).max(200),
   })
   .refine((v) => Boolean(v.customer_id || v.customer?.name), { error: "Elige un cliente o escribe su nombre.", path: ["customer"] })

@@ -37,6 +37,7 @@ export const ROUTES = {
   NEW_QUOTE: "/presupuestos/nuevo",
   QUOTE: (id: string) => `/presupuestos/${id}`,
   EDIT_QUOTE: (id: string) => `/presupuestos/${id}/editar`,
+  QUOTE_PDF: (id: string, download = false) => `/api/quotes/${id}/pdf${download ? "?download=1" : ""}`,
   ORDERS: "/pedidos",
   NEW_ORDER: "/pedidos/nuevo",
   ORDER: (id: string) => `/pedidos/${id}`,

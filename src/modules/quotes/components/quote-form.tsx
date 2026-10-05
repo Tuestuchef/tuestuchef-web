@@ -31,6 +31,7 @@ import { saveQuoteDraftAction } from "../lib/actions/quotes.action"
 import { QUOTE_CURRENCIES_LABELS } from "../lib/constants/quotes.constants"
 import type { CustomerKind, DiscountType, QuoteCurrencies, QuoteDetail, QuoteFormData } from "../lib/types/quotes.types"
 import { customizationTotal, quoteTotals } from "../lib/utils/quote-math.util"
+import QuoteHeaderField from "./quote-header-field"
 
 type QuoteLine = {
   key: string
@@ -110,7 +111,14 @@ const SwitchRow = ({ label, description, checked, onChange }: { label: string; d
   )
 }
 
-type QuoteFormProps = QuoteFormData & { canManage: boolean; quote?: QuoteDetail }
+type QuoteFormProps = QuoteFormData & {
+  canManage: boolean
+  quote?: QuoteDetail
+  storageEnabled: boolean
+  // Imagen del encabezado vigente: la propia del presupuesto o la de la empresa.
+  companyHeaderUrl: string | null
+  quoteHeaderUrl: string | null
+}
 
 // Crear o editar un presupuesto (borrador). La base vuelve a calcular precios y totales al guardar.
 const QuoteForm = ({
@@ -125,6 +133,9 @@ const QuoteForm = ({
   settings,
   canManage,
   quote,
+  storageEnabled,
+  companyHeaderUrl,
+  quoteHeaderUrl,
 }: QuoteFormProps) => {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -160,6 +171,9 @@ const QuoteForm = ({
   const [igtfEnabled, setIgtfEnabled] = useState(quote?.igtfNoteEnabled ?? settings.igtfNoteDefault)
   const [groupBySize, setGroupBySize] = useState(quote?.groupBySize ?? false)
   const [terms, setTerms] = useState(quote ? (quote.terms ?? "") : settings.defaultTerms)
+  const [header, setHeader] = useState<{ path: string; url: string | null } | null>(
+    quote?.headerImagePath ? { path: quote.headerImagePath, url: quoteHeaderUrl } : null
+  )
 
   const variantById = useMemo(() => new Map(variants.map((v) => [v.id, v])), [variants])
   const typeById = useMemo(() => new Map(customizationTypes.map((t) => [t.id, t])), [customizationTypes])
@@ -279,6 +293,7 @@ const QuoteForm = ({
         discount_value: discountAmount,
         discount_reason: discountReason,
         terms,
+        header_image_path: header?.path ?? null,
         items: lines.map((l) => ({
           variant_id: l.variantId,
           quantity: l.quantity,
@@ -547,6 +562,12 @@ const QuoteForm = ({
         <SwitchRow label="Nota de IGTF" description="Solo texto para pagos en divisas." checked={igtfEnabled} onChange={setIgtfEnabled} />
         <SwitchRow label="Agrupar por talla" description="Para pedidos grandes: una fila por producto con el desglose de tallas." checked={groupBySize} onChange={setGroupBySize} />
       </section>
+
+      {storageEnabled && (
+        <FormField label="Imagen del encabezado" htmlFor="q-header">
+          <QuoteHeaderField imageUrl={header?.url ?? companyHeaderUrl} hasCustomImage={Boolean(header)} enabled={storageEnabled} onChange={setHeader} />
+        </FormField>
+      )}
 
       <FormField label="Notas y condiciones" htmlFor="q-terms">
         <Textarea id="q-terms" rows={6} maxLength={3000} value={terms} onChange={(e) => setTerms(e.target.value)} />

@@ -4316,6 +4316,10 @@ export type Database = {
       }
     }
     Functions: {
+      set_quote_pdf_path: {
+        Args: { p_quote_id: string; p_path: string }
+        Returns: undefined
+      }
       expire_quotes: {
         Args: never
         Returns: number

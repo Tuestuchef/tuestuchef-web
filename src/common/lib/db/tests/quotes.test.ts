@@ -204,6 +204,19 @@ describe("estados e inmutabilidad", () => {
   })
 })
 
+describe("PDF congelado", () => {
+  it("se anota una sola vez, solo de un presupuesto enviado", async () => {
+    const id = await save(staff, payload())
+    const path = "quotes/2026/10/TLT00001.pdf"
+    await expect(staff("select public.set_quote_pdf_path($1, $2)", [id, path])).rejects.toThrow(/al enviar/)
+    await staff("select public.send_quote($1)", [id])
+    await staff("select public.set_quote_pdf_path($1, $2)", [id, path])
+    expect((await one(owner<{ pdf_path: string }>("select pdf_path from public.quotes where id = $1", [id]))).pdf_path).toBe(path)
+    await expect(staff("select public.set_quote_pdf_path($1, $2)", [id, "quotes/2026/10/OTRO.pdf"])).rejects.toThrow(/ya tiene su PDF/)
+    await expect(staff("select public.set_quote_pdf_path($1, $2)", [await save(staff, payload()), "x"])).rejects.toThrow(/al enviar/)
+  })
+})
+
 describe("cliente bloqueado y permisos", () => {
   it("un cliente bloqueado no recibe presupuestos", async () => {
     await expect(save(staff, payload({ customer_id: ids.blocked }))).rejects.toThrow(/bloqueado/)

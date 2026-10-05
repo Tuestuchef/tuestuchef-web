@@ -8,8 +8,20 @@ import { authorizeAction } from "@/common/lib/services/session.service"
 import { toUserError } from "@/common/lib/utils/to-user-error.util"
 
 import { QUOTE_MESSAGES } from "../constants/quotes.constants"
-import { discardQuoteSchema, markQuoteSchema, saveQuoteSchema } from "../schemas/quote.schema"
-import { discardQuote, duplicateQuote, markQuote, newQuoteVersion, saveQuoteDraft, sendQuote } from "../services/quotes.service"
+import { headerImageUploadSchema } from "@/modules/business/lib/schemas/business-profile.schema"
+
+import { discardQuoteSchema, markQuoteSchema, QUOTE_HEADER_PATH_PATTERN, saveQuoteSchema } from "../schemas/quote.schema"
+import { createQuoteHeaderUpload, verifyQuoteHeaderImage } from "../services/quote-header.service"
+import { storeQuotePdf } from "../services/quote-pdf.service"
+import {
+  discardQuote,
+  duplicateQuote,
+  getQuoteDetail,
+  markQuote,
+  newQuoteVersion,
+  saveQuoteDraft,
+  sendQuote,
+} from "../services/quotes.service"
 
 type Fail = { ok: false; error: string }
 type Done = { ok: true; message: string } | Fail
@@ -29,15 +41,40 @@ export async function saveQuoteDraftAction(input: unknown): Promise<WithId> {
   return { ok: true, id: data, message: QUOTE_MESSAGES.SAVED }
 }
 
-// Marcar como enviado: queda congelado. El envío por correo y WhatsApp usa esta misma acción.
+// Marcar como enviado: queda congelado y se guarda su PDF oficial (una sola vez).
+// El envío por correo y WhatsApp usa esta misma acción.
 export async function sendQuoteAction(id: string): Promise<Done> {
   const auth = await authorizeAction(ROLE_GROUPS.ALL)
   if (!auth.ok) return { ok: false, error: auth.error }
   if (!idSchema.safeParse(id).success) return { ok: false, error: "Presupuesto inválido." }
   const { error } = await sendQuote(id)
   if (error) return { ok: false, error: toUserError(error) }
+
+  const quote = await getQuoteDetail(id)
+  const stored = quote ? await storeQuotePdf(quote) : { ok: true as const, stored: false }
   refresh()
+  // El presupuesto ya quedó enviado; si el PDF no se pudo guardar, se genera al pedirlo con los mismos datos.
+  if (!stored.ok) console.error(`[quotes] PDF de ${quote?.code} no guardado: ${stored.error}`)
   return { ok: true, message: QUOTE_MESSAGES.SENT }
+}
+
+// Firma la subida de una imagen de encabezado solo para un presupuesto.
+export async function requestQuoteHeaderUploadAction(
+  input: unknown
+): Promise<{ ok: true; data: { path: string; uploadUrl: string; contentType: string } } | Fail> {
+  const auth = await authorizeAction(ROLE_GROUPS.ALL)
+  if (!auth.ok) return { ok: false, error: auth.error }
+  const parsed = headerImageUploadSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
+  return createQuoteHeaderUpload(parsed.data.contentType)
+}
+
+export async function verifyQuoteHeaderImageAction(path: unknown): Promise<{ ok: true; data: { url: string | null } } | Fail> {
+  const auth = await authorizeAction(ROLE_GROUPS.ALL)
+  if (!auth.ok) return { ok: false, error: auth.error }
+  const parsed = z.string().regex(QUOTE_HEADER_PATH_PATTERN).safeParse(path)
+  if (!parsed.success) return { ok: false, error: "Imagen inválida." }
+  return verifyQuoteHeaderImage(parsed.data)
 }
 
 export async function markQuoteAction(input: unknown): Promise<Done> {
