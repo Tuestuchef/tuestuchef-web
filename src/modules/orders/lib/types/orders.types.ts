@@ -95,6 +95,8 @@ export type OrderDetail = {
   stockMode: OrderStockMode
   customer: { id: string; name: string; phone: string | null } | null
   totalUsd: number
+  // IVA incluido en el total (null si el pedido no lleva IVA).
+  vat: { percent: number; usd: number } | null
   paidUsd: number
   balanceUsd: number
   depositRequiredUsd: number

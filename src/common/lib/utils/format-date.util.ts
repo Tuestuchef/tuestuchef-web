@@ -27,8 +27,13 @@ const isoDateFormat = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
 })
 
-export const formatDate = (value: string | Date) => dateFormat.format(new Date(value))
-export const formatDayHeading = (value: string | Date) => dayHeadingFormat.format(new Date(value))
+// Una fecha sola ("2026-10-10", columnas date) es ese día en Caracas, no la medianoche UTC: con
+// new Date() saldría el día anterior.
+const toInstant = (value: string | Date) =>
+  typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(caracasNoonIso(value)) : new Date(value)
+
+export const formatDate = (value: string | Date) => dateFormat.format(toInstant(value))
+export const formatDayHeading = (value: string | Date) => dayHeadingFormat.format(toInstant(value))
 export const formatTime = (value: string | Date) => timeFormat.format(new Date(value))
 
 // "2026-09-27" en hora de Caracas.

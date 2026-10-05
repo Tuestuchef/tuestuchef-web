@@ -35,7 +35,7 @@ export const ORDERS_CHAPTER: ManualChapter = {
     { title: "Quién tiene qué", url: ROUTES.PRODUCTION_ASSIGNMENTS, roles: ROLE_GROUPS.ALL },
     { title: "Material necesario", url: ROUTES.PRODUCTION_MATERIALS, roles: ROLE_GROUPS.ALL },
   ],
-  related: ["ventas", "inventario", "equipo", "compras", "clientes"],
+  related: ["ventas", "inventario", "equipo", "compras", "clientes", "presupuestos"],
   sections: [
     {
       id: "que-es",
@@ -74,6 +74,10 @@ export const ORDERS_CHAPTER: ManualChapter = {
             },
             { title: "Elige el inventario", body: "Reservar lo que hay y producir lo que falta, o producir todo desde cero." },
             { title: "Revisa la fecha y el abono", body: "La fecha viene a 5 días (configurable). Registra el pago inicial." },
+            {
+              title: "IVA, si lo pide el cliente",
+              body: "**Agregar IVA** lo suma al total, después de descuentos y sin el delivery. El detalle del pedido muestra cuánto IVA incluye. No es ingreso: los resultados lo muestran aparte.",
+            },
           ],
         },
         {
@@ -82,6 +86,13 @@ export const ORDERS_CHAPTER: ManualChapter = {
           title: "¿Reservar o producir todo?",
           body:
             "**Reservar y producir lo que falta** aparta lo que ya hay en inventario (deja de estar disponible) y fabrica solo el resto. **Producir todo desde cero** no toca el inventario: sirve para que todas las piezas salgan de la misma tela.",
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "¿El cliente aceptó un presupuesto?",
+          body:
+            "No lo registres a mano: en el presupuesto aceptado toca **Convertir en pedido** y se copian las líneas, la personalización, los precios y el IVA. El pedido muestra de qué presupuesto salió.",
         },
       ],
     },

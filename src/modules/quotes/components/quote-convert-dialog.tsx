@@ -178,7 +178,8 @@ const QuoteConvertDialog = ({
           <FormField label="Fecha prometida" htmlFor="qc-date">
             <Input id="qc-date" type="date" min={today} value={promisedDate} onChange={(e) => setPromisedDate(e.target.value)} className="h-11 md:h-9" />
           </FormField>
-          <div className="grid gap-4 sm:grid-cols-2">
+          {/* Uno debajo del otro: lado a lado, en el ancho del diálogo los botones se deforman. */}
+          <div className="grid gap-4">
             <FormField label="Canal" htmlFor="qc-channel">
               <ChoiceChips id="qc-channel" label="Canal" value={channel} onChange={(v) => setChannel(v as SaleChannel)} options={MANUAL_CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))} />
             </FormField>

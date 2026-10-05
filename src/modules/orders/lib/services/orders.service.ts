@@ -116,7 +116,7 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
 
   const [order, sale, items, overrides, cancellation, dateChanges, fromQuote] = await Promise.all([
     supabase.from("orders").select("stock_mode, delivered_at").eq("sale_id", saleId).single(),
-    supabase.from("sales").select("customer:customers(id, first_name, last_name, phone)").eq("id", saleId).single(),
+    supabase.from("sales").select("vat_percent, vat_usd, customer:customers(id, first_name, last_name, phone)").eq("id", saleId).single(),
     supabase
       .from("sale_items")
       .select(
@@ -160,6 +160,7 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
     stockMode: order.data!.stock_mode,
     customer: customer ? { id: customer.id, name: fullName(customer) ?? "", phone: customer.phone } : null,
     totalUsd: Number(overview.total_usd),
+    vat: Number(sale.data?.vat_usd ?? 0) > 0 ? { percent: Number(sale.data!.vat_percent), usd: Number(sale.data!.vat_usd) } : null,
     paidUsd: Number(overview.paid_usd),
     balanceUsd: Number(overview.balance_usd),
     depositRequiredUsd: Number(overview.deposit_required_usd),

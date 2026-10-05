@@ -104,6 +104,12 @@ const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }
               <dt>Total</dt>
               <dd>{usd(order.totalUsd)}</dd>
             </div>
+            {order.vat && (
+              <div className="flex justify-between text-muted-foreground">
+                <dt>Incluye IVA {order.vat.percent}%</dt>
+                <dd>{usd(order.vat.usd)}</dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt>Para empezar a producir</dt>
               <dd>{usd(order.depositRequiredUsd)}</dd>

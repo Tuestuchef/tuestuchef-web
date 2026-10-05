@@ -857,6 +857,13 @@ export const HELP_TOPICS = {
     summary: "Etapas de cada línea, pagos, entrega y cancelación.",
     sections: [
       {
+        heading: "Arriba",
+        items: [
+          "El total incluye el IVA si el pedido lo lleva; debajo se ve cuánto es.",
+          "Si salió de un presupuesto, el enlace 'Desde el presupuesto' lleva a él.",
+        ],
+      },
+      {
         heading: "Etapas",
         items: [
           "Por producir → corte → confección → personalización → revisión → empaque → listo para entregar.",
