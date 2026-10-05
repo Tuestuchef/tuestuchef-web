@@ -234,8 +234,8 @@ export const SALES_CHAPTER: ManualChapter = {
           title: "Lo que pasa con un encargo",
           steps: [
             { title: "Por producir", detail: "Se vendió; aún no se empieza." },
-            { title: "En producción", detail: "Se está haciendo." },
-            { title: "Listo", detail: "Al llegar aquí se descuenta la materia prima de su receta (tela, botones…)." },
+            { title: "Confección", detail: "Se está haciendo." },
+            { title: "Listo para entregar", detail: "Al llegar aquí se descuenta la materia prima de su receta (tela, botones…)." },
             { title: "Entregado", detail: "El cliente lo tiene." },
           ],
           note: "Los estados solo avanzan. Si falta materia prima del color, el sistema avisa y no deja marcarlo listo.",

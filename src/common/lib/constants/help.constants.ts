@@ -129,7 +129,7 @@ export const HELP_TOPICS = {
         heading: "Qué puedes hacer",
         items: [
           "Registrar pago: para abonos o saldos. En Bs se usa la tasa del día del pago.",
-          "Avanzar cada producto: por producir → en producción → listo → entregado.",
+          "Avanzar cada producto por encargo: por producir → confección → listo para entregar → entregado.",
           "Marcar entregado: pasa a entregado todo lo que está listo.",
           "WhatsApp: elige el mensaje (nota de entrega), revísalo y se abre WhatsApp con el texto listo. Queda en Mensajes enviados.",
           "Nota de entrega: para imprimir o guardar como PDF. No es factura fiscal.",
