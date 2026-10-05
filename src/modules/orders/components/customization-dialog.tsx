@@ -40,12 +40,15 @@ type CustomizationDialogProps = {
   lineQuantity: number
   types: CustomizationType[]
   storageEnabled: boolean
+  // En un presupuesto, los nombres y el logo se piden después, en el pedido.
+  mode?: "order" | "quote"
   onClose: () => void
   onSave: (customization: LineCustomization) => void
 }
 
 // Agregar una personalización a una línea: tipo, piezas, texto o nombres, logo y medida.
-const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnabled, onClose, onSave }: CustomizationDialogProps) => {
+const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnabled, mode = "order", onClose, onSave }: CustomizationDialogProps) => {
+  const isQuote = mode === "quote"
   const usable = types.filter((t) => t.unitPriceUsd !== null)
   const [typeId, setTypeId] = useState(usable[0]?.id ?? "")
   const [quantity, setQuantity] = useState(String(lineQuantity))
@@ -81,11 +84,11 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
     const problem =
       !Number.isInteger(qty) || qty < 1 || qty > lineQuantity
         ? `Las piezas van de 1 a ${lineQuantity}.`
-        : type.requiresText && !text.trim() && nameList.length === 0
+        : !isQuote && type.requiresText && !text.trim() && nameList.length === 0
           ? "Escribe el texto o la lista de nombres."
           : nameList.length > 0 && nameList.length !== qty
             ? `Van ${nameList.length} nombres para ${qty} piezas.`
-            : type.requiresLogo && !logoPath
+            : !isQuote && type.requiresLogo && !logoPath
               ? "Sube el archivo del logo."
               : type.maxSizeCm !== null && sizeCm !== undefined && sizeCm > type.maxSizeCm
                 ? `"${type.name}" es de hasta ${type.maxSizeCm} cm: más grande es logo de pecho.`
@@ -148,7 +151,10 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
             <FormField label="Piezas" htmlFor="cz-qty" hint={`De las ${lineQuantity} de la línea.`}>
               <Input id="cz-qty" inputMode="numeric" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="h-11 md:h-9" />
             </FormField>
-            {type?.requiresText && (
+            {isQuote && (type?.requiresText || type?.requiresLogo) && (
+              <p className="text-xs text-muted-foreground">Los nombres y el logo se piden al convertirlo en pedido.</p>
+            )}
+            {type?.requiresText && !isQuote && (
               <>
                 <FormField label="Texto (igual en todas)" htmlFor="cz-text" optional>
                   <Input id="cz-text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Chef Ana" className="h-11 md:h-9" />
@@ -163,7 +169,7 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
                 )}
               </>
             )}
-            {type?.requiresLogo && (
+            {type?.requiresLogo && !isQuote && (
               <ReceiptField enabled={storageEnabled} name="logo_path" label="Logo (JPG, PNG o PDF)" onPathChange={setLogoPath} />
             )}
             <div className="grid grid-cols-2 gap-3">

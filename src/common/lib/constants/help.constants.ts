@@ -1020,6 +1020,65 @@ export const HELP_TOPICS = {
     ],
   },
 
+  quotes: {
+    title: "Presupuestos",
+    chapter: "presupuestos",
+    summary: "Cotizaciones para empresas y pedidos grandes. Un presupuesto no es una factura ni mueve dinero ni inventario.",
+    sections: [
+      {
+        heading: "Qué ves",
+        items: [
+          "Cada presupuesto con su número, estado, cliente, fechas, quién lo hizo y su total.",
+          "Busca por número o cliente y filtra por estado o fecha.",
+          "Un enviado cuya fecha pasó aparece como vencido.",
+        ],
+      },
+    ],
+  },
+
+  quoteForm: {
+    title: "Nuevo presupuesto",
+    chapter: "presupuestos",
+    summary: "Cliente, monedas, productos, descuentos, IVA y condiciones. Se guarda como borrador.",
+    sections: [
+      {
+        heading: "Cómo se arma",
+        items: [
+          "Cliente: elige uno guardado o escribe solo el nombre. A un cliente bloqueado no se le hacen presupuestos.",
+          "Monedas: USD, Bs o ambas. Cada moneda sale de la lista de precios de un método de pago; los Bs, a la tasa BCV del día.",
+          "Productos con color y talla, combos y personalización. Los nombres y el logo se piden en el pedido.",
+          "Descuento por línea o del presupuesto, siempre con motivo; staff tiene el mismo límite que en ventas.",
+          "IVA opcional sobre el total. La nota de IGTF es solo texto.",
+        ],
+      },
+      {
+        heading: "Recuerda",
+        items: ["Los totales de la pantalla son una vista previa: al guardar, el sistema vuelve a calcular precios, tasa y fecha."],
+      },
+    ],
+  },
+
+  quote: {
+    title: "Detalle de presupuesto",
+    chapter: "presupuestos",
+    summary: "El presupuesto como lo ve el cliente, sus acciones según el estado y su historial.",
+    sections: [
+      {
+        heading: "Qué puedes hacer",
+        items: [
+          "Borrador: editar, marcar como enviado o descartar con motivo. Para enviarlo debe ser de hoy (si no, guárdalo de nuevo).",
+          "Enviado: marcar aceptado o rechazado cuando el cliente responda.",
+          "Nueva versión: para cambiar uno enviado, rechazado o vencido. Mismo número con -v2; el anterior queda reemplazado.",
+          "Duplicar: un presupuesto nuevo con el mismo contenido y precios de hoy.",
+        ],
+      },
+      {
+        heading: "Recuerda",
+        items: ["Enviado, ya no cambia. Cada cambio de estado queda en el historial con quién y cuándo."],
+      },
+    ],
+  },
+
   quoteSettings: {
     title: "Configuración de presupuestos",
     chapter: "configuracion",

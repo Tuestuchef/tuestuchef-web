@@ -6,6 +6,7 @@ import {
   ClipboardListIcon,
   CloudOffIcon,
   ContactRoundIcon,
+  FileTextIcon,
   FactoryIcon,
   FileSpreadsheetIcon,
   HandCoinsIcon,
@@ -67,6 +68,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     label: "Comercial",
     items: [
       { title: "Ventas", url: ROUTES.SALES, icon: ShoppingBagIcon, roles: ROLE_GROUPS.ALL },
+      { title: "Presupuestos", url: ROUTES.QUOTES, icon: FileTextIcon, roles: ROLE_GROUPS.ALL },
       { title: "Clientes", url: ROUTES.CUSTOMERS, icon: ContactRoundIcon, roles: ROLE_GROUPS.ALL },
       { title: "Por cobrar", url: ROUTES.RECEIVABLES, icon: HandCoinsIcon, roles: ROLE_GROUPS.MANAGEMENT },
       { title: "Ventas pendientes", url: ROUTES.OFFLINE_SALES, icon: CloudOffIcon, roles: ROLE_GROUPS.ALL },
@@ -157,6 +159,7 @@ export type QuickAction = {
 export const QUICK_ACTIONS: readonly QuickAction[] = [
   { title: "Venta", description: "Vender y cobrar", url: ROUTES.NEW_SALE, icon: ShoppingBagIcon, roles: ROLE_GROUPS.ALL },
   { title: "Pedido", description: "Por encargo, con personalización", url: ROUTES.NEW_ORDER, icon: ClipboardListIcon, roles: ROLE_GROUPS.ALL },
+  { title: "Presupuesto", description: "Para empresas, en PDF", url: ROUTES.NEW_QUOTE, icon: FileTextIcon, roles: ROLE_GROUPS.ALL },
   {
     title: "Gasto o ingreso",
     description: "Alquiler, servicios, publicidad…",
