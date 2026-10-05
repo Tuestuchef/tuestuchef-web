@@ -40,7 +40,11 @@ const ProfitView = async ({ period }: { period: PeriodValue }) => {
   return (
     <>
       <div className="@container/card grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard title="Ingresos" value={<SignedAmount value={kpis.income} tone="income" />} hint="Ventas y otros ingresos" />
+        <KpiCard
+          title="Ingresos"
+          value={<SignedAmount value={kpis.income} tone="income" />}
+          hint={kpis.vatCollected !== 0 ? `Ventas y otros ingresos. IVA cobrado aparte: ${formatUsdt(kpis.vatCollected)} (no es ingreso).` : "Ventas y otros ingresos"}
+        />
         <KpiCard
           title="Egresos"
           value={<SignedAmount value={kpis.expenses} tone="expense" />}

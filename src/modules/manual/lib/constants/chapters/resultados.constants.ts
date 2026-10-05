@@ -74,7 +74,7 @@ export const RESULTS_CHAPTER: ManualChapter = {
             { label: "Utilidad real", value: "834,00 USDT", total: true },
           ],
           conclusion:
-            "Si es positiva aparece **En verde**; si es negativa, **En rojo**. Los **aportes de capital** (dinero que el dueño mete) no son ingreso: se muestran aparte.",
+            "Si es positiva aparece **En verde**; si es negativa, **En rojo**. Los **aportes de capital** (dinero que el dueño mete) no son ingreso: se muestran aparte. El **IVA cobrado** en ventas o pedidos con IVA tampoco es ingreso: el sistema lo separa de cada cobro y lo muestra aparte, en el dashboard y en el Excel del mes.",
         },
         {
           kind: "callout",

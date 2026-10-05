@@ -40,4 +40,5 @@ export const QUOTE_MESSAGES = {
   DISCARDED: "Borrador descartado.",
   VERSION: "Versión nueva creada como borrador.",
   DUPLICATED: "Copia creada como borrador.",
+  CONVERTED: "Pedido creado desde el presupuesto.",
 }

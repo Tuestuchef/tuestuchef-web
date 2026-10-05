@@ -16,6 +16,7 @@ export const CATEGORY_TYPE_LABELS: Record<CategoryType, string> = {
   withdrawal: "Retiro o adelanto",
   reinvestment: "Reinversión",
   profit_distribution: "Reparto de utilidades",
+  vat_collected: "IVA cobrado",
 }
 
 // Ayuda al crear categorías: qué va en cada tipo.
@@ -31,6 +32,8 @@ export const CATEGORY_TYPE_HINTS: Record<CategoryType, string> = {
   withdrawal: "Retiro o gasto personal pagado con dinero del negocio. Cuenta como adelanto de sueldo.",
   reinvestment: "Para crecer: máquina nueva, línea nueva, stock adelantado. Sale de la utilidad.",
   profit_distribution: "Reparto de utilidades a una persona. Sale de la utilidad.",
+  // No es una categoría para registrar: el sistema la calcula al separar el IVA de los cobros.
+  vat_collected: "IVA de los cobros de ventas con IVA. No es ingreso.",
 }
 
 export const INCOME_CATEGORY_TYPES: readonly CategoryType[] = ["sales", "other_income", "capital_contribution"]

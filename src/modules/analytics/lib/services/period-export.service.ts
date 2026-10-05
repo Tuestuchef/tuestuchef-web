@@ -37,11 +37,15 @@ export async function buildPeriodWorkbook(month: string): Promise<Buffer> {
   const supabase = await createSupabaseServerClient()
   const { from, to } = caracasMonthRange(month)
 
-  const [sales, payments, purchases, ledger, payroll, status] = await Promise.all([
+  // Último día del mes (AAAA-MM-DD) para el resumen por tipo.
+  const [year, monthNumber] = month.split("-").map(Number)
+  const lastDay = `${month}-${String(new Date(Date.UTC(year, monthNumber, 0)).getUTCDate()).padStart(2, "0")}`
+
+  const [sales, payments, purchases, ledger, payroll, status, totalsByType] = await Promise.all([
     supabase
       .from("sales")
       .select(
-        "id, number, occurred_at, channel, subtotal_usd, volume_discount_usd, discount_usd, delivery_fee_usd, total_usd, customer:customers(first_name, last_name), method:payment_methods(name)"
+        "id, number, occurred_at, channel, subtotal_usd, volume_discount_usd, discount_usd, delivery_fee_usd, vat_usd, total_usd, customer:customers(first_name, last_name), method:payment_methods(name)"
       )
       .gte("occurred_at", from)
       .lt("occurred_at", to)
@@ -73,8 +77,10 @@ export async function buildPeriodWorkbook(month: string): Promise<Buffer> {
       .lt("occurred_at", to)
       .order("occurred_at"),
     supabase.from("period_status").select("is_closed, changed_at").eq("period", `${month}-01`).maybeSingle(),
+    // Mismo resumen que el dashboard: el IVA de los cobros ya viene separado de las ventas.
+    supabase.rpc("analytics_ledger_summary", { p_from: `${month}-01`, p_to: lastDay }),
   ])
-  for (const result of [sales, payments, purchases, ledger, payroll]) if (result.error) throw result.error
+  for (const result of [sales, payments, purchases, ledger, payroll, totalsByType]) if (result.error) throw result.error
 
   const saleIds = (sales.data ?? []).map((s) => s.id)
   const purchaseIds = (purchases.data ?? []).map((p) => p.id)
@@ -93,9 +99,8 @@ export async function buildPeriodWorkbook(month: string): Promise<Buffer> {
 
   // ---- Resumen: utilidad real del mes ----
   const byType = new Map<CategoryType, number>()
-  for (const row of ledger.data ?? []) {
-    const type = row.category?.type
-    if (type) byType.set(type, (byType.get(type) ?? 0) + Number(row.usdt_value))
+  for (const row of totalsByType.data ?? []) {
+    byType.set(row.category_type, (byType.get(row.category_type) ?? 0) + Number(row.usdt_value))
   }
   const sum = (types: readonly CategoryType[]) => types.reduce((s, t) => s + (byType.get(t) ?? 0), 0)
   const income = sum(INCOME_TYPES)
@@ -115,6 +120,7 @@ export async function buildPeriodWorkbook(month: string): Promise<Buffer> {
       { label: "Utilidad real", value: income + deductions },
       ...PROFIT_USE_TYPES.map((t) => ({ label: `${CATEGORY_TYPE_LABELS[t]} (sale de la utilidad)`, value: byType.get(t) ?? 0 })),
       ...CONTRIBUTION_TYPES.map((t) => ({ label: `${CATEGORY_TYPE_LABELS[t]} (no es ingreso)`, value: byType.get(t) ?? 0 })),
+      { label: `${CATEGORY_TYPE_LABELS.vat_collected} (no es ingreso)`, value: byType.get("vat_collected") ?? 0 },
     ]
   )
   summary.getRow(2).font = { bold: true }
@@ -132,6 +138,7 @@ export async function buildPeriodWorkbook(month: string): Promise<Buffer> {
       { header: "Al mayor USD", key: "volume", money: true },
       { header: "Descuento USD", key: "discount", money: true },
       { header: "Delivery USD", key: "fee", money: true },
+      { header: "IVA USD", key: "vat", money: true },
       { header: "Total USD", key: "total", money: true },
       { header: "Pagado USD", key: "paid", money: true },
       { header: "Saldo USD", key: "balance", money: true },
@@ -149,6 +156,7 @@ export async function buildPeriodWorkbook(month: string): Promise<Buffer> {
         volume: Number(s.volume_discount_usd),
         discount: Number(s.discount_usd),
         fee: Number(s.delivery_fee_usd),
+        vat: Number(s.vat_usd),
         total: Number(s.total_usd),
         paid: Number(st?.paid_usd ?? 0),
         balance: Number(st?.balance_usd ?? 0),

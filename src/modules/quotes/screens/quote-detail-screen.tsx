@@ -6,12 +6,19 @@ import PageHeader from "@/common/components/page-header"
 import StatusAlert from "@/common/components/status-alert"
 import { Button } from "@/common/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/common/components/ui/card"
+import { isRoleIn, ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
-import { formatDate, formatTime } from "@/common/lib/utils/format-date.util"
+import { isStorageEnabled } from "@/common/lib/services/storage.service"
+import type { SessionUser } from "@/common/lib/types/session.types"
+import { caracasNoonIso, formatDate, formatTime, toCaracasDate } from "@/common/lib/utils/format-date.util"
 import { getBusinessProfile, resolvePublicImageUrl } from "@/modules/business/lib/services/business-profile.service"
 import MessageHistory from "@/modules/messages/components/message-history"
+import { formatSaleNumber } from "@/modules/sales/lib/constants/sales.constants"
+import { listCustomizationTypes } from "@/modules/orders/lib/services/order-settings.service"
+import { getOrderSettings } from "@/modules/orders/lib/services/orders.service"
 
 import QuoteActions from "../components/quote-actions"
+import QuoteConvertDialog from "../components/quote-convert-dialog"
 import QuoteDocument from "../components/quote-document"
 import QuoteLinkPanel from "../components/quote-link-panel"
 import QuotePdfButtons from "../components/quote-pdf-buttons"
@@ -20,12 +27,18 @@ import { QUOTE_STATUS_LABELS } from "../lib/constants/quotes.constants"
 import { getQuoteLink, getQuoteLinkViews, isQuoteEmailConfigured, quotePublicUrl } from "../lib/services/quote-delivery.service"
 import { getQuoteDetail } from "../lib/services/quotes.service"
 
-const QuoteDetailScreen = async ({ id }: { id: string }) => {
+const addDays = (iso: string, days: number) => toCaracasDate(new Date(new Date(caracasNoonIso(iso)).getTime() + days * 86_400_000))
+
+const QuoteDetailScreen = async ({ user, id }: { user: SessionUser; id: string }) => {
   const [quote, business] = await Promise.all([getQuoteDetail(id), getBusinessProfile()])
   if (!quote) notFound()
   const headerImageUrl = quote.headerImagePath ? await resolvePublicImageUrl(quote.headerImagePath) : business.headerImageUrl
   const shared = quote.status !== "draft" && quote.status !== "discarded"
   const [link, views] = shared ? await Promise.all([getQuoteLink(quote.id), getQuoteLinkViews(quote.id)]) : [null, null]
+  const convertible = quote.effectiveStatus === "accepted" && !quote.orderSaleId && !quote.supersededBy
+  const [types, orderSettings] = convertible ? await Promise.all([listCustomizationTypes(), getOrderSettings()]) : [[], null]
+  const typeById = new Map(types.map((t) => [t.id, t]))
+  const today = toCaracasDate()
 
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
@@ -58,6 +71,37 @@ const QuoteDetailScreen = async ({ id }: { id: string }) => {
         <StatusAlert tone="info" title="Sin cliente guardado">
           Basta para enviarlo; para convertirlo en pedido se pedirá elegir o crear el cliente.
         </StatusAlert>
+      )}
+
+      {quote.orderSaleId && (
+        <StatusAlert tone="success" title={`Convertido en el pedido ${quote.orderNumber ? formatSaleNumber(quote.orderNumber) : ""}`}>
+          <Link href={ROUTES.ORDER(quote.orderSaleId)} className="underline underline-offset-4">
+            Ver el pedido
+          </Link>
+        </StatusAlert>
+      )}
+      {convertible && orderSettings && (
+        <QuoteConvertDialog
+          quoteId={quote.id}
+          code={quote.code}
+          currencies={quote.currencies}
+          totals={{ usd: quote.usd.total, vesBs: quote.ves.totalBs }}
+          customer={quote.customerId ? { id: quote.customerId, name: quote.customer.name } : null}
+          canManage={isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)}
+          promisedDefault={addDays(today, orderSettings.defaultLeadDays)}
+          today={today}
+          storageEnabled={isStorageEnabled()}
+          customizations={quote.items.flatMap((item) =>
+            item.customizations.map((c) => ({
+              id: c.id,
+              label: `${c.typeName} (${item.productName})`,
+              quantity: c.quantity,
+              requiresText: typeById.get(c.typeId)?.requiresText ?? false,
+              requiresLogo: typeById.get(c.typeId)?.requiresLogo ?? false,
+              text: c.text,
+            }))
+          )}
+        />
       )}
 
       <QuoteActions

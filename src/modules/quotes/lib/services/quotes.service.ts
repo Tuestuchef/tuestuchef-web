@@ -5,7 +5,7 @@ import { toCaracasDate } from "@/common/lib/utils/format-date.util"
 import { getOrderFormData } from "@/modules/orders/lib/services/orders.service"
 
 import { QUOTE_LIST_LIMIT } from "../constants/quotes.constants"
-import type { QuoteFilters, SaveQuoteInput } from "../schemas/quote.schema"
+import type { ConvertQuoteInput, QuoteFilters, SaveQuoteInput } from "../schemas/quote.schema"
 import type { QuoteDetail, QuoteFormData, QuoteItem, QuoteListItem, QuoteStatus } from "../types/quotes.types"
 import { getQuoteSettings, listPriceLists } from "./quote-settings.service"
 
@@ -57,6 +57,21 @@ export async function newQuoteVersion(id: string) {
   return supabase.rpc("new_quote_version", { p_quote_id: id })
 }
 
+// Convierte un presupuesto aceptado en pedido (la base copia precios y verifica que el total coincida).
+export async function convertQuoteToOrder(input: ConvertQuoteInput) {
+  const supabase = await createSupabaseServerClient()
+  return supabase.rpc("convert_quote_to_order", {
+    p_quote_id: input.id,
+    p_customer_id: input.customer_id,
+    p_currency: input.currency,
+    p_stock_mode: input.stock_mode,
+    p_promised_date: input.promised_date,
+    p_channel: input.channel,
+    p_delivery_method: input.delivery_method,
+    p_details: input.details,
+  })
+}
+
 export async function duplicateQuote(id: string) {
   const supabase = await createSupabaseServerClient()
   return supabase.rpc("duplicate_quote", { p_quote_id: id })
@@ -105,7 +120,9 @@ export async function getQuoteDetail(id: string): Promise<QuoteDetail | null> {
   const [quoteResult, itemsResult, eventsResult] = await Promise.all([
     supabase
       .from("quotes")
-      .select("*, usd_list:payment_methods!quotes_usd_price_method_id_fkey(id, name), ves_list:payment_methods!quotes_ves_price_method_id_fkey(id, name)")
+      .select(
+        "*, usd_list:payment_methods!quotes_usd_price_method_id_fkey(id, name), ves_list:payment_methods!quotes_ves_price_method_id_fkey(id, name), order:sales!quotes_order_sale_id_fkey(number)"
+      )
       .eq("id", id)
       .maybeSingle(),
     supabase
@@ -213,6 +230,7 @@ export async function getQuoteDetail(id: string): Promise<QuoteDetail | null> {
     supersededBy: q.superseded_by,
     duplicatedFrom: q.duplicated_from,
     orderSaleId: q.order_sale_id,
+    orderNumber: q.order?.number ?? null,
     pdfPath: q.pdf_path,
     items,
     events: (eventsResult.data ?? []).map((e) => ({

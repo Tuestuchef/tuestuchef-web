@@ -14,6 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Input } from "@/common/components/ui/input"
 import { Label } from "@/common/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/common/components/ui/popover"
+import { Switch } from "@/common/components/ui/switch"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import { parseAmount } from "@/common/lib/utils/parse-amount.util"
@@ -54,6 +55,7 @@ const OrderForm = ({
   customizationTypes,
   customizationTiers,
   settings,
+  vatPercent,
   today,
   canManage,
   storageEnabled,
@@ -74,6 +76,7 @@ const OrderForm = ({
   const [promisedDate, setPromisedDate] = useState(addDays(today, settings.defaultLeadDays))
   const [payments, setPayments] = useState<PaymentRow[]>([])
   const [notes, setNotes] = useState("")
+  const [vatEnabled, setVatEnabled] = useState(false)
 
   const variantById = useMemo(() => new Map(variants.map((v) => [v.id, v])), [variants])
   const typeById = useMemo(() => new Map(customizationTypes.map((t) => [t.id, t])), [customizationTypes])
@@ -104,7 +107,9 @@ const OrderForm = ({
     return type && qty < type.minQuantity ? [`"${type.name}" es desde ${type.minQuantity} piezas (van ${qty}).`] : []
   })
   const fee = deliveryMethod === "delivery" ? (parseAmount(deliveryFee) ?? 0) : 0
-  const total = round(productsSubtotal + customizationTotal - volume + fee)
+  // IVA sobre lo que queda después de descuentos, sin el delivery (como la base).
+  const vat = vatEnabled ? round(((productsSubtotal + customizationTotal - volume) * vatPercent) / 100) : 0
+  const total = round(productsSubtotal + customizationTotal - volume + fee + vat)
   const depositRequired = total >= settings.depositThresholdUsd ? round((total * settings.depositPercent) / 100) : total
   const paymentsToSend = payments.flatMap((p) => {
     const amount = parseAmount(p.amount)
@@ -173,6 +178,7 @@ const OrderForm = ({
         })),
         payments: paymentsToSend,
         delivery_fee_usd: fee,
+        vat_enabled: vatEnabled,
         notes: notes.trim() || null,
       })
       if (!result.ok) {
@@ -416,6 +422,16 @@ const OrderForm = ({
         </Button>
       </section>
 
+      {vatPercent > 0 && (
+        <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+          <div className="grid gap-0.5">
+            <Label htmlFor="order-vat">Agregar IVA ({vatPercent}%)</Label>
+            <p className="text-xs text-muted-foreground">Se suma al total, después de descuentos y sin el delivery.</p>
+          </div>
+          <Switch id="order-vat" checked={vatEnabled} onCheckedChange={setVatEnabled} />
+        </div>
+      )}
+
       <FormField label="Notas" htmlFor="order-notes" optional>
         <Input id="order-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Entregar en la cocina" className="h-11 md:h-9" />
       </FormField>
@@ -443,6 +459,12 @@ const OrderForm = ({
             <div className="flex justify-between text-muted-foreground">
               <dt>Delivery</dt>
               <dd>{usd(fee)}</dd>
+            </div>
+          )}
+          {vat > 0 && (
+            <div className="flex justify-between text-muted-foreground">
+              <dt>IVA {vatPercent}%</dt>
+              <dd>{usd(vat)}</dd>
             </div>
           )}
           <div className="flex justify-between text-base font-semibold">

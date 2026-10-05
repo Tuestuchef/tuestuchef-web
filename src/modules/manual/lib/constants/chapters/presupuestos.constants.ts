@@ -146,6 +146,33 @@ export const QUOTES_CHAPTER: ManualChapter = {
       ],
     },
     {
+      id: "convertir",
+      heading: "Convertirlo en pedido",
+      blocks: [
+        {
+          kind: "steps",
+          items: [
+            { title: "Márcalo aceptado", body: "Cuando el cliente confirma, toca **Aceptado** en el presupuesto." },
+            {
+              title: "Convertir en pedido",
+              body: "Copia el cliente, las líneas, los combos, la personalización y **los precios del presupuesto**, aunque la lista haya cambiado después. Si el presupuesto lleva IVA, el pedido también.",
+            },
+            {
+              title: "Completa lo que falta",
+              body: "El cliente guardado (si solo tenía nombre), con qué lista paga si tenía USD y Bs, el inventario, la fecha prometida y los nombres o logos de la personalización.",
+            },
+            { title: "El pedido sigue su camino", body: "Con la regla de abono de siempre. El pedido muestra de qué presupuesto salió y el presupuesto enlaza a su pedido." },
+          ],
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "Cobra exactamente lo aceptado",
+          body: "Si por cualquier motivo el total del pedido no coincidiera con el del presupuesto, no se convierte. Y un presupuesto se convierte **una sola vez**.",
+        },
+      ],
+    },
+    {
       id: "quien",
       heading: "Quién puede qué",
       blocks: [

@@ -184,6 +184,7 @@ export type Database = {
       }
       ledger_entries: {
         Row: {
+          sale_id: string | null
           team_member_id: string | null
           account_id: string
           amount: number
@@ -205,6 +206,7 @@ export type Database = {
           usdt_value: number
         }
         Insert: {
+          sale_id?: string | null
           team_member_id?: string | null
           account_id: string
           amount: number
@@ -226,6 +228,7 @@ export type Database = {
           usdt_value?: number
         }
         Update: {
+          sale_id?: string | null
           team_member_id?: string | null
           account_id?: string
           amount?: number
@@ -1012,6 +1015,8 @@ export type Database = {
       }
       sales: {
         Row: {
+          vat_percent: number
+          vat_usd: number
           volume_discount_percent: number
           volume_discount_usd: number
           is_backdated: boolean
@@ -1039,6 +1044,8 @@ export type Database = {
           usd_usdt_rate: number
         }
         Insert: {
+          vat_percent?: number
+          vat_usd?: number
           volume_discount_percent?: number
           volume_discount_usd?: number
           is_backdated?: boolean
@@ -1066,6 +1073,8 @@ export type Database = {
           usd_usdt_rate: number
         }
         Update: {
+          vat_percent?: number
+          vat_usd?: number
           volume_discount_percent?: number
           volume_discount_usd?: number
           is_backdated?: boolean
@@ -4354,6 +4363,10 @@ export type Database = {
       }
     }
     Functions: {
+      convert_quote_to_order: {
+        Args: { p_quote_id: string; p_customer_id: string | null; p_currency: string; p_stock_mode: Database["public"]["Enums"]["order_stock_mode"]; p_promised_date?: string; p_channel?: Database["public"]["Enums"]["sale_channel"]; p_delivery_method?: Database["public"]["Enums"]["delivery_method"]; p_notes?: string; p_details?: Json }
+        Returns: string
+      }
       revoke_quote_link: {
         Args: { p_quote_id: string }
         Returns: undefined
@@ -4495,7 +4508,7 @@ export type Database = {
         Returns: string
       }
       create_order: {
-        Args: { p_customer_id: string; p_price_method_id: string; p_channel: Database["public"]["Enums"]["sale_channel"]; p_delivery_method: Database["public"]["Enums"]["delivery_method"]; p_items: Json; p_stock_mode: Database["public"]["Enums"]["order_stock_mode"]; p_promised_date?: string; p_payments?: Json; p_delivery_fee_usd?: number; p_discount_type?: Database["public"]["Enums"]["discount_type"]; p_discount_value?: number; p_discount_reason?: string; p_notes?: string; p_occurred_at?: string }
+        Args: { p_customer_id: string; p_price_method_id: string; p_channel: Database["public"]["Enums"]["sale_channel"]; p_delivery_method: Database["public"]["Enums"]["delivery_method"]; p_items: Json; p_stock_mode: Database["public"]["Enums"]["order_stock_mode"]; p_promised_date?: string; p_payments?: Json; p_delivery_fee_usd?: number; p_discount_type?: Database["public"]["Enums"]["discount_type"]; p_discount_value?: number; p_discount_reason?: string; p_notes?: string; p_occurred_at?: string; p_vat_percent?: number }
         Returns: string
       }
       volume_discount_percent: {
@@ -4796,6 +4809,7 @@ export type Database = {
         | "withdrawal"
         | "reinvestment"
         | "profit_distribution"
+        | "vat_collected"
       currency: "VES" | "USD" | "USDT"
       rate_source: "api" | "manual"
       fulfillment_type: "stock" | "made_to_order" | "both"
@@ -4878,6 +4892,7 @@ export const Constants = {
         "withdrawal",
         "reinvestment",
         "profit_distribution",
+        "vat_collected",
       ],
       currency: ["VES", "USD", "USDT"],
       rate_source: ["api", "manual"],

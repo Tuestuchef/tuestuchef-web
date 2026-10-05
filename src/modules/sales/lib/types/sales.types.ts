@@ -106,6 +106,8 @@ export type SaleDetail = {
   volumeDiscount: { percent: number; usd: number } | null
   discount: { type: DiscountType; value: number; usd: number; reason: string; byName: string | null } | null
   deliveryFeeUsd: number
+  // IVA sobre el total (después de descuentos); null si la venta no lleva IVA.
+  vat: { percent: number; usd: number } | null
   totalUsd: number
   paidUsd: number
   balanceUsd: number

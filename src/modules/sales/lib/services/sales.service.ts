@@ -350,6 +350,7 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
           }
         : null,
     deliveryFeeUsd: Number(sale.delivery_fee_usd),
+    vat: Number(sale.vat_usd) > 0 ? { percent: Number(sale.vat_percent), usd: Number(sale.vat_usd) } : null,
     totalUsd: Number(sale.total_usd),
     paidUsd: Number(summaryResult.data?.paid_usd ?? 0),
     balanceUsd: Number(summaryResult.data?.balance_usd ?? sale.total_usd),

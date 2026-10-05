@@ -177,6 +177,12 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
                 <dd>{usd(sale.deliveryFeeUsd)}</dd>
               </div>
             )}
+            {sale.vat && (
+              <div className="flex justify-between text-muted-foreground">
+                <dt>IVA {sale.vat.percent}%</dt>
+                <dd>{usd(sale.vat.usd)}</dd>
+              </div>
+            )}
             <div className="flex justify-between text-base font-semibold">
               <dt>Total</dt>
               <dd className={isVoided ? "line-through" : undefined}>{usd(sale.totalUsd)}</dd>

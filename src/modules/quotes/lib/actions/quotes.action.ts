@@ -12,7 +12,7 @@ import { headerImageUploadSchema } from "@/modules/business/lib/schemas/business
 import { normalizeEmail, normalizePhone } from "@/modules/customers/lib/utils/normalize-contact.util"
 import { whatsappLink } from "@/modules/messages/lib/utils/render-template.util"
 
-import { discardQuoteSchema, markQuoteSchema, QUOTE_HEADER_PATH_PATTERN, saveQuoteSchema } from "../schemas/quote.schema"
+import { convertQuoteSchema, discardQuoteSchema, markQuoteSchema, QUOTE_HEADER_PATH_PATTERN, saveQuoteSchema } from "../schemas/quote.schema"
 import {
   buildQuoteWhatsappText,
   getQuoteLink,
@@ -24,6 +24,7 @@ import {
 import { createQuoteHeaderUpload, verifyQuoteHeaderImage } from "../services/quote-header.service"
 import { storeQuotePdf } from "../services/quote-pdf.service"
 import {
+  convertQuoteToOrder,
   discardQuote,
   duplicateQuote,
   getQuoteDetail,
@@ -170,4 +171,16 @@ export async function revokeQuoteLinkAction(id: string): Promise<Done> {
   if (error) return { ok: false, error: toUserError(error) }
   refresh()
   return { ok: true, message: "Enlace revocado: ya no abre el presupuesto." }
+}
+
+// Convertir en pedido: copia cliente, líneas, personalización y precios del presupuesto. Una sola vez.
+export async function convertQuoteAction(input: unknown): Promise<{ ok: true; saleId: string; message: string } | Fail> {
+  const auth = await authorizeAction(ROLE_GROUPS.ALL)
+  if (!auth.ok) return { ok: false, error: auth.error }
+  const parsed = convertQuoteSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." }
+  const { data, error } = await convertQuoteToOrder(parsed.data)
+  if (error || !data) return { ok: false, error: toUserError(error, "No se pudo convertir el presupuesto.") }
+  refresh()
+  return { ok: true, saleId: data, message: QUOTE_MESSAGES.CONVERTED }
 }

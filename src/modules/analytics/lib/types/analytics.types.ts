@@ -23,6 +23,8 @@ export type AnalyticsKpis = {
   reinvestment: number
   distributions: number
   contributions: number
+  // IVA de los cobros de ventas con IVA: aparte, no es ingreso ni resta de la utilidad.
+  vatCollected: number
   // profit / income; null sin ingresos.
   margin: number | null
 }

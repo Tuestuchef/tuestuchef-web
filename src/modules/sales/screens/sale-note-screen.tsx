@@ -101,7 +101,7 @@ const SaleNoteScreen = async ({ id }: { id: string }) => {
         </table>
 
         <dl className="ml-auto grid w-full max-w-64 gap-1 text-sm tabular-nums">
-          {(sale.volumeDiscount || sale.discount || sale.deliveryFeeUsd > 0) && (
+          {(sale.volumeDiscount || sale.discount || sale.deliveryFeeUsd > 0 || sale.vat) && (
             <div className="flex justify-between">
               <dt>Subtotal</dt>
               <dd>{usd(sale.subtotalUsd)}</dd>
@@ -123,6 +123,12 @@ const SaleNoteScreen = async ({ id }: { id: string }) => {
             <div className="flex justify-between">
               <dt>Delivery</dt>
               <dd>{usd(sale.deliveryFeeUsd)}</dd>
+            </div>
+          )}
+          {sale.vat && (
+            <div className="flex justify-between">
+              <dt>IVA {sale.vat.percent}%</dt>
+              <dd>{usd(sale.vat.usd)}</dd>
             </div>
           )}
           <div className="flex justify-between border-t pt-1 text-base font-semibold">

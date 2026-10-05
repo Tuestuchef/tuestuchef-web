@@ -545,6 +545,7 @@ export const HELP_TOPICS = {
         heading: "Utilidad real",
         items: [
           "Ingresos − costos − gastos − comisiones − impuestos − sueldos (incluido el del dueño).",
+          "El IVA cobrado en ventas o pedidos con IVA no es ingreso: se separa solo de cada cobro y se muestra aparte.",
           "Ingresos vs. egresos de los últimos 12 meses, a dónde va el dinero y cuánto recibió cada persona.",
         ],
       },
@@ -829,6 +830,7 @@ export const HELP_TOPICS = {
           "Agrega productos o combos. 'Personalizar' añade nombres bordados o logos a una línea.",
           "Inventario: 'reservar y producir lo que falta' aparta lo que hay; 'producir todo' no toca el stock (misma tela).",
           "Revisa la fecha prometida (por defecto 5 días) y registra el pago inicial.",
+          "Agregar IVA (opcional): se suma al total después de descuentos, sin el delivery. La tasa es la de Configuración → Presupuestos.",
         ],
       },
       {
@@ -1073,6 +1075,7 @@ export const HELP_TOPICS = {
           "Enviado: marcar aceptado o rechazado cuando el cliente responda.",
           "Nueva versión: para cambiar uno enviado, rechazado o vencido. Mismo número con -v2; el anterior queda reemplazado.",
           "Duplicar: un presupuesto nuevo con el mismo contenido y precios de hoy.",
+          "Convertir en pedido (aceptado): copia cliente, líneas, personalización y precios del presupuesto. Pide el cliente guardado, con qué lista paga (USD o Bs), inventario, fecha y los nombres o logos que falten. Se convierte una sola vez.",
         ],
       },
       {

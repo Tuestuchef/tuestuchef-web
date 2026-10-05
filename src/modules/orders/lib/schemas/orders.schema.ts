@@ -91,6 +91,8 @@ export const createOrderSchema = z.object({
   items: z.array(orderItemSchema).min(1, { error: "Agrega al menos un producto." }).max(100),
   payments: z.array(z.object({ payment_method_id: z.uuid(), amount: amountText("el monto del pago") })).max(10).default([]),
   delivery_fee_usd: z.number().min(0).default(0),
+  // IVA sobre el total: la tasa la pone el servidor (Configuración → Presupuestos).
+  vat_enabled: z.boolean().default(false),
   notes: z.string().trim().max(500).nullable().default(null),
 })
 

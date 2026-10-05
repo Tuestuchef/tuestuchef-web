@@ -23,8 +23,15 @@ const query = (table: string) => {
 }
 
 vi.mock("server-only", () => ({}))
+// Resumen por tipo (analytics_ledger_summary): el cobro de 580 trae 80 de IVA, que va aparte.
+const SUMMARY = [
+  { month: "2026-09", category_type: "sales", category_name: "Ventas", person_name: null, usdt_value: 500 },
+  { month: "2026-09", category_type: "vat_collected", category_name: "IVA cobrado", person_name: null, usdt_value: 80 },
+  { month: "2026-09", category_type: "operating_expense", category_name: "Alquiler", person_name: null, usdt_value: -200 },
+]
+
 vi.mock("@/common/lib/db/supabase-server.client", () => ({
-  createSupabaseServerClient: async () => ({ from: query }),
+  createSupabaseServerClient: async () => ({ from: query, rpc: async () => ({ data: SUMMARY, error: null }) }),
 }))
 
 describe("Excel del mes", () => {
@@ -40,6 +47,7 @@ describe("Excel del mes", () => {
     summary.eachRow((row) => values.set(String(row.getCell(1).value), Number(row.getCell(2).value)))
     expect(values.get("Ingresos reales")).toBe(500)
     expect(values.get("Utilidad real")).toBe(300)
+    expect(values.get("IVA cobrado (no es ingreso)")).toBe(80)
     expect(book.getWorksheet("Movimientos")!.rowCount).toBe(3)
   })
 })

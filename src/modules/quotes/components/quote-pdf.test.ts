@@ -64,6 +64,7 @@ const quote = (over: Partial<QuoteDetail> = {}): QuoteDetail => ({
   supersededBy: null,
   duplicatedFrom: null,
   orderSaleId: null,
+  orderNumber: null,
   pdfPath: null,
   items: [
     item({ sizeName: "S", sizeSort: 1 }),

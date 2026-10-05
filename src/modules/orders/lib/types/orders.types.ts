@@ -34,6 +34,8 @@ export type OrderFormData = SaleFormData & {
   customizationTypes: CustomizationType[]
   customizationTiers: { minQuantity: number; percent: number }[]
   settings: OrderSettings
+  // Tasa de IVA de la configuración (la misma de los presupuestos).
+  vatPercent: number
 }
 
 export type OrderListItem = {
@@ -102,6 +104,8 @@ export type OrderDetail = {
   deliveredAt: string | null
   lines: OrderLine[]
   dateChanges: { previous: string; next: string; reason: string | null; at: string }[]
+  // Presupuesto del que salió (si se convirtió de uno).
+  fromQuote: { id: string; code: string } | null
 }
 
 export type ProductionCard = {

@@ -34,22 +34,26 @@ export async function updateOrderSettings(input: OrderSettingsInput) {
 
 export async function getOrderFormData(): Promise<OrderFormData> {
   const supabase = await createSupabaseServerClient()
-  const [sale, types, settings, tiers] = await Promise.all([
+  const [sale, types, settings, tiers, quoteSettings] = await Promise.all([
     getSaleFormData(),
     listCustomizationTypes(),
     getOrderSettings(),
     supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "customization").order("min_quantity"),
+    supabase.from("quote_settings").select("vat_percent").maybeSingle(),
   ])
   return {
     ...sale,
     customizationTypes: types.filter((t) => t.isActive),
     customizationTiers: (tiers.data ?? []).map((t) => ({ minQuantity: t.min_quantity, percent: Number(t.percent) })),
     settings,
+    vatPercent: Number(quoteSettings.data?.vat_percent ?? 0),
   }
 }
 
 export async function createOrder(input: CreateOrderInput) {
   const supabase = await createSupabaseServerClient()
+  // La tasa de IVA es la de la configuración, nunca la que mande el navegador.
+  const vatPercent = input.vat_enabled ? (await supabase.from("quote_settings").select("vat_percent").single()).data?.vat_percent : 0
   return supabase.rpc("create_order", {
     p_customer_id: input.customer_id,
     p_price_method_id: input.price_method_id,
@@ -61,6 +65,7 @@ export async function createOrder(input: CreateOrderInput) {
     p_payments: input.payments,
     p_delivery_fee_usd: input.delivery_fee_usd,
     p_notes: input.notes ?? undefined,
+    p_vat_percent: Number(vatPercent ?? 0),
   })
 }
 
@@ -109,7 +114,7 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
   const { data: overview } = await supabase.from("orders_overview").select("*").eq("sale_id", saleId).maybeSingle()
   if (!overview) return null
 
-  const [order, sale, items, overrides, cancellation, dateChanges] = await Promise.all([
+  const [order, sale, items, overrides, cancellation, dateChanges, fromQuote] = await Promise.all([
     supabase.from("orders").select("stock_mode, delivered_at").eq("sale_id", saleId).single(),
     supabase.from("sales").select("customer:customers(id, first_name, last_name, phone)").eq("id", saleId).single(),
     supabase
@@ -126,6 +131,7 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
     supabase.from("order_overrides").select("kind, reason, author:profiles!order_overrides_created_by_fkey(full_name)").eq("sale_id", saleId),
     supabase.from("order_cancellations").select("*").eq("sale_id", saleId).maybeSingle(),
     supabase.from("order_date_changes").select("*").eq("sale_id", saleId).order("created_at"),
+    supabase.from("quotes").select("id, code").eq("order_sale_id", saleId).maybeSingle(),
   ])
   if (items.error) throw items.error
 
@@ -169,6 +175,7 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
       : null,
     deliveredAt: order.data!.delivered_at,
     dateChanges: (dateChanges.data ?? []).map((d) => ({ previous: d.previous_date, next: d.new_date, reason: d.reason, at: d.created_at })),
+    fromQuote: fromQuote.data ? { id: fromQuote.data.id, code: fromQuote.data.code } : null,
     lines: ordered.map((item) => {
       const stage = statusById.get(item.id) ?? null
       const open = item.assignments.find((a) => a.stage === stage && !a.completed_at)

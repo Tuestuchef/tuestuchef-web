@@ -76,6 +76,14 @@ const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }
         }
       />
 
+      {order.fromQuote && (
+        <p className="text-sm text-muted-foreground">
+          Desde el presupuesto{" "}
+          <Link href={ROUTES.QUOTE(order.fromQuote.id)} className="font-mono text-foreground underline-offset-4 hover:underline">
+            {order.fromQuote.code}
+          </Link>
+        </p>
+      )}
       {order.cancellation && (
         <StatusAlert tone="error" title="Pedido cancelado">
           {order.cancellation.reason} · {formatDate(order.cancellation.at)}. Se reembolsó {formatUsdt(order.cancellation.refundedUsdt)}

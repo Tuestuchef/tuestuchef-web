@@ -115,3 +115,27 @@ export const discardQuoteSchema = z.object({
   id: z.uuid(),
   reason: z.string().trim().min(3, { error: "Escribe el motivo." }).max(300),
 })
+
+// Convertir un presupuesto aceptado en pedido.
+export const convertQuoteSchema = z.object({
+  id: z.uuid(),
+  customer_id: optionalId,
+  currency: z.enum(["usd", "ves"], { error: "Elige la moneda con que paga el cliente." }),
+  stock_mode: z.enum(E.order_stock_mode),
+  promised_date: z.iso.date({ error: "Indica la fecha prometida." }),
+  channel: z.enum(E.sale_channel),
+  delivery_method: z.enum(E.delivery_method),
+  // Por personalización del presupuesto: nombres (uno por pieza), texto y logo que pide el pedido.
+  details: z
+    .record(
+      z.uuid(),
+      z.object({
+        text: optionalText(60),
+        names: z.array(z.string().trim().min(1).max(60)).max(1000).default([]),
+        logo_path: z.string().max(300).nullish(),
+      })
+    )
+    .default({}),
+})
+
+export type ConvertQuoteInput = z.infer<typeof convertQuoteSchema>

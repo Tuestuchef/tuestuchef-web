@@ -8,8 +8,8 @@ import QuoteDetailScreen from "@/modules/quotes/screens/quote-detail-screen"
 export const metadata: Metadata = { title: "Presupuesto" }
 
 export default async function QuotePage({ params }: PageProps<"/presupuestos/[id]">) {
-  await requireSessionUser()
+  const user = await requireSessionUser()
   const { id } = await params
   if (!z.uuid().safeParse(id).success) notFound()
-  return <QuoteDetailScreen id={id} />
+  return <QuoteDetailScreen user={user} id={id} />
 }
