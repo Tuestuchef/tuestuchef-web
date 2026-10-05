@@ -66,6 +66,7 @@ export const ENTRY_TYPE_LABELS: Record<LedgerEntryType, string> = {
   transfer_in: "Traspaso (entra)",
   exchange_fee: "Comisión de cambio",
   purchase_payment: "Pago de compra",
+  sale_refund: "Reembolso de venta",
 }
 
 // Categorías visibles de inmediato en el registro rápido (el resto tras "Ver todas").

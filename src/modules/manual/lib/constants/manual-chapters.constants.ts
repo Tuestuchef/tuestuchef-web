@@ -4,6 +4,7 @@ import { PURCHASES_CHAPTER } from "./chapters/compras.constants"
 import { SETTINGS_CHAPTER } from "./chapters/configuracion.constants"
 import { TEAM_CHAPTER } from "./chapters/equipo.constants"
 import { INVENTORY_CHAPTER } from "./chapters/inventario.constants"
+import { ORDERS_CHAPTER } from "./chapters/pedidos.constants"
 import { RESULTS_CHAPTER } from "./chapters/resultados.constants"
 import { TREASURY_CHAPTER } from "./chapters/tesoreria.constants"
 
@@ -12,6 +13,7 @@ export const MANUAL_CHAPTERS: readonly ManualChapter[] = [
   SALES_CHAPTER,
   CUSTOMERS_CHAPTER,
   INVENTORY_CHAPTER,
+  ORDERS_CHAPTER,
   PURCHASES_CHAPTER,
   TREASURY_CHAPTER,
   RESULTS_CHAPTER,

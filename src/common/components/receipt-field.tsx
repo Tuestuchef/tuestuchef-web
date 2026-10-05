@@ -17,7 +17,10 @@ import { receiptUploadSchema } from "@/common/lib/schemas/receipt-upload.schema"
 type ReceiptFieldProps = {
   enabled: boolean
   name?: string
+  label?: string
   onUploadingChange?: (uploading: boolean) => void
+  // Avisa la ruta subida (o null al quitarla), para formularios que no usan FormData.
+  onPathChange?: (path: string | null) => void
 }
 
 type ReceiptState =
@@ -27,7 +30,7 @@ type ReceiptState =
   | { status: "error"; message: string }
 
 // Sube el archivo directo a R2 con una URL prefirmada y deja solo la ruta en el formulario.
-const ReceiptField = ({ enabled, name = "receipt_path", onUploadingChange }: ReceiptFieldProps) => {
+const ReceiptField = ({ enabled, name = "receipt_path", label = "Comprobante", onUploadingChange, onPathChange }: ReceiptFieldProps) => {
   const inputId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const [state, setState] = useState<ReceiptState>({ status: "idle" })
@@ -56,6 +59,7 @@ const ReceiptField = ({ enabled, name = "receipt_path", onUploadingChange }: Rec
       })
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       setState({ status: "uploaded", fileName: file.name, path: signed.data.path })
+      onPathChange?.(signed.data.path)
     } catch {
       setState({ status: "error", message: RECEIPT_MESSAGES.UPLOAD_FAILED })
     } finally {
@@ -64,12 +68,15 @@ const ReceiptField = ({ enabled, name = "receipt_path", onUploadingChange }: Rec
     }
   }
 
-  const clear = () => setState({ status: "idle" })
+  const clear = () => {
+    setState({ status: "idle" })
+    onPathChange?.(null)
+  }
 
   return (
     <div className="grid gap-2">
       <Label htmlFor={inputId}>
-        Comprobante <span className="font-normal text-muted-foreground">(opcional)</span>
+        {label} <span className="font-normal text-muted-foreground">(opcional)</span>
       </Label>
 
       <input

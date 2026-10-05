@@ -153,6 +153,17 @@ export const PURCHASES_CHAPTER: ManualChapter = {
       ],
     },
     {
+      id: "talleres",
+      heading: "Talleres",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "Un proveedor de tipo **taller** (confección, bordado) puede recibir etapas de los pedidos, con una fecha estimada que se confirma con ellos; si se pasa, aparece atrasado. Lo que se le paga se registra como una compra de servicio, y si el pedido se cancela después del corte, ese gasto se descuenta del reembolso.",
+        },
+      ],
+    },
+    {
       id: "anular",
       heading: "Corregir un error: anular",
       blocks: [

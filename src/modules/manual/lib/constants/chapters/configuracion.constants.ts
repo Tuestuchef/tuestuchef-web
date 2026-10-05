@@ -35,6 +35,7 @@ export const SETTINGS_CHAPTER: ManualChapter = {
   screens: [
     { title: "Usuarios", url: ROUTES.SETTINGS_USERS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Reglas de venta", url: ROUTES.SETTINGS_SALES, roles: ROLE_GROUPS.MANAGEMENT },
+    { title: "Pedidos y personalización", url: ROUTES.SETTINGS_ORDERS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Cuentas", url: ROUTES.SETTINGS_ACCOUNTS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Métodos de pago", url: ROUTES.SETTINGS_PAYMENT_METHODS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Categorías de dinero", url: ROUTES.SETTINGS_CATEGORIES, roles: ROLE_GROUPS.MANAGEMENT },
@@ -179,6 +180,45 @@ export const SETTINGS_CHAPTER: ManualChapter = {
               title: "Días hacia atrás de staff",
               effect: "Hasta cuántos días atrás staff registra ventas, pagos y movimientos (7 por defecto).",
               chapter: "ventas",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "pedidos",
+      heading: "Pedidos y personalización",
+      blocks: [
+        {
+          kind: "effects",
+          items: [
+            {
+              icon: TagsIcon,
+              title: "Precios de personalización",
+              effect: "Nombre bordado, logos de bolsillo, estampado y de pecho: precio por unidad en USD y mínimo de piezas. Sin precio no se pueden usar.",
+            },
+            {
+              icon: PercentIcon,
+              title: "Descuento al mayor",
+              effect: "Tramos 'desde N piezas, X%' para productos y para personalización. Se aplica solo el más alto alcanzado.",
+              chapter: "ventas",
+            },
+            {
+              icon: CalendarClockIcon,
+              title: "Abono y fecha prometida",
+              effect: "Desde qué total se cobra abono, qué porcentaje y en cuántos días se promete por defecto.",
+              chapter: "pedidos",
+            },
+            {
+              icon: CoinsIcon,
+              title: "Tarifas a destajo",
+              effect: "Cuánto se paga por pieza según la categoría y la etapa.",
+              chapter: "equipo",
+            },
+            {
+              icon: ShieldCheckIcon,
+              title: "Reglas del negocio",
+              effect: "Todos las leen en Ayuda; owner y admin las escriben. Unas las aplica el sistema solo.",
             },
           ],
         },

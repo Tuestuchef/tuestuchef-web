@@ -12,7 +12,9 @@ export const ROUTES = {
   TREASURY: "/cuentas",
   NEW_TRANSFER: "/cuentas/traspaso",
   ANALYTICS: "/analitica",
+  PERIODS: "/analitica/cierres",
   PRODUCTS: "/productos",
+  COMBOS: "/productos/combos",
   PRODUCT: (id: string) => `/productos/${id}`,
   STOCK: "/productos/stock",
   INITIAL_STOCK: "/productos/stock/carga-inicial",
@@ -30,6 +32,13 @@ export const ROUTES = {
   RAW_MATERIALS: "/compras/materia-prima",
   TEAM: "/equipo",
   TEAM_MEMBER: (id: string) => `/equipo/${id}`,
+  ORDERS: "/pedidos",
+  NEW_ORDER: "/pedidos/nuevo",
+  ORDER: (id: string) => `/pedidos/${id}`,
+  PRODUCTION: "/produccion",
+  PRODUCTION_ASSIGNMENTS: "/produccion/asignaciones",
+  PRODUCTION_MATERIALS: "/produccion/materiales",
+  BUSINESS_RULES: "/reglas-de-negocio",
   CUSTOMERS: "/clientes",
   CUSTOMER: (id: string) => `/clientes/${id}`,
   MANUAL: "/manual",
@@ -43,8 +52,12 @@ export const ROUTES = {
   SETTINGS_SIZES: "/configuracion/tallas",
   SETTINGS_COLORS: "/configuracion/colores",
   SETTINGS_SALES: "/configuracion/ventas",
+  SETTINGS_ORDERS: "/configuracion/pedidos",
+  SETTINGS_PIECE_RATES: "/configuracion/tarifas",
 
   RECEIPT: (entryId: string) => `/api/receipts/${entryId}`,
+  CUSTOMIZATION_LOGO: (customizationId: string) => `/api/logos/${customizationId}`,
+  PERIOD_EXPORT: (month: string) => `/api/exports/${month}`,
 } as const
 
 // Rutas accesibles sin sesión.

@@ -161,6 +161,12 @@ export const recipeLineSchema = z.object({
   quantity: positiveAmountSchema("la cantidad", 4),
 })
 
+export const comboComponentSchema = z.object({
+  combo_product_id: z.uuid(),
+  component_product_id: z.uuid({ error: "Elige el producto." }),
+  quantity: z.coerce.number({ error: "Indica la cantidad." }).int({ error: "Solo unidades enteras." }).min(1).max(100),
+})
+
 export const initialStockSchema = z.object({
   csv: z.string().trim().min(1, { error: "Pega o sube el CSV." }).max(200_000),
 })
@@ -192,6 +198,8 @@ export type CatalogItemInput = z.infer<typeof catalogItemSchema>
 export type ProductInput = z.infer<typeof productSchema>
 export type RecipeLineInput = z.infer<typeof recipeLineSchema>
 export type RecipeLineField = keyof RecipeLineInput
+export type ComboComponentInput = z.infer<typeof comboComponentSchema>
+export type ComboComponentField = keyof ComboComponentInput
 export type VariantInput = z.infer<typeof variantSchema>
 export type StockMovementInput = z.infer<typeof stockMovementSchema>
 export type ProductField = keyof ProductInput

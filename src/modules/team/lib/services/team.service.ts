@@ -127,6 +127,7 @@ export async function saveTeamMember(input: TeamMemberInput) {
     job_title: input.job_title ?? null,
     phone: input.phone,
     notes: input.notes ?? null,
+    pay_basis: input.pay_basis,
     is_active: input.is_active,
   }
   return input.id

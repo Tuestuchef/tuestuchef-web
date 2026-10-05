@@ -32,15 +32,20 @@ const ProductList = ({ products }: { products: ProductListItem[] }) => {
             <div className="grid min-w-0 flex-1 content-start gap-1">
               <span className="line-clamp-2 font-medium leading-snug">{product.name}</span>
               <span className="text-xs text-muted-foreground">
-                {product.categoryName} · {product.variantCount} variantes
+                {product.categoryName}
+                {product.kind !== "combo" && <> · {product.variantCount} variantes</>}
                 {product.priceFromUsd !== null && <> · desde {formatMoney(product.priceFromUsd, "USD")}</>}
               </span>
               <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <StockBadge
-                  quantity={product.totalStock}
-                  isLow={false}
-                  madeToOrder={product.fulfillmentType === "made_to_order"}
-                />
+                {product.kind === "combo" ? (
+                  <StatusBadge tone="info">Combo</StatusBadge>
+                ) : (
+                  <StockBadge
+                    quantity={product.totalStock}
+                    isLow={false}
+                    madeToOrder={product.fulfillmentType === "made_to_order"}
+                  />
+                )}
                 {product.lowStockCount > 0 && (
                   <StatusBadge tone="warning">
                     {product.lowStockCount} {product.lowStockCount === 1 ? "variante baja" : "variantes bajas"}

@@ -7,7 +7,7 @@ import type { CustomerInput } from "../schemas/customers.schema"
 import type { CustomerDetail, CustomerListItem, DuplicateCustomer } from "../types/customers.types"
 import { findCustomersByContact } from "./customer-lookup.service"
 
-const LIST_COLUMNS = "id, first_name, last_name, phone, email, instagram, is_active, has_id_document"
+const LIST_COLUMNS = "id, first_name, last_name, phone, email, instagram, is_active, has_id_document, blocked_at, blocked_reason"
 
 // Quita lo que rompería el filtro de PostgREST.
 const sanitize = (value: string) => value.replace(/[,()%*"\\]/g, " ").trim()
@@ -104,4 +104,23 @@ export async function saveCustomer(input: CustomerInput, { canManage }: { canMan
   }
 
   return { ok: true, id: data.id }
+}
+
+export async function setCustomerBlocked(customerId: string, blocked: boolean, reason: string) {
+  const supabase = await createSupabaseServerClient()
+  return blocked
+    ? supabase.rpc("block_customer", { p_customer_id: customerId, p_reason: reason })
+    : supabase.rpc("unblock_customer", { p_customer_id: customerId, p_reason: reason })
+}
+
+export type CustomerBlockEvent = { id: string; action: "block" | "unblock"; reason: string; at: string; byName: string | null }
+
+export async function listCustomerBlockEvents(customerId: string): Promise<CustomerBlockEvent[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data } = await supabase
+    .from("customer_block_events")
+    .select("id, action, reason, created_at, author:profiles!customer_block_events_created_by_fkey(full_name)")
+    .eq("customer_id", customerId)
+    .order("created_at", { ascending: false })
+  return (data ?? []).map((e) => ({ id: e.id, action: e.action, reason: e.reason, at: e.created_at, byName: e.author?.full_name ?? null }))
 }

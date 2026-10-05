@@ -407,7 +407,7 @@ begin
   for i in 1..coalesce(array_length(v_mto_items, 1), 0) loop
     begin
       -- Pausa mínima: el estado vigente es el evento más reciente (created_at = clock_timestamp()).
-      perform public.set_sale_item_status(v_mto_items[i], 'in_production');
+      perform public.set_sale_item_status(v_mto_items[i], 'sewing');
       perform pg_sleep(0.002);
       if i <= array_length(v_mto_items, 1) - 2 then
         perform public.set_sale_item_status(v_mto_items[i], 'ready');

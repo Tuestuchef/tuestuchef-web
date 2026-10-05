@@ -10,6 +10,9 @@ import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { isStorageEnabled } from "@/common/lib/services/storage.service"
 import { formatDate } from "@/common/lib/utils/format-date.util"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
+import PieceworkPaymentDialog from "@/modules/orders/components/piecework-payment-dialog"
+import { listPendingPiecework } from "@/modules/orders/lib/services/production.service"
+import { ITEM_STATUS_LABELS } from "@/modules/sales/lib/constants/sales.constants"
 import { listAccounts } from "@/modules/treasury/lib/services/accounts.service"
 import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.service"
 
@@ -22,7 +25,10 @@ import { getTeamMember, listLinkableProfiles } from "../lib/services/team.servic
 const TeamMemberScreen = async ({ id }: { id: string }) => {
   const [detail, accounts, rateStatus] = await Promise.all([getTeamMember(id), listAccounts({ activeOnly: true }), getRateStatus()])
   if (!detail) notFound()
-  const profiles = await listLinkableProfiles(detail.member.profile_id)
+  const [profiles, piecework] = await Promise.all([
+    listLinkableProfiles(detail.member.profile_id),
+    detail.member.pay_basis === "salary" ? Promise.resolve([]) : listPendingPiecework(id),
+  ])
   const { member, currentSalary, agreements, entries, pendingAdvances } = detail
   const rates = rateStatus.rate ? { bcvUsd: Number(rateStatus.rate.bcv_usd), usdUsdt: Number(rateStatus.rate.usd_usdt) } : null
   const accountOptions = accounts.map((a) => ({ id: a.id, name: a.name, currency: a.currency }))
@@ -67,7 +73,42 @@ const TeamMemberScreen = async ({ id }: { id: string }) => {
           </>
         )}
         <SalaryAgreementDialog memberId={member.id} current={currentSalary} today={rateStatus.today} />
+        {member.is_active && (
+          <PieceworkPaymentDialog
+            memberId={member.id}
+            pieces={piecework}
+            advances={pendingAdvances.map((a) => ({ id: a.id, usdAmount: a.usdAmount, occurredAt: a.occurredAt }))}
+            accounts={accountOptions}
+          />
+        )}
       </div>
+
+      {member.pay_basis !== "salary" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Destajo pendiente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {piecework.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sin piezas por pagar.</p>
+            ) : (
+              <ul className="divide-y text-sm">
+                {piecework.map((p) => (
+                  <li key={p.id} className="flex items-center gap-3 py-2">
+                    <span className="grid flex-1">
+                      <span>{p.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {ITEM_STATUS_LABELS[p.stage]} · {p.pieces} piezas · {formatDate(p.completedAt)}
+                      </span>
+                    </span>
+                    <span className="tabular-nums">{formatMoney(p.amountUsd, "USD")}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

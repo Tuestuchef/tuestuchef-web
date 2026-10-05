@@ -14,7 +14,7 @@ export async function listProducts(
   let query = supabase
     .from("products")
     .select(
-      `id, name, fulfillment_type, is_active,
+      `id, kind, name, fulfillment_type, is_active,
        category:product_categories(name),
        variants:product_variants(id, is_active),
        prices:product_prices(amount_usd),
@@ -40,6 +40,7 @@ export async function listProducts(
       const prices = product.prices.map((p) => Number(p.amount_usd))
       return {
         id: product.id,
+        kind: product.kind,
         name: product.name,
         categoryName: product.category?.name ?? "—",
         fulfillmentType: product.fulfillment_type,

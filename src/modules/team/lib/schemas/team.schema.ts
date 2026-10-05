@@ -35,6 +35,8 @@ export const teamMemberSchema = z.object({
       return result
     }),
   notes: optionalTextSchema(500),
+  // Cómo cobra: sueldo, por pieza (destajo) o ambos.
+  pay_basis: z.enum(E.pay_basis).default("salary"),
   is_active: booleanFieldSchema.default(true),
 })
 

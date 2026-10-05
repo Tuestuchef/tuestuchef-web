@@ -58,10 +58,19 @@ import {
   methodAmountToUsd,
   round,
   usdToMethodAmount,
+  volumePercent,
 } from "../lib/utils/sale-math.util"
 import BackdateField from "./backdate-field"
+import ComboPickerDialog, { type ComboSelection } from "./combo-picker-dialog"
 
-type CartLine = { variantId: string; quantity: number; source: SaleLineSource }
+// Una línea del carrito. Un combo trae la talla y el color de cada pieza (components).
+type CartLine = {
+  key: string
+  variantId: string
+  quantity: number
+  source: SaleLineSource
+  components?: ComboSelection["components"]
+}
 type PaymentMode = "full" | "custom" | "none"
 type PaymentRow = { key: number; methodId: string; amount: string }
 
@@ -92,6 +101,7 @@ const SaleForm = ({
   rates,
   staffMaxDiscountPercent,
   staffMaxBackdateDays,
+  volumeTiers,
   today,
   canManage,
 }: SaleFormProps) => {
@@ -101,6 +111,7 @@ const SaleForm = ({
 
   const [cart, setCart] = useState<CartLine[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [comboToPick, setComboToPick] = useState<SellableVariant | null>(null)
   const [priceMethodId, setPriceMethodId] = useState(methods[0]?.id ?? "")
   const [customer, setCustomer] = useState<PickedCustomer | null>(null)
   const [channel, setChannel] = useState<SaleChannel>("in_person")
@@ -136,13 +147,36 @@ const SaleForm = ({
     return { ...line, variant, price, total: price === undefined ? 0 : lineTotal(price, line.quantity) }
   })
   const missingPrice = lines.filter((l) => l.price === undefined)
-  const shortStock = lines.filter((l) => l.source === "stock" && l.quantity > l.variant.stock)
+
+  // Stock pedido por variante: líneas sueltas y piezas de combos.
+  const stockWanted = new Map<string, number>()
+  for (const line of cart) {
+    const pieces = line.components ?? [{ variantId: line.variantId, quantity: line.quantity, source: line.source }]
+    for (const piece of pieces) {
+      if (piece.source === "stock") stockWanted.set(piece.variantId, (stockWanted.get(piece.variantId) ?? 0) + piece.quantity)
+    }
+  }
+  const shortStock = [...stockWanted].flatMap(([variantId, wanted]) => {
+    const variant = variantById.get(variantId)
+    return variant && wanted > variant.stock ? [variant] : []
+  })
+  const availableFor = (variantId: string) => (variantById.get(variantId)?.stock ?? 0) - (stockWanted.get(variantId) ?? 0)
+
   const subtotal = round(lines.reduce((sum, l) => sum + l.total, 0))
+  // Descuento al mayor: por piezas (un combo cuenta por sus componentes).
+  const pieces = cart.reduce(
+    (sum, l) => sum + (l.components ? l.components.reduce((s, c) => s + c.quantity, 0) : l.quantity),
+    0
+  )
+  const volumePct = volumePercent(volumeTiers, pieces)
+  const volume = round((subtotal * volumePct) / 100)
+  const nextTier = volumeTiers.find((t) => t.minQuantity > pieces)
+  const discountBase = round(subtotal - volume)
   const parsedDiscount = showDiscount ? (parseAmount(discountValue) ?? 0) : 0
-  const discount = Math.min(discountUsd(subtotal, discountType, parsedDiscount), subtotal)
+  const discount = Math.min(discountUsd(discountBase, discountType, parsedDiscount), discountBase)
   const fee = deliveryMethod === "delivery" ? (parseAmount(deliveryFee) ?? 0) : 0
-  const total = round(subtotal - discount + fee)
-  const overDiscountLimit = !canManage && discountPercent(subtotal, discount) > staffMaxDiscountPercent + 0.0001
+  const total = round(discountBase - discount + fee)
+  const overDiscountLimit = !canManage && discountPercent(discountBase, discount) > staffMaxDiscountPercent + 0.0001
 
   const saleRates =
     dateRates === "today"
@@ -173,8 +207,9 @@ const SaleForm = ({
 
   const blockers = [
     cart.length === 0 && SALES_MESSAGES.EMPTY_CART,
+    customer?.blockedReason && `Cliente bloqueado: no se le puede vender (${customer.blockedReason}).`,
     missingPrice[0] && SALES_MESSAGES.NO_PRICE(missingPrice[0].variant.productName, priceMethod?.name ?? ""),
-    shortStock[0] && `No hay suficiente "${shortStock[0].variant.productName}" (${shortStock[0].variant.sku}) en inventario.`,
+    shortStock[0] && `No hay suficiente "${shortStock[0].productName}" (${shortStock[0].sku}) en inventario.`,
     overDiscountLimit && `El descuento máximo sin owner o admin es ${staffMaxDiscountPercent}%.`,
     showDiscount && discount > 0 && !discountReason.trim() && "Indica el motivo del descuento.",
     overpaid && "Los pagos superan el total.",
@@ -185,24 +220,34 @@ const SaleForm = ({
   // ---- Carrito ----
   const addVariant = (variant: SellableVariant) => {
     setPickerOpen(false)
+    // Un combo pide la talla y el color de cada pieza antes de entrar al carrito.
+    if (variant.components) {
+      setComboToPick(variant)
+      return
+    }
     setCart((prev) => {
-      const existing = prev.find((l) => l.variantId === variant.id)
+      const existing = prev.find((l) => l.key === variant.id)
       if (existing) return prev.map((l) => (l === existing ? { ...l, quantity: l.quantity + 1 } : l))
       const source: SaleLineSource =
         variant.fulfillmentType === "made_to_order" || (variant.fulfillmentType === "both" && variant.stock < 1)
           ? "made_to_order"
           : "stock"
-      return [...prev, { variantId: variant.id, quantity: 1, source }]
+      return [...prev, { key: variant.id, variantId: variant.id, quantity: 1, source }]
     })
   }
-  const setQuantity = (variantId: string, quantity: number) =>
-    setCart((prev) =>
-      quantity <= 0 ? prev.filter((l) => l.variantId !== variantId) : prev.map((l) => (l.variantId === variantId ? { ...l, quantity } : l))
-    )
-  const toggleSource = (variantId: string) =>
-    setCart((prev) =>
-      prev.map((l) => (l.variantId === variantId ? { ...l, source: l.source === "stock" ? "made_to_order" : "stock" } : l))
-    )
+  const addCombo = (selection: ComboSelection) => {
+    if (!comboToPick) return
+    const combo = comboToPick
+    setComboToPick(null)
+    setCart((prev) => [
+      ...prev,
+      { key: `${combo.id}-${Date.now()}`, variantId: combo.id, quantity: selection.quantity, source: "combo", components: selection.components },
+    ])
+  }
+  const setQuantity = (key: string, quantity: number) =>
+    setCart((prev) => (quantity <= 0 ? prev.filter((l) => l.key !== key) : prev.map((l) => (l.key === key ? { ...l, quantity } : l))))
+  const toggleSource = (key: string) =>
+    setCart((prev) => prev.map((l) => (l.key === key ? { ...l, source: l.source === "stock" ? "made_to_order" : "stock" } : l)))
 
   const addPaymentRow = () => {
     const method = priceMethod ?? methods[0]
@@ -230,7 +275,15 @@ const SaleForm = ({
         price_method_id: priceMethodId,
         delivery_method: deliveryMethod,
         customer_id: customer?.id ?? null,
-        items: cart.map((l) => ({ variant_id: l.variantId, quantity: l.quantity, source: l.source })),
+        items: cart.map((l) =>
+          l.components
+            ? {
+                variant_id: l.variantId,
+                quantity: l.quantity,
+                components: l.components.map((c) => ({ variant_id: c.variantId, quantity: c.quantity, source: c.source })),
+              }
+            : { variant_id: l.variantId, quantity: l.quantity, source: l.source }
+        ),
         payments: payments.map((p) => ({ payment_method_id: p.methodId, amount: p.amount })),
         delivery_fee_usd: fee,
         discount_type: showDiscount && discount > 0 ? discountType : null,
@@ -288,9 +341,11 @@ const SaleForm = ({
                         <span className="grid justify-items-end text-xs tabular-nums">
                           <span>{price === undefined ? "Sin precio" : usd(price)}</span>
                           <span className="text-muted-foreground">
-                            {variant.fulfillmentType === "made_to_order"
-                              ? "Por encargo"
-                              : `Hay ${quantityFormat.format(variant.stock)}`}
+                            {variant.components
+                              ? "Combo"
+                              : variant.fulfillmentType === "made_to_order"
+                                ? "Por encargo"
+                                : `Hay ${quantityFormat.format(variant.stock)}`}
                           </span>
                         </span>
                       </CommandItem>
@@ -305,7 +360,7 @@ const SaleForm = ({
         {lines.length > 0 && (
           <ul className="divide-y rounded-lg border">
             {lines.map((line) => (
-              <li key={line.variantId} className="grid gap-2 p-3">
+              <li key={line.key} className="grid gap-2 p-3">
                 <div className="flex items-start gap-2">
                   <div className="grid min-w-0 flex-1 gap-0.5">
                     <span className="text-sm font-medium">
@@ -322,9 +377,31 @@ const SaleForm = ({
                         </>
                       )}
                     </span>
+                    {line.components && (
+                      <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
+                        {line.components.map((c) => {
+                          const piece = variantById.get(c.variantId)
+                          return (
+                            <li key={c.variantId}>
+                              {quantityFormat.format(c.quantity)} × {piece?.productName} · {piece?.variantLabel}
+                              {c.source === "made_to_order" && " · por encargo"}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
                   </div>
                   <span className="text-sm font-medium tabular-nums">{usd(line.total)}</span>
                 </div>
+                {line.components ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge tone="info">{quantityFormat.format(line.quantity)} {line.quantity === 1 ? "combo" : "combos"}</StatusBadge>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setQuantity(line.key, 0)}>
+                      <Trash2Icon aria-hidden />
+                      Quitar
+                    </Button>
+                  </div>
+                ) : (
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center rounded-md border">
                     <Button
@@ -332,7 +409,7 @@ const SaleForm = ({
                       variant="ghost"
                       size="icon"
                       className="size-10 md:size-8"
-                      onClick={() => setQuantity(line.variantId, line.quantity - 1)}
+                      onClick={() => setQuantity(line.key, line.quantity - 1)}
                     >
                       {line.quantity === 1 ? <Trash2Icon aria-hidden /> : <MinusIcon aria-hidden />}
                       <span className="sr-only">{line.quantity === 1 ? "Quitar" : "Uno menos"}</span>
@@ -345,14 +422,14 @@ const SaleForm = ({
                       variant="ghost"
                       size="icon"
                       className="size-10 md:size-8"
-                      onClick={() => setQuantity(line.variantId, line.quantity + 1)}
+                      onClick={() => setQuantity(line.key, line.quantity + 1)}
                     >
                       <PlusIcon aria-hidden />
                       <span className="sr-only">Uno más</span>
                     </Button>
                   </div>
                   {line.variant.fulfillmentType === "both" ? (
-                    <Button type="button" variant="outline" size="sm" onClick={() => toggleSource(line.variantId)}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => toggleSource(line.key)}>
                       {SOURCE_LABELS[line.source]}
                       <span className="sr-only">(cambiar)</span>
                     </Button>
@@ -363,11 +440,14 @@ const SaleForm = ({
                     <StatusBadge tone="error">Stock insuficiente</StatusBadge>
                   )}
                 </div>
+                )}
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      <ComboPickerDialog combo={comboToPick} variants={variants} available={availableFor} onCancel={() => setComboToPick(null)} onConfirm={addCombo} />
 
       {/* 2. Método de pago (lista de precios) */}
       <FormField label="Método de pago" htmlFor="sale-method" hint="Define el precio de cada producto.">
@@ -578,11 +658,24 @@ const SaleForm = ({
       {/* Resumen y registrar */}
       <div className="sticky bottom-0 -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
         <dl className="grid gap-1 text-sm tabular-nums">
-          {(discount > 0 || fee > 0) && (
+          {(volume > 0 || discount > 0 || fee > 0) && (
             <div className="flex justify-between text-muted-foreground">
               <dt>Subtotal</dt>
               <dd>{usd(subtotal)}</dd>
             </div>
+          )}
+          {volume > 0 && (
+            <div className="flex justify-between text-muted-foreground">
+              <dt>
+                Al mayor {volumePct}% ({quantityFormat.format(pieces)} piezas)
+              </dt>
+              <dd>−{usd(volume)}</dd>
+            </div>
+          )}
+          {nextTier && pieces > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Con {quantityFormat.format(nextTier.minQuantity - pieces)} piezas más: {nextTier.percent}% al mayor.
+            </p>
           )}
           {discount > 0 && (
             <div className="flex justify-between text-muted-foreground">

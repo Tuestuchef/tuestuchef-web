@@ -53,6 +53,7 @@ export async function saveSupplier(input: SupplierInput, { canManage }: { canMan
     phone: input.phone,
     email: input.email,
     notes: input.notes ?? null,
+    kind: input.kind,
     ...(canManage ? { is_active: input.is_active } : {}),
   }
   return input.id

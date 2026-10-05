@@ -13,13 +13,15 @@ import {
   CommandList,
 } from "@/common/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/common/components/ui/popover"
+import StatusBadge from "@/common/components/status-badge"
 
 import { searchCustomersAction } from "../lib/actions/search-customers.action"
 import type { CustomerListItem } from "../lib/types/customers.types"
 import { formatPhone } from "../lib/utils/normalize-contact.util"
 import CustomerFormDialog from "./customer-form-dialog"
 
-export type PickedCustomer = { id: string; name: string }
+// blockedReason: el cliente está bloqueado (no se le puede vender).
+export type PickedCustomer = { id: string; name: string; blockedReason?: string | null }
 
 type CustomerPickerProps = {
   value: PickedCustomer | null
@@ -86,13 +88,20 @@ const CustomerPicker = ({ value, onChange, canManage, emptyLabel = "Sin cliente"
                     key={customer.id}
                     value={customer.id}
                     onSelect={() => {
-                      onChange({ id: customer.id, name: displayName(customer) })
+                      onChange({
+                        id: customer.id,
+                        name: displayName(customer),
+                        blockedReason: customer.blocked_at ? (customer.blocked_reason ?? "Bloqueado") : null,
+                      })
                       setOpen(false)
                       setSearch("")
                     }}
                   >
                     <span className="grid min-w-0">
-                      <span className="truncate">{displayName(customer)}</span>
+                      <span className="flex items-center gap-1.5 truncate">
+                        {displayName(customer)}
+                        {customer.blocked_at && <StatusBadge tone="error">Bloqueado</StatusBadge>}
+                      </span>
                       <span className="truncate text-xs text-muted-foreground">
                         {customer.phone ? formatPhone(customer.phone) : (customer.email ?? `@${customer.instagram}`)}
                       </span>

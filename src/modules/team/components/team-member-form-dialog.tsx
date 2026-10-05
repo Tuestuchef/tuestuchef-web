@@ -105,6 +105,13 @@ const TeamMemberFormDialog = ({ member, profiles }: TeamMemberFormDialogProps) =
           <FormField label="Notas" htmlFor="member-notes" error={errors.notes} optional>
             <Textarea id="member-notes" name="notes" rows={2} defaultValue={member?.notes ?? ""} />
           </FormField>
+          <FormField label="Cómo cobra" htmlFor="member-pay" hint="A destajo: se le cuentan las piezas al terminar las etapas que tiene asignadas.">
+            <select id="member-pay" name="pay_basis" defaultValue={member?.pay_basis ?? "salary"} className="h-11 rounded-md border bg-background px-2 text-sm md:h-9">
+              <option value="salary">Sueldo</option>
+              <option value="piecework">Por pieza (destajo)</option>
+              <option value="both">Sueldo y por pieza</option>
+            </select>
+          </FormField>
           {member && (
             <ActiveSwitchField defaultChecked={member.is_active} label="Activa" description="Las inactivas no aparecen al registrar pagos." />
           )}

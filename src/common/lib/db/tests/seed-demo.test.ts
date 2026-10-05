@@ -44,7 +44,7 @@ describe("seed demo", () => {
     // Nada aparece como retroactivo.
     expect(await count("select 1 from public.sales where is_backdated or created_at <> occurred_at")).toBe(0)
     // Encargos: los dos más recientes siguen en producción y el resto ya se entregó.
-    const pending = await owner("select 1 from public.sale_item_current_status where status in ('in_production', 'ready')")
+    const pending = await owner("select 1 from public.sale_item_current_status where status in ('sewing', 'ready')")
     expect(pending.rows.length).toBe(2)
   })
 

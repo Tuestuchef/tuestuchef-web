@@ -72,28 +72,34 @@ const SaleNoteScreen = async ({ id }: { id: string }) => {
           </thead>
           <tbody className="tabular-nums">
             {sale.items.map((item) => (
-              <tr key={item.id} className="border-b align-top">
-                <td className="py-2">{quantityFormat.format(item.quantity)}</td>
-                <td className="py-2">
-                  {item.productName} · {item.variantLabel}
+              <tr key={item.id} className={item.parentId ? "align-top text-muted-foreground" : "border-b align-top"}>
+                <td className={item.parentId ? "py-1 pl-3" : "py-2"}>{quantityFormat.format(item.quantity)}</td>
+                <td className={item.parentId ? "py-1 pl-3" : "py-2"}>
+                  {item.source === "combo" ? item.productName : `${item.productName} · ${item.variantLabel}`}
                   {item.source === "made_to_order" && (
                     <span className="block text-xs text-muted-foreground">
                       Por encargo{item.status ? ` · ${ITEM_STATUS_LABELS[item.status]}` : ""}
                     </span>
                   )}
                 </td>
-                <td className="py-2 text-right">{usd(item.unitPriceUsd)}</td>
-                <td className="py-2 text-right">{usd(item.lineTotalUsd)}</td>
+                <td className="py-2 text-right">{item.parentId ? "" : usd(item.unitPriceUsd)}</td>
+                <td className="py-2 text-right">{item.parentId ? "" : usd(item.lineTotalUsd)}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
         <dl className="ml-auto grid w-full max-w-64 gap-1 text-sm tabular-nums">
-          {(sale.discount || sale.deliveryFeeUsd > 0) && (
+          {(sale.volumeDiscount || sale.discount || sale.deliveryFeeUsd > 0) && (
             <div className="flex justify-between">
               <dt>Subtotal</dt>
               <dd>{usd(sale.subtotalUsd)}</dd>
+            </div>
+          )}
+          {sale.volumeDiscount && (
+            <div className="flex justify-between">
+              <dt>Al mayor {sale.volumeDiscount.percent}%</dt>
+              <dd>−{usd(sale.volumeDiscount.usd)}</dd>
             </div>
           )}
           {sale.discount && (

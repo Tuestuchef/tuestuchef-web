@@ -19,6 +19,14 @@ export function discountUsd(subtotal: number, type: DiscountType | null, value: 
 
 export const discountPercent = (subtotal: number, discount: number) => (subtotal > 0 ? (discount / subtotal) * 100 : 0)
 
+// Descuento al mayor: el tramo más alto que alcanzan las piezas (0 si ninguno).
+export function volumePercent(tiers: readonly { minQuantity: number; percent: number }[], pieces: number): number {
+  return tiers.filter((t) => t.minQuantity <= pieces).reduce((best, t) => (t.minQuantity > best.minQuantity ? t : best), {
+    minQuantity: 0,
+    percent: 0,
+  }).percent
+}
+
 export type SaleRates = { bcvUsd: number; bcvEur: number; usdUsdt: number }
 export type PaymentMethodRate = { rateKind: PaymentRateKind; currency: Currency }
 

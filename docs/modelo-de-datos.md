@@ -328,6 +328,35 @@ Migración: `20261008000000_dashboard.sql`. Pruebas: `src/common/lib/db/tests/da
 - **`product_sales_margin(desde, hasta)`**: por producto vendido (sin ventas anuladas): unidades, ingreso en USD (con el descuento repartido por línea, sin delivery), ingreso real (× BCV ÷ Binance si la lista de precios cobra en Bs; × usd_usdt si no), costo de materiales (el copiado al vender o el de su producción si es encargo), mano de obra y margen. Avisa las líneas sin costo.
 - **`exchange_rate_effect(desde, hasta)`**: ventas cobradas en Bs (real − nominal, normalmente pérdida) y pagos a proveedores en Bs (nominal − real, normalmente ganancia), donde nominal = USD cubiertos × usd_usdt y real = `usdt_value`.
 
+## 10. Combos, personalización y descuento al mayor (Fase 3, paso 1)
+
+- **Combo**: `products.kind = 'combo'`, con precio por método en `product_prices` y **una sola variante** (`CMB-…`, se crea sola). No lleva stock (`stock_movements_block_combo`), receta ni más variantes. Su tipo no cambia después de creado.
+- **`combo_components`** (`combo_product_id`, `component_product_id`, `quantity`): solo productos terminados. Owner y admin los editan; todos los leen.
+- **Venta de un combo**: la línea del combo (`sale_items.source = 'combo'`) lleva el precio, sin stock ni estado. Cada pieza es una línea hija (`parent_item_id`) a precio 0, con su variante elegida, que descuenta stock o va a producción. `create_sale` exige que, por producto, las piezas sumen `quantity × cantidad de combos`.
+- **Margen**: `product_sales_margin` reparte el ingreso del combo entre sus piezas según el precio de cada producto con el mismo método (o por cantidad si no tienen precio). `product_margins` calcula el costo del combo como la suma de sus componentes.
+- **`customization_types`**: código estable (`embroidered_name`, `pocket_logo`, `printed_logo`, `chest_logo`), precio por unidad en USD (vacío = no se puede usar), mínimo de piezas, medida máxima y de referencia. Se usan en los pedidos (paso 2).
+- **`volume_discount_tiers`** (`scope` `products` o `customization`, `min_quantity`, `percent`): se aplica el tramo más alto alcanzado. En `sales`, `volume_discount_percent` y `volume_discount_usd`; `total = subtotal − al mayor − descuento manual + delivery`. El manual se calcula sobre lo que queda y el límite de staff solo cuenta el manual.
+
+## 11. Pedidos y producción (Fase 3, paso 2)
+
+- **Un pedido es una venta** (regla 6). `orders` (`sale_id` PK) agrega `promised_date` (por defecto hoy + `order_settings.default_lead_days`), `stock_mode` (`reserve_and_produce` | `produce_all`), `deposit_required_usd` (fijado al crear: total ≥ `deposit_threshold_usd` → `deposit_percent`%; si no, total) y `delivered_at`. Solo cambian la fecha (con `order_date_changes`) y la entrega.
+- **Ventas**: `create_sale` y `create_order` comparten `create_sale_core` (interna). `sale_items.reserved_quantity`: en una línea por encargo, piezas apartadas del stock al crear el pedido; el resto se produce. A un cliente bloqueado no se le vende (lo exige la base).
+- **Etapas**: `sale_item_status` = por producir → corte → confección (antes `in_production`) → personalización → revisión → empaque → listo → entregado. En un pedido solo se avanza a la siguiente que aplica (`next_line_stage`): corte y confección si hay piezas por producir; personalización si la línea la lleva. Salir de “por producir” exige el abono o una excepción (`order_overrides`). Al terminar el corte se consume la receta. “Entregado” solo con `deliver_order` (todo listo; con saldo, owner o admin con motivo).
+- **Personalización**: `sale_item_customizations` (tipo, piezas, texto, logo en el bucket privado, posición, medida, nota, precio y descuento al mayor por tipo) y `sale_item_customization_names` (un nombre por pieza). Suma al subtotal de la venta.
+- **Asignaciones**: `production_assignments` (línea, etapa, persona **o** taller, fecha estimada). Talleres: `suppliers.kind = 'workshop'`; servicios vinculados con `purchase_order_links`.
+- **Destajo**: `team_members.pay_basis`; `piece_rates` versionadas por categoría y etapa; `piecework_entries` al completar una etapa asignada; `register_piecework_payment` paga como sueldo y deja `piecework_settlements`.
+- **Cancelar** (`cancel_order`): antes del corte, cualquiera; después, owner o admin con `deduction_usdt` (sugerido por `order_cancellation_quote`: materiales + talleres). Cada pago se reembolsa con `ledger_entries.entry_type = 'sale_refund'` en su moneda, cuenta y tasas, proporcional al descuento; vuelve el stock apartado; la venta queda en `sale_voids`; el cliente queda bloqueado.
+- **Clientes bloqueados**: `customers.blocked_at/blocked_reason` solo cambian con `set_customer_block` (interna), `block_customer`/`unblock_customer` (owner y admin, con motivo) y `customer_block_events`. Misma cédula que un bloqueado → bloqueado; `blocked_customer_match` avisa por teléfono, correo o cédula.
+- **Reglas del negocio**: `business_rules` + `business_rule_revisions` (historial). Todos leen; owner y admin escriben.
+- **Vistas**: `orders_overview` (estado derivado, atraso, puede empezar), `production_queue` (etapas abiertas y quién las tiene), `pending_piecework`; función `material_requirements()`.
+
+## 12. Cierre de período y exportación (Fase 3, paso 3)
+
+- **`period_close_events`** (mes, `close` | `reopen`, motivo, foto de totales por tipo de categoría): inmutable; el último evento de cada mes manda (`period_status`, `is_period_closed`).
+- **Mes cerrado = nada con esa fecha**, para todos los roles: `check_occurred_at` (ventas, pagos, compras, producción) llama a `assert_period_open`, y un trigger en `ledger_entries`, `stock_movements` y `account_transfers` cubre todo lo demás (sueldos, reembolsos, reversos que copian la fecha original).
+- `close_period`: owner y admin, solo meses terminados. `reopen_period`: solo owner, con motivo.
+- **Excel del mes** (`/api/exports/AAAA-MM`, owner y admin): resumen de utilidad real, ventas, pagos recibidos, compras, movimientos y sueldos; se lee con la sesión (RLS).
+
 ## Relaciones
 
 ```
@@ -405,3 +434,6 @@ no cuenta:           capital_contribution, traspasos
 | 2026-10-06 | Fase 2 · costos: promedio ponderado (arranca del costo actual), receta con material específico o del color de la prenda y cantidad por talla, producción y encargos consumen la receta, mano de obra solo para margen |
 | 2026-10-07 | Fase 2 · equipo: team_members con cuenta opcional; sueldos versionados; pagos y adelantos al libro como sueldo; adelantos se descuentan del siguiente pago; solo owner y admin |
 | 2026-10-08 | Fase 2 · dashboard: utilidad real con asignaciones (política vs. real), flujo de caja por cuenta, margen por producto vendido y efecto de la tasa; solo owner y admin |
+| 2026-10-09 | Fase 3 · combos con precio propio y piezas como líneas hijas a precio 0; personalización con precio en USD igual para todos los métodos (a BCV en Bs); descuento al mayor automático por piezas, con tramos para productos y para personalización, aparte del manual |
+| 2026-10-10 | Fase 3 · pedidos: un pedido es una venta con `orders`; abono por umbral (500 USD → 60%, si no completo) para empezar; etapas que se saltan si no aplican; tela consumida al terminar el corte; entrega completa; cancelación con reembolso en la moneda y cuenta de cada pago (con descuento de materiales después del corte) y bloqueo del cliente; destajo por categoría y etapa; talleres como proveedores |
+| 2026-10-11 | Fase 3 · cierre de mes: bloquea toda fecha del mes cerrado para todos los roles (incluido owner hasta reabrir); reabre solo el owner con motivo; Excel mensual para el contador con exceljs |

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/common/components/ui
 import { isRoleIn, ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { isStorageEnabled } from "@/common/lib/services/storage.service"
+import { cn } from "@/common/lib/utils"
 import type { SessionUser } from "@/common/lib/types/session.types"
 import { formatDate, formatTime } from "@/common/lib/utils/format-date.util"
 import { formatMoney, formatRate, formatUsdt } from "@/common/lib/utils/format-money.util"
@@ -116,19 +117,30 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
         <CardContent className="grid gap-4">
           <ul className="divide-y">
             {sale.items.map((item) => (
-              <li key={item.id} className="grid gap-1.5 py-2.5">
+              <li key={item.id} className={cn("grid gap-1.5 py-2.5", item.parentId && "ml-4 border-l-2 border-t-0 pl-3")}>
                 <div className="flex items-start gap-3">
                   <div className="grid min-w-0 flex-1 gap-0.5">
                     <span className="text-sm font-medium">
-                      {quantityFormat.format(item.quantity)} × {item.productName}{" "}
-                      <span className="font-normal text-muted-foreground">· {item.variantLabel}</span>
+                      {quantityFormat.format(item.quantity)} × {item.productName}
+                      {item.source !== "combo" && <span className="font-normal text-muted-foreground"> · {item.variantLabel}</span>}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      <code className="font-mono">{item.sku}</code> · {usd(item.unitPriceUsd)} c/u
+                      {item.parentId ? (
+                        <>
+                          <code className="font-mono">{item.sku}</code> · incluido en el combo
+                        </>
+                      ) : item.source === "combo" ? (
+                        `Combo · ${usd(item.unitPriceUsd)} c/u`
+                      ) : (
+                        <>
+                          <code className="font-mono">{item.sku}</code> · {usd(item.unitPriceUsd)} c/u
+                        </>
+                      )}
                     </span>
                   </div>
-                  <span className="text-sm tabular-nums">{usd(item.lineTotalUsd)}</span>
+                  {!item.parentId && <span className="text-sm tabular-nums">{usd(item.lineTotalUsd)}</span>}
                 </div>
+                {item.source !== "combo" && (
                 <div className="flex flex-wrap items-center gap-2">
                   {item.source === "made_to_order" && <StatusBadge tone="info">Por encargo</StatusBadge>}
                   {item.status && (
@@ -138,6 +150,7 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
                   )}
                   {!isVoided && <AdvanceItemButton itemId={item.id} status={item.status} />}
                 </div>
+                )}
               </li>
             ))}
           </ul>
@@ -147,6 +160,12 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
               <dt>Subtotal ({sale.priceMethodName})</dt>
               <dd>{usd(sale.subtotalUsd)}</dd>
             </div>
+            {sale.volumeDiscount && (
+              <div className="flex justify-between text-muted-foreground">
+                <dt>Al mayor {sale.volumeDiscount.percent}%</dt>
+                <dd>−{usd(sale.volumeDiscount.usd)}</dd>
+              </div>
+            )}
             {sale.discount && (
               <div className="flex justify-between gap-3 text-muted-foreground">
                 <dt>

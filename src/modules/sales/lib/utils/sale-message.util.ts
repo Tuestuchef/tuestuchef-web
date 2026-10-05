@@ -14,13 +14,18 @@ export function buildSaleMessage(sale: SaleDetail): string {
     `*${brandConfig.name}* · Nota de entrega ${formatSaleNumber(sale.number)}`,
     formatDate(sale.occurredAt),
     "",
-    ...sale.items.map(
-      (item) =>
-        `• ${quantityFormat.format(item.quantity)} × ${item.productName} (${item.variantLabel}) — ${usd(item.lineTotalUsd)}` +
-        (item.source === "made_to_order" ? " _por encargo_" : "")
+    ...sale.items.map((item) =>
+      item.parentId
+        ? `   ◦ ${quantityFormat.format(item.quantity)} × ${item.productName} (${item.variantLabel})` +
+          (item.source === "made_to_order" ? " _por encargo_" : "")
+        : item.source === "combo"
+          ? `• ${quantityFormat.format(item.quantity)} × ${item.productName} — ${usd(item.lineTotalUsd)}`
+          : `• ${quantityFormat.format(item.quantity)} × ${item.productName} (${item.variantLabel}) — ${usd(item.lineTotalUsd)}` +
+            (item.source === "made_to_order" ? " _por encargo_" : "")
     ),
     "",
   ]
+  if (sale.volumeDiscount) lines.push(`Al mayor ${sale.volumeDiscount.percent}%: −${usd(sale.volumeDiscount.usd)}`)
   if (sale.discount) lines.push(`Descuento: −${usd(sale.discount.usd)}`)
   if (sale.deliveryFeeUsd > 0) lines.push(`Delivery: ${usd(sale.deliveryFeeUsd)}`)
   lines.push(`*Total: ${usd(sale.totalUsd)}*`)

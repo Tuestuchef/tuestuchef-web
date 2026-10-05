@@ -75,6 +75,9 @@ const OptionalSelect = ({
 
 const ProductFormDialog = ({ categories, product, kind = "finished_good" }: ProductFormDialogProps) => {
   const isRaw = (product?.kind ?? kind) === "raw_material"
+  // Un combo solo lleva nombre, categoría y descripción: lo demás es de sus componentes.
+  const isCombo = (product?.kind ?? kind) === "combo"
+  const noun = isRaw ? "material" : isCombo ? "combo" : "producto"
   const [open, setOpen] = useState(false)
   const { state, onSubmit, pending } = useFormAction(saveProductAction)
   useActionFeedback(state, () => setOpen(false))
@@ -92,25 +95,19 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
         ) : (
           <Button className="h-11 md:h-9">
             <PlusIcon aria-hidden />
-            {isRaw ? "Nuevo material" : "Nuevo producto"}
+            {`Nuevo ${noun}`}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[90svh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {product
-              ? isRaw
-                ? "Editar material"
-                : "Editar producto"
-              : isRaw
-                ? "Nueva materia prima"
-                : "Nuevo producto"}
-          </DialogTitle>
+          <DialogTitle>{product ? `Editar ${noun}` : isRaw ? "Nueva materia prima" : `Nuevo ${noun}`}</DialogTitle>
           <DialogDescription>
             {isRaw
               ? "Ej.: “Tela antifluido”. Los colores van en las variantes; la unidad define cómo se compra y se consume."
-              : "El producto es el modelo (ej.: “Filipina manga corta dama broche”). Colores y tallas van en las variantes."}
+              : isCombo
+                ? "Ej.: “Combo Escuela”. Después agregas sus componentes y su precio por método de pago."
+                : "El producto es el modelo (ej.: “Filipina manga corta dama broche”). Colores y tallas van en las variantes."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="grid gap-4" noValidate>
@@ -137,7 +134,9 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
                 </SelectContent>
               </Select>
             </FormField>
-            {isRaw ? (
+            {isCombo ? (
+              <input type="hidden" name="fulfillment_type" value="stock" />
+            ) : isRaw ? (
               <FormField label="Unidad" htmlFor="product-unit" error={errors.unit}>
                 <input type="hidden" name="fulfillment_type" value="stock" />
                 <Select name="unit" defaultValue={product?.unit ?? "meter"}>
@@ -171,7 +170,7 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
             )}
           </div>
 
-          {!isRaw && (
+          {!isRaw && !isCombo && (
             <div className="grid gap-4 sm:grid-cols-3">
               <OptionalSelect
                 id="product-gender"
@@ -197,7 +196,7 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
             </div>
           )}
 
-          {!isRaw && (
+          {!isRaw && !isCombo && (
             <FormField
               label="Mano de obra por unidad (USDT)"
               htmlFor="product-labor"

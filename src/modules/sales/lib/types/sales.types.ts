@@ -20,13 +20,26 @@ export type SalePaymentMethod = {
 // Variante vendible, con sus precios en USD por método.
 export type SellableVariant = {
   id: string
+  productId: string
   sku: string
   productName: string
   variantLabel: string
   fulfillmentType: "stock" | "made_to_order" | "both"
   stock: number
   pricesUsd: Record<string, number>
+  // Solo en combos: qué lleva cada combo (la talla y el color se eligen al vender).
+  components?: ComboComponentOption[]
 }
+
+export type ComboComponentOption = {
+  productId: string
+  productName: string
+  // Cuántas piezas de este producto lleva un combo.
+  quantity: number
+}
+
+// Descuento al mayor por cantidad de piezas.
+export type VolumeTier = { minQuantity: number; percent: number }
 
 export type SaleFormData = {
   variants: SellableVariant[]
@@ -34,6 +47,7 @@ export type SaleFormData = {
   rates: { bcvUsd: number; bcvEur: number; usdUsdt: number; isCurrent: boolean } | null
   staffMaxDiscountPercent: number
   staffMaxBackdateDays: number
+  volumeTiers: VolumeTier[]
   today: string
 }
 
@@ -54,6 +68,8 @@ export type SaleListItem = {
 
 export type SaleDetailItem = {
   id: string
+  // Componente de un combo: la línea del combo a la que pertenece.
+  parentId: string | null
   sku: string
   productName: string
   variantLabel: string
@@ -87,6 +103,7 @@ export type SaleDetail = {
   priceMethodName: string
   customer: { id: string; name: string; phone: string | null } | null
   subtotalUsd: number
+  volumeDiscount: { percent: number; usd: number } | null
   discount: { type: DiscountType; value: number; usd: number; reason: string; byName: string | null } | null
   deliveryFeeUsd: number
   totalUsd: number

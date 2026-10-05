@@ -26,7 +26,10 @@ export const RESULTS_CHAPTER: ManualChapter = {
     "La respuesta a “¿estamos ganando?”: la utilidad real del período, qué se hace con ella, cómo se movió el dinero en cada cuenta, cuánto deja cada producto y cuánto cuesta la tasa.",
   icon: ChartColumnIcon,
   roles: ROLE_GROUPS.MANAGEMENT,
-  screens: [{ title: "Resultados", url: ROUTES.ANALYTICS, roles: ROLE_GROUPS.MANAGEMENT }],
+  screens: [
+    { title: "Resultados", url: ROUTES.ANALYTICS, roles: ROLE_GROUPS.MANAGEMENT },
+    { title: "Cierres y Excel", url: ROUTES.PERIODS, roles: ROLE_GROUPS.MANAGEMENT },
+  ],
   related: ["tesoreria", "ventas", "inventario", "equipo", "configuracion"],
   sections: [
     {
@@ -180,6 +183,35 @@ export const RESULTS_CHAPTER: ManualChapter = {
           kind: "text",
           body:
             "El neto dice si la tasa está jugando a favor o en contra. Si la pérdida crece, conviene revisar el [[precio-por-metodo|precio por método de pago]] o cambiar los Bs a USDT más rápido.",
+        },
+      ],
+    },
+    {
+      id: "cierres",
+      heading: "Cierres de mes y Excel para el contador",
+      blocks: [
+        {
+          kind: "steps",
+          items: [
+            {
+              title: "Descargar el Excel",
+              body: "En **Gestión → Cierres y Excel**, el botón Excel de cada mes: resumen de utilidad real, ventas, pagos recibidos, compras, movimientos de dinero y sueldos, cada monto en su moneda y en valor real.",
+            },
+            {
+              title: "Cerrar el mes",
+              body: "Cuando el mes terminó y todo está registrado. Desde ese momento **nadie** registra nada con fecha de ese mes, ni owner ni admin, y se guarda la utilidad tal como quedó.",
+            },
+            {
+              title: "Reabrir",
+              body: "Solo el owner, con motivo (p. ej. faltó un gasto). Queda registrado. Después se vuelve a cerrar.",
+            },
+          ],
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "¿Por qué cerrar?",
+          body: "Para que los números que ya viste (o que le diste al contador) no cambien por un registro con fecha vieja.",
         },
       ],
     },

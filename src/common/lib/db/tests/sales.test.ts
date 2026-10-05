@@ -430,9 +430,9 @@ describe("estados de línea", () => {
       await owner<{ id: string }>("select id from public.sale_items where sale_id = $1", [sale])
     ).rows[0].id
 
-    await staff("select public.set_sale_item_status($1, 'in_production')", [item])
+    await staff("select public.set_sale_item_status($1, 'sewing')", [item])
     await staff("select public.set_sale_item_status($1, 'ready')", [item])
-    await expect(staff("select public.set_sale_item_status($1, 'in_production')", [item])).rejects.toThrow(
+    await expect(staff("select public.set_sale_item_status($1, 'sewing')", [item])).rejects.toThrow(
       /solo avanza/
     )
     await staff("select public.set_sale_item_status($1, 'delivered')", [item])
@@ -441,7 +441,7 @@ describe("estados de línea", () => {
       "select status, created_by from public.sale_item_status_events where sale_item_id = $1 order by created_at",
       [item]
     )
-    expect(events.rows.map((e) => e.status)).toEqual(["to_produce", "in_production", "ready", "delivered"])
+    expect(events.rows.map((e) => e.status)).toEqual(["to_produce", "sewing", "ready", "delivered"])
     expect(events.rows[1].created_by).toBe(STAFF)
   })
 })

@@ -115,6 +115,12 @@ const SupplierFormDialog = ({ supplier, canManage, onSaved, trigger }: SupplierF
               />
             </FormField>
           </div>
+          <FormField label="Tipo" htmlFor="supplier-kind" hint="Un taller (confección, bordado) puede recibir etapas de los pedidos.">
+            <select id="supplier-kind" name="kind" defaultValue={supplier?.kind ?? "goods"} className="h-11 rounded-md border bg-background px-2 text-sm md:h-9">
+              <option value="goods">Proveedor (telas, insumos, servicios)</option>
+              <option value="workshop">Taller (confección o bordado)</option>
+            </select>
+          </FormField>
           <FormField label="Notas" htmlFor="supplier-notes" error={errors.notes} optional>
             <Textarea
               id="supplier-notes"

@@ -216,7 +216,7 @@ describe("encargos", () => {
     const item = await sellGorro()
     const before = await stock("fabricBlack")
 
-    await staff("select public.set_sale_item_status($1, 'in_production')", [item])
+    await staff("select public.set_sale_item_status($1, 'sewing')", [item])
     expect(await stock("fabricBlack")).toBe(before)
     await staff("select public.set_sale_item_status($1, 'ready')", [item])
     expect(await stock("fabricBlack")).toBeCloseTo(before - 2, 6) // 4 × 0,5 m

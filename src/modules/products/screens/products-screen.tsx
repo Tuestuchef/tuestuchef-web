@@ -22,23 +22,31 @@ type ProductsScreenProps = {
 
 const ProductsScreen = async ({ user, filters, kind = "finished_good" }: ProductsScreenProps) => {
   const isRaw = kind === "raw_material"
+  const isCombo = kind === "combo"
+  const copy = isRaw
+    ? { help: "rawMaterials" as const, title: "Materia prima", description: "Telas, botones, cierres e insumos para fabricar." }
+    : isCombo
+      ? { help: "combos" as const, title: "Combos", description: "Productos que se venden juntos, con precio propio." }
+      : { help: "products" as const, title: "Productos", description: "Modelos, variantes, precios y existencias." }
   const canManage = isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)
   const [products, categories] = await Promise.all([listProducts({ ...filters, kind }), listCatalog("product_categories")])
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-4">
       <PageHeader
-        help={isRaw ? "rawMaterials" : "products"}
-        title={isRaw ? "Materia prima" : "Productos"}
-        description={isRaw ? "Telas, botones, cierres e insumos para fabricar." : "Modelos, variantes, precios y existencias."}
+        help={copy.help}
+        title={copy.title}
+        description={copy.description}
         actions={
           <>
-            <Button asChild variant="outline" className="h-11 md:h-9">
-              <Link href={ROUTES.STOCK}>
-                <ArrowDownUpIcon aria-hidden />
-                Stock
-              </Link>
-            </Button>
+            {!isCombo && (
+              <Button asChild variant="outline" className="h-11 md:h-9">
+                <Link href={ROUTES.STOCK}>
+                  <ArrowDownUpIcon aria-hidden />
+                  Stock
+                </Link>
+              </Button>
+            )}
             {canManage && <ProductFormDialog categories={categories} kind={kind} />}
           </>
         }

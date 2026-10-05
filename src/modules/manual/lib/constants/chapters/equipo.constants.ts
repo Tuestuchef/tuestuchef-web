@@ -119,6 +119,27 @@ export const TEAM_CHAPTER: ManualChapter = {
       ],
     },
     {
+      id: "destajo",
+      heading: "Pago por pieza (destajo)",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "Cada persona cobra por **sueldo**, por **pieza** ([[destajo]]) o **ambos**. Las tarifas van por categoría de producto y etapa, en Configuración → Tarifas a destajo.",
+        },
+        {
+          kind: "example",
+          title: "María corta 20 filipinas (tarifa de corte: 0,50 USD)",
+          rows: [
+            { label: "Piezas contadas al terminar el corte", value: "20" },
+            { label: "Tarifa", value: "0,50 USD" },
+            { label: "Le corresponde", value: "10,00 USD", total: true },
+          ],
+          conclusion: "En su ficha: **Pagar destajo**. Se registra como sueldo y se pueden descontar adelantos.",
+        },
+      ],
+    },
+    {
       id: "usuario",
       heading: "Personas con usuario",
       blocks: [

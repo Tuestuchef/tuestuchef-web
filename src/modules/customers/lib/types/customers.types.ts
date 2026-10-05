@@ -4,7 +4,7 @@ export type Customer = Tables<"customers">
 
 export type CustomerListItem = Pick<
   Customer,
-  "id" | "first_name" | "last_name" | "phone" | "email" | "instagram" | "is_active" | "has_id_document"
+  "id" | "first_name" | "last_name" | "phone" | "email" | "instagram" | "is_active" | "has_id_document" | "blocked_at" | "blocked_reason"
 >
 
 // Detalle: la cédula solo llega para owner y admin (RLS); para staff es null aunque exista.

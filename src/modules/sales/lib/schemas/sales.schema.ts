@@ -18,10 +18,18 @@ const amountText = (label: string, { allowZero = false } = {}) =>
     return parsed
   })
 
+const comboComponentSchema = z.object({
+  variant_id: z.uuid(),
+  quantity: z.number().positive().max(10_000),
+  source: z.enum(["stock", "made_to_order"]),
+})
+
+// Una línea suelta, o un combo con la talla y el color de cada pieza.
 const saleItemSchema = z.object({
   variant_id: z.uuid(),
   quantity: z.number().positive().max(10_000),
-  source: z.enum(E.sale_line_source),
+  source: z.enum(E.sale_line_source).optional(),
+  components: z.array(comboComponentSchema).max(500).optional(),
 })
 
 const salePaymentSchema = z.object({

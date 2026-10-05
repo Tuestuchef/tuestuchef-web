@@ -3,6 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import PageHeader from "@/common/components/page-header"
+import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
 import { Button } from "@/common/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/common/components/ui/card"
@@ -13,8 +14,9 @@ import { formatDate } from "@/common/lib/utils/format-date.util"
 import SaleList from "@/modules/sales/components/sale-list"
 import { listSales } from "@/modules/sales/lib/services/sales.service"
 
+import CustomerBlockDialog from "../components/customer-block-dialog"
 import CustomerFormDialog from "../components/customer-form-dialog"
-import { getCustomer } from "../lib/services/customers.service"
+import { getCustomer, listCustomerBlockEvents } from "../lib/services/customers.service"
 import { formatPhone, whatsappUrl } from "../lib/utils/normalize-contact.util"
 
 const Row = ({ icon: Icon, label, children }: { icon: typeof PhoneIcon; label: string; children: React.ReactNode }) => (
@@ -34,6 +36,7 @@ const CustomerDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
     listSales({ customerId: id }),
   ])
   if (!customer) notFound()
+  const blockEvents = await listCustomerBlockEvents(id)
 
   const name = [customer.first_name, customer.last_name].filter(Boolean).join(" ")
 
@@ -53,10 +56,34 @@ const CustomerDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
           <span className="flex flex-wrap items-center gap-1.5">
             Cliente desde {formatDate(customer.created_at)}
             {!customer.is_active && <StatusBadge tone="info">Inactivo</StatusBadge>}
+            {customer.blocked_at && <StatusBadge tone="error">Bloqueado</StatusBadge>}
           </span>
         }
-        actions={<CustomerFormDialog customer={customer} canManage={canManage} />}
+        actions={
+          <>
+            <CustomerFormDialog customer={customer} canManage={canManage} />
+            {canManage && <CustomerBlockDialog customerId={customer.id} blocked={Boolean(customer.blocked_at)} />}
+          </>
+        }
       />
+      {customer.blocked_at && (
+        <StatusAlert tone="error" title="Cliente bloqueado: no se le puede vender">
+          {customer.blocked_reason} · desde el {formatDate(customer.blocked_at)}.
+        </StatusAlert>
+      )}
+      {blockEvents.length > 0 && (
+        <details className="rounded-lg border p-3 text-sm">
+          <summary className="cursor-pointer font-medium">Historial de bloqueos</summary>
+          <ul className="mt-2 grid gap-1">
+            {blockEvents.map((e) => (
+              <li key={e.id}>
+                {e.action === "block" ? "Bloqueado" : "Desbloqueado"} el {formatDate(e.at)}
+                {e.byName ? ` por ${e.byName}` : ""}: <span className="text-muted-foreground">{e.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
 
       <Card>
         <CardContent className="divide-y">

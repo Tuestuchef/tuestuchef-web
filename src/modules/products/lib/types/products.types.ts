@@ -5,6 +5,7 @@ import type {
   ProductClosure,
   ProductFit,
   ProductGender,
+  ProductKind,
   ProductUnit,
   StockMovementType,
 } from "../constants/products.constants"
@@ -18,6 +19,7 @@ export type ProductImage = Tables<"product_images"> & { url: string | null }
 
 export type ProductListItem = {
   id: string
+  kind: ProductKind
   name: string
   categoryName: string
   fulfillmentType: FulfillmentType
@@ -50,6 +52,17 @@ export type ProductDetail = {
   prices: Record<string, number>
   images: ProductImage[]
 }
+
+// Componente de un combo y cuántos lleva cada combo.
+export type ComboComponent = {
+  id: string
+  productId: string
+  productName: string
+  quantity: number
+  variantCount: number
+}
+
+export type ComboComponentOption = { id: string; name: string }
 
 export type ProductAttributes = {
   gender: ProductGender | null

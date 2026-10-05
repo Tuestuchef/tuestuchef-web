@@ -13,6 +13,7 @@ import type { SessionUser } from "@/common/lib/types/session.types"
 import { formatUsdt } from "@/common/lib/utils/format-money.util"
 import { listPaymentMethods } from "@/modules/treasury/lib/services/payment-methods.service"
 
+import ComboComponentsEditor from "../components/combo-components-editor"
 import PriceGrid from "../components/price-grid"
 import ProductFormDialog from "../components/product-form-dialog"
 import MarginTable from "../components/margin-table"
@@ -30,6 +31,7 @@ import {
   UNIT_LABELS,
 } from "../lib/constants/products.constants"
 import { listCatalog } from "../lib/services/catalog.service"
+import { listComboComponentOptions, listComboComponents } from "../lib/services/combos.service"
 import { getProductDetail } from "../lib/services/products.service"
 import { listMaterialOptions, listProductMargins, listRecipe } from "../lib/services/recipes.service"
 import { listStockMovements } from "../lib/services/stock.service"
@@ -51,8 +53,18 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
   if (!detail) notFound()
 
   const { product, variants, prices, images } = detail
-  const madeToOrder = product.fulfillment_type === "made_to_order"
   const isRaw = product.kind === "raw_material"
+  const isCombo = product.kind === "combo"
+  // Un combo no lleva stock propio: el stock es de cada componente.
+  const madeToOrder = product.fulfillment_type === "made_to_order" || isCombo
+  const [components, componentOptions] = isCombo
+    ? await Promise.all([listComboComponents(id), canManage ? listComboComponentOptions() : Promise.resolve([])])
+    : [[], []]
+  const backTo = isRaw
+    ? { url: ROUTES.RAW_MATERIALS, label: "Materia prima" }
+    : isCombo
+      ? { url: ROUTES.COMBOS, label: "Combos" }
+      : { url: ROUTES.PRODUCTS, label: "Productos" }
   const attributes = [
     product.gender && GENDER_LABELS[product.gender],
     product.closure && CLOSURE_LABELS[product.closure],
@@ -64,13 +76,13 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
       <Button asChild variant="ghost" className="h-auto w-fit px-0 text-muted-foreground">
-        <Link href={isRaw ? ROUTES.RAW_MATERIALS : ROUTES.PRODUCTS}>
+        <Link href={backTo.url}>
           <ChevronLeftIcon aria-hidden />
-          {isRaw ? "Materia prima" : "Productos"}
+          {backTo.label}
         </Link>
       </Button>
       <PageHeader
-        help="product"
+        help={isCombo ? "combo" : "product"}
         className="pt-0"
         title={product.name}
         description={
@@ -81,7 +93,9 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
               ·{" "}
               {isRaw
                 ? `Materia prima · por ${UNIT_LABELS[product.unit].toLowerCase()}`
-                : FULFILLMENT_LABELS[product.fulfillment_type]}
+                : isCombo
+                  ? "Combo"
+                  : FULFILLMENT_LABELS[product.fulfillment_type]}
             </span>
             {!product.is_active && <StatusBadge tone="info">Inactivo</StatusBadge>}
           </span>
@@ -90,28 +104,43 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
       />
       {product.description && <p className="text-sm">{product.description}</p>}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Variantes</CardTitle>
-          <CardDescription>Color × talla, con su SKU y existencia.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <VariantTable
-            productId={product.id}
-            variants={variants}
-            colors={colors}
-            sizes={sizes}
-            canManage={canManage}
-            madeToOrder={madeToOrder}
-          />
-          {canManage && (
-            <div className="flex flex-wrap gap-2">
-              <VariantCombinationsDialog productId={product.id} colors={colors} sizes={sizes} />
-              <VariantFormDialog productId={product.id} colors={colors} sizes={sizes} />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {isCombo ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Componentes</CardTitle>
+            <CardDescription>
+              Lo que trae cada combo. Al vender se elige la talla y el color de cada pieza, y el stock se descuenta de
+              cada una.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ComboComponentsEditor comboId={product.id} components={components} options={componentOptions} canManage={canManage} />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Variantes</CardTitle>
+            <CardDescription>Color × talla, con su SKU y existencia.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <VariantTable
+              productId={product.id}
+              variants={variants}
+              colors={colors}
+              sizes={sizes}
+              canManage={canManage}
+              madeToOrder={madeToOrder}
+            />
+            {canManage && (
+              <div className="flex flex-wrap gap-2">
+                <VariantCombinationsDialog productId={product.id} colors={colors} sizes={sizes} />
+                <VariantFormDialog productId={product.id} colors={colors} sizes={sizes} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {!isRaw && (
         <Card>
@@ -127,7 +156,7 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
         </Card>
       )}
 
-      {!isRaw && (
+      {!isRaw && !isCombo && (
         <Card>
           <CardHeader>
             <CardTitle>Receta</CardTitle>
@@ -146,8 +175,11 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
           <CardHeader>
             <CardTitle>Margen</CardTitle>
             <CardDescription>
-              Precio en valor real (con las tasas de hoy) menos materiales y mano de obra
-              {product.labor_cost_usdt > 0 ? ` (${formatUsdt(product.labor_cost_usdt)} por unidad)` : ""}.
+              {isCombo
+                ? "Precio en valor real (con las tasas de hoy) menos el costo y la mano de obra de sus componentes."
+                : `Precio en valor real (con las tasas de hoy) menos materiales y mano de obra${
+                    product.labor_cost_usdt > 0 ? ` (${formatUsdt(product.labor_cost_usdt)} por unidad)` : ""
+                  }.`}
             </CardDescription>
           </CardHeader>
           <CardContent>

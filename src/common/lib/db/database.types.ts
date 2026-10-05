@@ -416,6 +416,8 @@ export type Database = {
       }
       customers: {
         Row: {
+          blocked_at: string | null
+          blocked_reason: string | null
           created_at: string
           created_by: string | null
           email: string | null
@@ -431,6 +433,8 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -446,6 +450,8 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -991,6 +997,8 @@ export type Database = {
       }
       sales: {
         Row: {
+          volume_discount_percent: number
+          volume_discount_usd: number
           is_backdated: boolean
           bcv_eur_rate: number
           bcv_usd_rate: number
@@ -1016,6 +1024,8 @@ export type Database = {
           usd_usdt_rate: number
         }
         Insert: {
+          volume_discount_percent?: number
+          volume_discount_usd?: number
           is_backdated?: boolean
           bcv_eur_rate: number
           bcv_usd_rate: number
@@ -1041,6 +1051,8 @@ export type Database = {
           usd_usdt_rate: number
         }
         Update: {
+          volume_discount_percent?: number
+          volume_discount_usd?: number
           is_backdated?: boolean
           bcv_eur_rate?: number
           bcv_usd_rate?: number
@@ -1098,6 +1110,8 @@ export type Database = {
       }
       sale_items: {
         Row: {
+          reserved_quantity: number
+          parent_item_id: string | null
           created_at: string
           id: string
           line_total_usd: number
@@ -1109,6 +1123,8 @@ export type Database = {
           variant_id: string
         }
         Insert: {
+          reserved_quantity?: number
+          parent_item_id?: string | null
           created_at?: string
           id?: string
           line_total_usd: number
@@ -1120,6 +1136,8 @@ export type Database = {
           variant_id: string
         }
         Update: {
+          reserved_quantity?: number
+          parent_item_id?: string | null
           created_at?: string
           id?: string
           line_total_usd?: number
@@ -1354,6 +1372,7 @@ export type Database = {
       }
       suppliers: {
         Row: {
+          kind: Database["public"]["Enums"]["supplier_kind"]
           contact_name: string | null
           created_at: string
           created_by: string | null
@@ -1368,6 +1387,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          kind?: Database["public"]["Enums"]["supplier_kind"]
           contact_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -1382,6 +1402,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          kind?: Database["public"]["Enums"]["supplier_kind"]
           contact_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -1861,6 +1882,7 @@ export type Database = {
       }
       team_members: {
         Row: {
+          pay_basis: Database["public"]["Enums"]["pay_basis"]
           created_at: string
           created_by: string | null
           full_name: string
@@ -1874,6 +1896,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          pay_basis?: Database["public"]["Enums"]["pay_basis"]
           created_at?: string
           created_by?: string | null
           full_name: string
@@ -1887,6 +1910,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          pay_basis?: Database["public"]["Enums"]["pay_basis"]
           created_at?: string
           created_by?: string | null
           full_name?: string
@@ -2113,6 +2137,996 @@ export type Database = {
           },
         ]
       }
+      combo_components: {
+        Row: {
+          combo_product_id: string
+          component_product_id: string
+          created_at: string
+          created_by: string
+          id: string
+          quantity: number
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          combo_product_id: string
+          component_product_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          quantity?: number
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          combo_product_id?: string
+          component_product_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          quantity?: number
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combo_components_combo_product_id_fkey"
+            columns: ["combo_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combo_components_component_product_id_fkey"
+            columns: ["component_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combo_components_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combo_components_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      volume_discount_tiers: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          min_quantity: number
+          percent: number
+          scope: Database["public"]["Enums"]["volume_discount_scope"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          min_quantity: number
+          percent: number
+          scope: Database["public"]["Enums"]["volume_discount_scope"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          min_quantity?: number
+          percent?: number
+          scope?: Database["public"]["Enums"]["volume_discount_scope"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "volume_discount_tiers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "volume_discount_tiers_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customization_types: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          default_size_cm: number | null
+          description: string | null
+          id: string
+          is_active: boolean
+          max_size_cm: number | null
+          min_quantity: number
+          name: string
+          requires_logo: boolean
+          requires_text: boolean
+          sort_order: number
+          unit_price_usd: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          default_size_cm?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_size_cm?: number | null
+          min_quantity?: number
+          name: string
+          requires_logo?: boolean
+          requires_text?: boolean
+          sort_order?: number
+          unit_price_usd?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          default_size_cm?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_size_cm?: number | null
+          min_quantity?: number
+          name?: string
+          requires_logo?: boolean
+          requires_text?: boolean
+          sort_order?: number
+          unit_price_usd?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customization_types_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customization_types_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_settings: {
+        Row: {
+          default_lead_days: number
+          deposit_percent: number
+          deposit_threshold_usd: number
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          default_lead_days?: number
+          deposit_percent?: number
+          deposit_threshold_usd?: number
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          default_lead_days?: number
+          deposit_percent?: number
+          deposit_threshold_usd?: number
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          created_by: string
+          delivered_at: string | null
+          deposit_required_usd: number
+          promised_date: string
+          sale_id: string
+          stock_mode: Database["public"]["Enums"]["order_stock_mode"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          delivered_at?: string | null
+          deposit_required_usd: number
+          promised_date: string
+          sale_id: string
+          stock_mode: Database["public"]["Enums"]["order_stock_mode"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          delivered_at?: string | null
+          deposit_required_usd?: number
+          promised_date?: string
+          sale_id?: string
+          stock_mode?: Database["public"]["Enums"]["order_stock_mode"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_overrides: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          kind: Database["public"]["Enums"]["order_override_kind"]
+          reason: string
+          sale_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          kind: Database["public"]["Enums"]["order_override_kind"]
+          reason: string
+          sale_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["order_override_kind"]
+          reason?: string
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_overrides_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_overrides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_cancellations: {
+        Row: {
+          created_at: string
+          created_by: string
+          deduction_usdt: number
+          production_started: boolean
+          reason: string
+          refunded_usdt: number
+          sale_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          deduction_usdt?: number
+          production_started: boolean
+          reason: string
+          refunded_usdt?: number
+          sale_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          deduction_usdt?: number
+          production_started?: boolean
+          reason?: string
+          refunded_usdt?: number
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_cancellations_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_cancellations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_date_changes: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          new_date: string
+          previous_date: string
+          reason: string | null
+          sale_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          new_date: string
+          previous_date: string
+          reason?: string | null
+          sale_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          new_date?: string
+          previous_date?: string
+          reason?: string | null
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_date_changes_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_date_changes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_order_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          purchase_id: string
+          sale_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          purchase_id: string
+          sale_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          purchase_id?: string
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_links_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_links_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_item_customizations: {
+        Row: {
+          created_at: string
+          created_by: string
+          customization_type_id: string
+          discount_percent: number
+          id: string
+          line_total_usd: number
+          logo_path: string | null
+          note: string | null
+          position: string | null
+          quantity: number
+          sale_item_id: string
+          size_cm: number | null
+          text: string | null
+          unit_price_usd: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          customization_type_id: string
+          discount_percent?: number
+          id?: string
+          line_total_usd: number
+          logo_path?: string | null
+          note?: string | null
+          position?: string | null
+          quantity: number
+          sale_item_id: string
+          size_cm?: number | null
+          text?: string | null
+          unit_price_usd: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          customization_type_id?: string
+          discount_percent?: number
+          id?: string
+          line_total_usd?: number
+          logo_path?: string | null
+          note?: string | null
+          position?: string | null
+          quantity?: number
+          sale_item_id?: string
+          size_cm?: number | null
+          text?: string | null
+          unit_price_usd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_item_customizations_customization_type_id_fkey"
+            columns: ["customization_type_id"]
+            isOneToOne: false
+            referencedRelation: "customization_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_item_customizations_sale_item_id_fkey"
+            columns: ["sale_item_id"]
+            isOneToOne: false
+            referencedRelation: "sale_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_item_customizations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_item_customization_names: {
+        Row: {
+          customization_id: string
+          id: string
+          name: string
+          ordinal: number
+        }
+        Insert: {
+          customization_id: string
+          id?: string
+          name: string
+          ordinal: number
+        }
+        Update: {
+          customization_id?: string
+          id?: string
+          name?: string
+          ordinal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_item_customization_names_customization_id_fkey"
+            columns: ["customization_id"]
+            isOneToOne: false
+            referencedRelation: "sale_item_customizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_assignments: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          expected_date: string | null
+          id: string
+          note: string | null
+          pieces: number | null
+          sale_item_id: string
+          stage: Database["public"]["Enums"]["sale_item_status"]
+          supplier_id: string | null
+          team_member_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          expected_date?: string | null
+          id?: string
+          note?: string | null
+          pieces?: number | null
+          sale_item_id: string
+          stage: Database["public"]["Enums"]["sale_item_status"]
+          supplier_id?: string | null
+          team_member_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          expected_date?: string | null
+          id?: string
+          note?: string | null
+          pieces?: number | null
+          sale_item_id?: string
+          stage?: Database["public"]["Enums"]["sale_item_status"]
+          supplier_id?: string | null
+          team_member_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_assignments_sale_item_id_fkey"
+            columns: ["sale_item_id"]
+            isOneToOne: false
+            referencedRelation: "sale_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_assignments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_assignments_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_assignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_assignments_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      piece_rates: {
+        Row: {
+          created_at: string
+          created_by: string
+          effective_from: string
+          id: string
+          product_category_id: string
+          rate_usd: number
+          stage: Database["public"]["Enums"]["sale_item_status"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          effective_from?: string
+          id?: string
+          product_category_id: string
+          rate_usd: number
+          stage: Database["public"]["Enums"]["sale_item_status"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          effective_from?: string
+          id?: string
+          product_category_id?: string
+          rate_usd?: number
+          stage?: Database["public"]["Enums"]["sale_item_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "piece_rates_product_category_id_fkey"
+            columns: ["product_category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "piece_rates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      piecework_entries: {
+        Row: {
+          amount_usd: number
+          assignment_id: string
+          completed_at: string
+          created_at: string
+          created_by: string
+          id: string
+          pieces: number
+          rate_usd: number
+          sale_item_id: string
+          stage: Database["public"]["Enums"]["sale_item_status"]
+          team_member_id: string
+        }
+        Insert: {
+          amount_usd: number
+          assignment_id: string
+          completed_at: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          pieces: number
+          rate_usd: number
+          sale_item_id: string
+          stage: Database["public"]["Enums"]["sale_item_status"]
+          team_member_id: string
+        }
+        Update: {
+          amount_usd?: number
+          assignment_id?: string
+          completed_at?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          pieces?: number
+          rate_usd?: number
+          sale_item_id?: string
+          stage?: Database["public"]["Enums"]["sale_item_status"]
+          team_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "piecework_entries_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "production_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "piecework_entries_sale_item_id_fkey"
+            columns: ["sale_item_id"]
+            isOneToOne: false
+            referencedRelation: "sale_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "piecework_entries_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "piecework_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      piecework_settlements: {
+        Row: {
+          created_at: string
+          created_by: string
+          payroll_entry_id: string
+          piecework_entry_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          payroll_entry_id: string
+          piecework_entry_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          payroll_entry_id?: string
+          piecework_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "piecework_settlements_payroll_entry_id_fkey"
+            columns: ["payroll_entry_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "piecework_settlements_piecework_entry_id_fkey"
+            columns: ["piecework_entry_id"]
+            isOneToOne: false
+            referencedRelation: "piecework_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "piecework_settlements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_block_events: {
+        Row: {
+          action: Database["public"]["Enums"]["customer_block_action"]
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          reason: string
+          sale_id: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["customer_block_action"]
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          reason: string
+          sale_id?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["customer_block_action"]
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          reason?: string
+          sale_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_block_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_block_events_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_block_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_rules: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          enforced_by_system: boolean
+          id: string
+          is_active: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          enforced_by_system?: boolean
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          enforced_by_system?: boolean
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_rules_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_rule_revisions: {
+        Row: {
+          body: string
+          changed_at: string
+          changed_by: string | null
+          enforced_by_system: boolean
+          id: string
+          is_active: boolean
+          rule_id: string
+          title: string
+        }
+        Insert: {
+          body: string
+          changed_at?: string
+          changed_by?: string | null
+          enforced_by_system: boolean
+          id?: string
+          is_active: boolean
+          rule_id: string
+          title: string
+        }
+        Update: {
+          body?: string
+          changed_at?: string
+          changed_by?: string | null
+          enforced_by_system?: boolean
+          id?: string
+          is_active?: boolean
+          rule_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_rule_revisions_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "business_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_rule_revisions_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      period_close_events: {
+        Row: {
+          action: Database["public"]["Enums"]["period_close_action"]
+          created_at: string
+          created_by: string
+          id: string
+          period: string
+          reason: string | null
+          totals_snapshot: Json | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["period_close_action"]
+          created_at?: string
+          created_by?: string
+          id?: string
+          period: string
+          reason?: string | null
+          totals_snapshot?: Json | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["period_close_action"]
+          created_at?: string
+          created_by?: string
+          id?: string
+          period?: string
+          reason?: string | null
+          totals_snapshot?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "period_close_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       current_salary_agreements: {
@@ -2265,8 +3279,155 @@ export type Database = {
         }
         Relationships: []
       }
+      orders_overview: {
+        Row: {
+          sale_id: string | null
+          number: number | null
+          customer_id: string | null
+          occurred_at: string | null
+          promised_date: string | null
+          stock_mode: Database["public"]["Enums"]["order_stock_mode"] | null
+          deposit_required_usd: number | null
+          total_usd: number | null
+          paid_usd: number | null
+          balance_usd: number | null
+          can_start: boolean | null
+          delivered_at: string | null
+          cancelled_at: string | null
+          min_stage: Database["public"]["Enums"]["sale_item_status"] | null
+          status: string | null
+          is_late: boolean | null
+        }
+        Relationships: []
+      }
+      production_queue: {
+        Row: {
+          sale_item_id: string | null
+          sale_id: string | null
+          number: number | null
+          promised_date: string | null
+          variant_id: string | null
+          quantity: number | null
+          reserved_quantity: number | null
+          stage: Database["public"]["Enums"]["sale_item_status"] | null
+          assignment_id: string | null
+          team_member_id: string | null
+          supplier_id: string | null
+          expected_date: string | null
+          workshop_late: boolean | null
+          order_late: boolean | null
+        }
+        Relationships: []
+      }
+      pending_piecework: {
+        Row: {
+          id: string | null
+          team_member_id: string | null
+          assignment_id: string | null
+          sale_item_id: string | null
+          stage: Database["public"]["Enums"]["sale_item_status"] | null
+          pieces: number | null
+          rate_usd: number | null
+          amount_usd: number | null
+          completed_at: string | null
+          created_by: string | null
+          created_at: string | null
+        }
+        Relationships: []
+      }
+      period_status: {
+        Row: {
+          period: string | null
+          is_closed: boolean | null
+          changed_at: string | null
+          changed_by: string | null
+          reason: string | null
+          totals_snapshot: Json | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      is_period_closed: {
+        Args: { p_date: string }
+        Returns: boolean
+      }
+      reopen_period: {
+        Args: { p_period: string; p_reason: string }
+        Returns: undefined
+      }
+      close_period: {
+        Args: { p_period: string }
+        Returns: undefined
+      }
+      order_production_started: {
+        Args: { p_sale_id: string }
+        Returns: boolean
+      }
+      sale_paid_usd: {
+        Args: { p_sale_id: string }
+        Returns: number
+      }
+      next_line_stage: {
+        Args: { p_item_id: string }
+        Returns: Database["public"]["Enums"]["sale_item_status"] | null
+      }
+      material_requirements: {
+        Args: never
+        Returns: { raw_variant_id: string | null; sku: string | null; material_name: string; color_name: string | null; unit: Database["public"]["Enums"]["product_unit"]; required: number; available: number; shortage: number; lines: number }[]
+      }
+      blocked_customer_match: {
+        Args: { p_phone?: string; p_email?: string; p_id_document?: string }
+        Returns: { customer_id: string; customer_name: string; blocked_reason: string | null }[]
+      }
+      unblock_customer: {
+        Args: { p_customer_id: string; p_reason: string }
+        Returns: undefined
+      }
+      block_customer: {
+        Args: { p_customer_id: string; p_reason: string }
+        Returns: undefined
+      }
+      register_piecework_payment: {
+        Args: { p_team_member_id: string; p_account_id: string; p_amount: number; p_piecework_ids: string[]; p_settle_advance_ids?: string[]; p_note?: string; p_occurred_at?: string; p_receipt_path?: string }
+        Returns: string
+      }
+      link_purchase_to_order: {
+        Args: { p_purchase_id: string; p_sale_id: string }
+        Returns: undefined
+      }
+      order_cancellation_quote: {
+        Args: { p_sale_id: string }
+        Returns: { paid_usdt: number; materials_usdt: number; workshops_usdt: number; suggested_deduction_usdt: number; production_started: boolean }[]
+      }
+      cancel_order: {
+        Args: { p_sale_id: string; p_reason: string; p_deduction_usdt?: number }
+        Returns: undefined
+      }
+      deliver_order: {
+        Args: { p_sale_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      change_order_promised_date: {
+        Args: { p_sale_id: string; p_date: string; p_reason?: string }
+        Returns: undefined
+      }
+      allow_order_without_deposit: {
+        Args: { p_sale_id: string; p_reason: string }
+        Returns: undefined
+      }
+      assign_stage: {
+        Args: { p_sale_item_id: string; p_stage: Database["public"]["Enums"]["sale_item_status"]; p_team_member_id?: string; p_supplier_id?: string; p_expected_date?: string; p_note?: string }
+        Returns: string
+      }
+      create_order: {
+        Args: { p_customer_id: string; p_price_method_id: string; p_channel: Database["public"]["Enums"]["sale_channel"]; p_delivery_method: Database["public"]["Enums"]["delivery_method"]; p_items: Json; p_stock_mode: Database["public"]["Enums"]["order_stock_mode"]; p_promised_date?: string; p_payments?: Json; p_delivery_fee_usd?: number; p_discount_type?: Database["public"]["Enums"]["discount_type"]; p_discount_value?: number; p_discount_reason?: string; p_notes?: string; p_occurred_at?: string }
+        Returns: string
+      }
+      volume_discount_percent: {
+        Args: { p_scope: Database["public"]["Enums"]["volume_discount_scope"]; p_quantity: number }
+        Returns: number
+      }
       cash_flow_by_account: {
         Args: { p_from: string; p_to: string }
         Returns: {
@@ -2523,12 +3684,19 @@ export type Database = {
       }
     }
     Enums: {
+      period_close_action: "close" | "reopen"
+      order_override_kind: "start_without_deposit" | "deliver_with_balance"
+      customer_block_action: "block" | "unblock"
+      pay_basis: "salary" | "piecework" | "both"
+      order_stock_mode: "reserve_and_produce" | "produce_all"
+      supplier_kind: "goods" | "workshop"
+      volume_discount_scope: "products" | "customization"
       delivery_method: "pickup" | "delivery"
       discount_type: "amount" | "percent"
       payment_rate_kind: "bcv_usd" | "bcv_eur" | "none"
       sale_channel: "in_person" | "whatsapp" | "instagram" | "online_store"
-      sale_item_status: "to_produce" | "in_production" | "ready" | "delivered"
-      sale_line_source: "stock" | "made_to_order"
+      sale_item_status: "to_produce" | "cutting" | "sewing" | "customization" | "quality_check" | "packing" | "ready" | "delivered"
+      sale_line_source: "stock" | "made_to_order" | "combo"
       account_kind: "bank" | "cash" | "zelle" | "crypto_wallet"
       app_role: "owner" | "admin" | "staff"
       category_scope: "business" | "personal"
@@ -2550,7 +3718,7 @@ export type Database = {
       product_closure: "snap" | "zipper" | "buttons"
       product_fit: "jogger" | "straight"
       product_gender: "women" | "men" | "unisex"
-      product_kind: "finished_good" | "raw_material"
+      product_kind: "finished_good" | "raw_material" | "combo"
       product_unit: "unit" | "meter" | "kg"
       stock_movement_type:
         | "initial_count"
@@ -2561,14 +3729,7 @@ export type Database = {
         | "sale_reversal"
         | "purchase_reversal"
         | "consumption"
-      ledger_entry_type:
-        | "income"
-        | "expense"
-        | "sale_payment"
-        | "transfer_out"
-        | "transfer_in"
-        | "exchange_fee"
-        | "purchase_payment"
+      ledger_entry_type: "income" | "expense" | "sale_payment" | "transfer_out" | "transfer_in" | "exchange_fee" | "purchase_payment" | "sale_refund"
       supplier_rate_kind: "bcv_usd" | "parallel" | "none"
       purchase_line_type: "inventory" | "concept"
       salary_frequency: "weekly" | "biweekly" | "monthly"
@@ -2595,12 +3756,19 @@ export type Enums<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"]
 export const Constants = {
   public: {
     Enums: {
+      period_close_action: ["close", "reopen"],
+      order_override_kind: ["start_without_deposit", "deliver_with_balance"],
+      customer_block_action: ["block", "unblock"],
+      pay_basis: ["salary", "piecework", "both"],
+      order_stock_mode: ["reserve_and_produce", "produce_all"],
+      supplier_kind: ["goods", "workshop"],
+      volume_discount_scope: ["products", "customization"],
       delivery_method: ["pickup", "delivery"],
       discount_type: ["amount", "percent"],
       payment_rate_kind: ["bcv_usd", "bcv_eur", "none"],
       sale_channel: ["in_person", "whatsapp", "instagram", "online_store"],
-      sale_item_status: ["to_produce", "in_production", "ready", "delivered"],
-      sale_line_source: ["stock", "made_to_order"],
+      sale_item_status: ["to_produce", "cutting", "sewing", "customization", "quality_check", "packing", "ready", "delivered"],
+      sale_line_source: ["stock", "made_to_order", "combo"],
       account_kind: ["bank", "cash", "zelle", "crypto_wallet"],
       app_role: ["owner", "admin", "staff"],
       category_scope: ["business", "personal"],
@@ -2623,7 +3791,7 @@ export const Constants = {
       product_closure: ["snap", "zipper", "buttons"],
       product_fit: ["jogger", "straight"],
       product_gender: ["women", "men", "unisex"],
-      product_kind: ["finished_good", "raw_material"],
+      product_kind: ["finished_good", "raw_material", "combo"],
       product_unit: ["unit", "meter", "kg"],
       stock_movement_type: [
         "initial_count",
@@ -2635,15 +3803,7 @@ export const Constants = {
         "purchase_reversal",
         "consumption",
       ],
-      ledger_entry_type: [
-        "income",
-        "expense",
-        "sale_payment",
-        "transfer_out",
-        "transfer_in",
-        "exchange_fee",
-        "purchase_payment",
-      ],
+      ledger_entry_type: ["income", "expense", "sale_payment", "transfer_out", "transfer_in", "exchange_fee", "purchase_payment", "sale_refund"],
       supplier_rate_kind: ["bcv_usd", "parallel", "none"],
       purchase_line_type: ["inventory", "concept"],
       salary_frequency: ["weekly", "biweekly", "monthly"],

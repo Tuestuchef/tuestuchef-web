@@ -13,11 +13,18 @@ import type {
   SaleFormData,
   SaleListItem,
   SalesFilters,
+  SellableVariant,
   SalesTotals,
 } from "../types/sales.types"
 
 const variantLabel = (v: { color: { name: string } | null; size: { name: string } | null }) =>
   [v.color?.name, v.size?.name].filter(Boolean).join(" · ") || "Única"
+
+// Cada combo seguido de sus componentes (en el orden en que se registraron).
+const withComponentsAfterCombo = <T extends { id: string; parent_item_id: string | null }>(items: T[]): T[] =>
+  items
+    .filter((item) => !item.parent_item_id)
+    .flatMap((item) => [item, ...items.filter((child) => child.parent_item_id === item.id)])
 
 // Fecha del formulario → instante de la venta o pago (vacío u hoy = ahora).
 const occurredAt = (date?: string) => (date && date !== toCaracasDate() ? caracasNoonIso(date) : undefined)
@@ -28,12 +35,15 @@ const fullName = (c: { first_name: string; last_name: string | null } | null) =>
 // Todo lo que necesita la pantalla de venta, en una sola carga.
 export async function getSaleFormData(): Promise<SaleFormData> {
   const supabase = await createSupabaseServerClient()
-  const [variantsResult, balancesResult, pricesResult, methodsResult, settingsResult, rateStatus] = await Promise.all([
+  const [variantsResult, balancesResult, pricesResult, methodsResult, settingsResult, rateStatus, componentsResult, tiersResult] = await Promise.all([
     supabase
       .from("product_variants")
-      .select("id, sku, product_id, color:colors(name), size:sizes(name), product:products!inner(name, is_active, fulfillment_type)")
+      .select(
+        "id, sku, product_id, color:colors(name), size:sizes(name), product:products!inner(name, kind, is_active, fulfillment_type)"
+      )
       .eq("is_active", true)
       .eq("product.is_active", true)
+      .neq("product.kind", "raw_material")
       .order("sku"),
     supabase.from("stock_balances").select("variant_id, quantity"),
     supabase.from("product_prices").select("product_id, payment_method_id, amount_usd"),
@@ -45,6 +55,11 @@ export async function getSaleFormData(): Promise<SaleFormData> {
       .order("name"),
     supabase.from("sales_settings").select("staff_max_discount_percent, staff_max_backdate_days").maybeSingle(),
     getRateStatus(),
+    supabase
+      .from("combo_components")
+      .select("combo_product_id, component_product_id, quantity, product:products!combo_components_component_product_id_fkey(name)")
+      .order("sort_order"),
+    supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "products").order("min_quantity"),
   ])
   if (variantsResult.error) throw variantsResult.error
   if (methodsResult.error) throw methodsResult.error
@@ -57,17 +72,29 @@ export async function getSaleFormData(): Promise<SaleFormData> {
     prices.set(price.product_id, byMethod)
   }
 
+  const components = new Map<string, NonNullable<SellableVariant["components"]>>()
+  for (const row of componentsResult.data ?? []) {
+    const list = components.get(row.combo_product_id) ?? []
+    list.push({ productId: row.component_product_id, productName: row.product?.name ?? "—", quantity: row.quantity })
+    components.set(row.combo_product_id, list)
+  }
+
   const rate = rateStatus.rate
   return {
-    variants: variantsResult.data.map((v) => ({
-      id: v.id,
-      sku: v.sku,
-      productName: v.product.name,
-      variantLabel: variantLabel(v),
-      fulfillmentType: v.product.fulfillment_type,
-      stock: stock.get(v.id) ?? 0,
-      pricesUsd: prices.get(v.product_id) ?? {},
-    })),
+    variants: variantsResult.data
+      // Un combo sin componentes no se puede vender.
+      .filter((v) => v.product.kind !== "combo" || components.has(v.product_id))
+      .map((v) => ({
+        id: v.id,
+        productId: v.product_id,
+        sku: v.sku,
+        productName: v.product.name,
+        variantLabel: v.product.kind === "combo" ? "Combo" : variantLabel(v),
+        fulfillmentType: v.product.fulfillment_type,
+        stock: stock.get(v.id) ?? 0,
+        pricesUsd: prices.get(v.product_id) ?? {},
+        ...(v.product.kind === "combo" && { components: components.get(v.product_id) }),
+      })),
     methods: methodsResult.data.map((m) => ({
       id: m.id,
       name: m.name,
@@ -84,6 +111,7 @@ export async function getSaleFormData(): Promise<SaleFormData> {
       : null,
     staffMaxDiscountPercent: Number(settingsResult.data?.staff_max_discount_percent ?? 10),
     staffMaxBackdateDays: Number(settingsResult.data?.staff_max_backdate_days ?? 7),
+    volumeTiers: (tiersResult.data ?? []).map((t) => ({ minQuantity: t.min_quantity, percent: Number(t.percent) })),
     today: rateStatus.today,
   }
 }
@@ -166,7 +194,7 @@ async function getItemStatuses(itemIds: string[]): Promise<Map<string, SaleItemS
 
 const SALE_LIST_COLUMNS = `id, number, occurred_at, channel, total_usd, is_backdated, created_at,
   customer:customers(first_name, last_name),
-  items:sale_items(id, quantity, source, variant:product_variants(sku, product:products(name)))`
+  items:sale_items(id, quantity, source, parent_item_id, variant:product_variants(sku, product:products(name)))`
 
 export async function listSales(
   filters: SalesFilters | { customerId: string }
@@ -199,7 +227,7 @@ export async function listSales(
   const inProduction = new Set(
     data
       .filter((sale) =>
-        sale.items.some((i) => i.source === "made_to_order" && ["to_produce", "in_production"].includes(statuses.get(i.id) ?? ""))
+        sale.items.some((i) => i.source === "made_to_order" && !["ready", "delivered"].includes(statuses.get(i.id) ?? "ready"))
       )
       .map((sale) => sale.id)
   )
@@ -215,7 +243,9 @@ export async function listSales(
       totalUsd: Number(sale.total_usd),
       balanceUsd: Number(s?.balance_usd ?? 0),
       paymentStatus: (s?.payment_status ?? "pending") as PaymentStatus,
+      // Los componentes de un combo no se repiten: el combo ya los resume.
       itemsSummary: sale.items
+        .filter((i) => !i.parent_item_id)
         .map((i) => `${Number(i.quantity)} × ${i.variant?.product?.name ?? i.variant?.sku ?? "—"}`)
         .join(", "),
       pendingProduction: inProduction.has(sale.id),
@@ -270,7 +300,7 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
     supabase
       .from("sale_items")
       .select(
-        `id, quantity, unit_price_usd, line_total_usd, source,
+        `id, parent_item_id, quantity, unit_price_usd, line_total_usd, source,
          variant:product_variants(sku, color:colors(name), size:sizes(name), product:products(name))`
       )
       .eq("sale_id", id)
@@ -305,6 +335,10 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
       ? { id: sale.customer.id, name: fullName(sale.customer) ?? "", phone: sale.customer.phone }
       : null,
     subtotalUsd: Number(sale.subtotal_usd),
+    volumeDiscount:
+      Number(sale.volume_discount_usd) > 0
+        ? { percent: Number(sale.volume_discount_percent), usd: Number(sale.volume_discount_usd) }
+        : null,
     discount:
       Number(sale.discount_usd) > 0 && sale.discount_type
         ? {
@@ -325,8 +359,9 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
     isBackdated: sale.is_backdated,
     createdAt: sale.created_at,
     authorName: sale.author?.full_name ?? null,
-    items: itemsResult.data.map((item) => ({
+    items: withComponentsAfterCombo(itemsResult.data).map((item) => ({
       id: item.id,
+      parentId: item.parent_item_id,
       sku: item.variant?.sku ?? "—",
       productName: item.variant?.product?.name ?? "—",
       variantLabel: item.variant ? variantLabel(item.variant) : "",

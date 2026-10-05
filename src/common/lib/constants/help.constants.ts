@@ -83,8 +83,17 @@ export const HELP_TOPICS = {
       {
         heading: "Descuentos",
         items: [
-          "En porcentaje o monto, siempre con motivo. Queda registrado quién lo aplicó.",
-          "Staff tiene un máximo (10% por defecto); por encima, solo owner o admin.",
+          "Al mayor: se aplica solo según las piezas (un combo cuenta por sus componentes). Abajo se ve cuántas faltan para el siguiente tramo.",
+          "Manual: en porcentaje o monto, siempre con motivo, sobre lo que queda después del descuento al mayor. Queda registrado quién lo aplicó.",
+          "Staff tiene un máximo para el manual (10% por defecto); por encima, solo owner o admin. El de al mayor no cuenta.",
+        ],
+      },
+      {
+        heading: "Combos",
+        items: [
+          "Al elegir un combo se abre una ventana para escoger la talla y el color de cada pieza.",
+          "Con varios combos se pueden mezclar tallas (p. ej. 3 combos: 2 filipinas M y 1 L).",
+          "El combo lleva el precio; el stock se descuenta de cada pieza. Para cambiarlo, quítalo y agrégalo de nuevo.",
         ],
       },
       {
@@ -723,6 +732,236 @@ export const HELP_TOPICS = {
       },
     ],
   },
+  combos: {
+    title: "Combos",
+    chapter: "inventario",
+    summary: "Productos que se venden juntos con un precio propio, como el Combo Escuela.",
+    sections: [
+      {
+        heading: "Cómo funcionan",
+        items: [
+          "Un combo tiene nombre, categoría, fotos y un precio por método de pago.",
+          "Sus componentes son productos del catálogo con su cantidad (p. ej. 1 filipina, 1 pantalón, 1 delantal).",
+          "No lleva stock propio: al venderlo se elige la talla y el color de cada pieza, y se descuenta de cada una.",
+          "Un combo sin componentes no aparece al vender.",
+        ],
+      },
+    ],
+  },
+
+  combo: {
+    title: "Detalle de combo",
+    chapter: "inventario",
+    summary: "Componentes, precios, margen y fotos del combo.",
+    sections: [
+      {
+        heading: "Componentes",
+        items: [
+          "Agrega cada producto con cuántas piezas lleva un combo. Para cambiar la cantidad, quítalo y agrégalo de nuevo.",
+          "Las ventas ya registradas guardan lo que llevaban: cambiar el combo solo afecta las ventas nuevas.",
+        ],
+      },
+      {
+        heading: "Margen (owner y admin)",
+        items: [
+          "Costo = costo promedio de cada componente + su mano de obra.",
+          "En el dashboard, lo vendido en combos se reparte entre sus productos según el precio de cada uno.",
+        ],
+      },
+    ],
+  },
+
+  orderSettings: {
+    title: "Pedidos y personalización",
+    chapter: "configuracion",
+    summary: "Precios de bordados y logos, y los tramos del descuento al mayor. Solo owner y admin.",
+    sections: [
+      {
+        heading: "Personalización",
+        items: [
+          "Cada tipo tiene precio por unidad en USD de referencia (igual para todos los métodos) y un mínimo de piezas.",
+          "Sin precio, un tipo no se puede usar todavía en los pedidos.",
+          "Logo de bolsillo: hasta 8 cm. Más grande se considera logo de pecho.",
+        ],
+      },
+      {
+        heading: "Descuento al mayor",
+        items: [
+          "Tramos 'desde N piezas, X%'. Se aplica el más alto alcanzado, solo y aparte del descuento manual.",
+          "Productos: cuenta todas las piezas de la venta. Personalización: cuenta las piezas de cada tipo en un pedido.",
+          "Cambiar un tramo solo afecta las ventas nuevas.",
+        ],
+      },
+    ],
+  },
+
+  orders: {
+    title: "Pedidos",
+    chapter: "pedidos",
+    summary: "Lo que se produce por encargo: fecha prometida, abono, etapas y entrega.",
+    sections: [
+      {
+        heading: "Qué ves",
+        items: [
+          "Abiertos por fecha prometida; los atrasados resaltados.",
+          "'Falta abono': no se puede empezar a producir hasta cubrirlo (o una autorización de owner o admin).",
+          "Un pedido es una venta: su dinero aparece en Tesorería y en Resultados como cualquier venta.",
+        ],
+      },
+    ],
+  },
+
+  newOrder: {
+    title: "Nuevo pedido",
+    chapter: "pedidos",
+    summary: "Registra un pedido con su cliente, productos, personalización y abono.",
+    sections: [
+      {
+        heading: "Pasos",
+        items: [
+          "Elige el cliente (obligatorio). Un cliente bloqueado no puede pedir.",
+          "Agrega productos o combos. 'Personalizar' añade nombres bordados o logos a una línea.",
+          "Inventario: 'reservar y producir lo que falta' aparta lo que hay; 'producir todo' no toca el stock (misma tela).",
+          "Revisa la fecha prometida (por defecto 5 días) y registra el pago inicial.",
+        ],
+      },
+      {
+        heading: "Abono",
+        items: [
+          "Desde 500 USD: 60% para empezar y 40% al entregar. Por debajo: pago completo para empezar.",
+          "Sin el pago, el pedido queda registrado pero no avanza a producción.",
+        ],
+      },
+      {
+        heading: "Personalización",
+        items: [
+          "Nombres: el mismo texto para todas o un nombre por pieza (pega la lista).",
+          "Logos: sube el archivo; el de bolsillo es de hasta 8 cm, más grande es logo de pecho.",
+          "Cada tipo tiene un mínimo de piezas por pedido y su propio descuento al mayor.",
+        ],
+      },
+    ],
+  },
+
+  order: {
+    title: "Detalle de pedido",
+    chapter: "pedidos",
+    summary: "Etapas de cada línea, pagos, entrega y cancelación.",
+    sections: [
+      {
+        heading: "Etapas",
+        items: [
+          "Por producir → corte → confección → personalización → revisión → empaque → listo para entregar.",
+          "Las que no aplican se saltan solas (lo que sale del inventario no se corta ni se cose).",
+          "Al terminar el corte se descuenta la tela de la receta.",
+          "'Asignar' pone la etapa a nombre de una persona o un taller (con su fecha estimada).",
+        ],
+      },
+      {
+        heading: "Entregar",
+        items: [
+          "Se entrega completo cuando todas las líneas están listas.",
+          "Con saldo, primero se registra el pago; si no, solo owner o admin entregan, con motivo.",
+        ],
+      },
+      {
+        heading: "Cancelar",
+        items: [
+          "Antes del corte: se devuelve cada pago en su moneda y a su cuenta.",
+          "Después del corte: solo owner o admin, descontando materiales y talleres.",
+          "El cliente queda bloqueado (regla de negocio).",
+        ],
+      },
+    ],
+  },
+
+  production: {
+    title: "Producción",
+    chapter: "pedidos",
+    summary: "Qué se está haciendo, en qué etapa y quién lo tiene.",
+    sections: [
+      {
+        heading: "Qué puedes hacer",
+        items: [
+          "Tablero: una columna por etapa; desliza de lado en el celular. Toca el botón para pasar a la siguiente.",
+          "Quién tiene qué: lo asignado a cada persona o taller, y lo que nadie tiene todavía.",
+          "Talleres con fecha estimada vencida aparecen como atrasados.",
+        ],
+      },
+    ],
+  },
+
+  materials: {
+    title: "Material necesario",
+    chapter: "pedidos",
+    summary: "Tela e insumos que necesitan los pedidos que aún no se cortan, contra lo que hay.",
+    sections: [
+      {
+        heading: "Recuerda",
+        items: [
+          "Se calcula solo con las recetas, el stock y los pedidos.",
+          "'Falta el color': la receta pide tela del color de la prenda y ese color no existe en la materia prima.",
+          "Compra lo que falta en Compras → Nueva compra.",
+        ],
+      },
+    ],
+  },
+
+  pieceRates: {
+    title: "Tarifas a destajo",
+    chapter: "equipo",
+    summary: "Cuánto se paga por pieza según la categoría y la etapa. Solo owner y admin.",
+    sections: [
+      {
+        heading: "Cómo funciona",
+        items: [
+          "Las piezas se cuentan al terminar una etapa asignada a una persona que cobra a destajo.",
+          "Se paga en Equipo, como un sueldo: piezas × tarifa, menos adelantos.",
+          "Una tarifa nueva rige desde hoy; lo ya contado conserva su tarifa.",
+        ],
+      },
+    ],
+  },
+
+  businessRules: {
+    title: "Reglas del negocio",
+    chapter: "configuracion",
+    summary: "Cómo trabaja el negocio. Todos las leen; owner y admin las escriben.",
+    sections: [
+      {
+        heading: "Recuerda",
+        items: [
+          "'La aplica el sistema': se cumple sola (p. ej. el bloqueo de clientes que cancelan con reembolso).",
+          "'La aplica el equipo': es una guía que cada persona debe seguir.",
+          "Cada cambio queda en el historial.",
+        ],
+      },
+    ],
+  },
+
+  periods: {
+    title: "Cierres y exportación",
+    chapter: "resultados",
+    summary: "El Excel del mes para el contador y el cierre de los meses terminados. Solo owner y admin.",
+    sections: [
+      {
+        heading: "Excel",
+        items: [
+          "Hojas: resumen de utilidad real, ventas, pagos recibidos, compras, movimientos de dinero y sueldos.",
+          "Cada monto en su moneda, con su tasa y su valor real en USDT.",
+        ],
+      },
+      {
+        heading: "Cerrar un mes",
+        items: [
+          "Solo meses terminados. Después nadie registra nada con fecha de ese mes, ni owner ni admin.",
+          "Se guarda la utilidad del mes tal como quedó.",
+          "Solo el owner reabre un mes, con motivo; queda registrado.",
+        ],
+      },
+    ],
+  },
+
   team: {
     title: "Equipo",
     chapter: "equipo",

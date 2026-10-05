@@ -53,6 +53,8 @@ export const supplierSchema = z.object({
   phone: normalized(normalizePhone, "Teléfono inválido. Ej.: 0414-123.45.67"),
   email: normalized(normalizeEmail, "Correo inválido."),
   notes: optionalTextSchema(500),
+  // Taller: confección o bordado tercerizado; se le asignan etapas de producción.
+  kind: z.enum(E.supplier_kind).default("goods"),
   is_active: booleanFieldSchema.default(true),
 })
 

@@ -26,16 +26,22 @@ export const DELIVERY_LABELS: Record<DeliveryMethod, string> = {
 export const SOURCE_LABELS: Record<SaleLineSource, string> = {
   stock: "Inventario",
   made_to_order: "Por encargo",
+  combo: "Combo",
 }
 
 export const ITEM_STATUS_LABELS: Record<SaleItemStatus, string> = {
   to_produce: "Por producir",
-  in_production: "En producción",
-  ready: "Listo",
+  cutting: "Corte",
+  sewing: "Confección",
+  customization: "Personalización",
+  quality_check: "Revisión",
+  packing: "Empaque",
+  ready: "Listo para entregar",
   delivered: "Entregado",
 }
 
-export const ITEM_STATUS_ORDER: readonly SaleItemStatus[] = ["to_produce", "in_production", "ready", "delivered"]
+// Venta normal (sin pedido): flujo corto. Los pedidos usan todas las etapas.
+export const ITEM_STATUS_ORDER: readonly SaleItemStatus[] = ["to_produce", "sewing", "ready", "delivered"]
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   pending: "Por cobrar",

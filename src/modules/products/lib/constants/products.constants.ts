@@ -55,5 +55,6 @@ export const PRODUCT_MESSAGES = {
   IMAGE_SAVED: "Foto guardada.",
   IMAGE_DELETED: "Foto eliminada.",
   RECIPE_SAVED: "Receta actualizada.",
+  COMBO_SAVED: "Combo actualizado.",
   INITIAL_STOCK_LOADED: (count: number) => `Carga inicial lista: ${count} variantes.`,
 } as const

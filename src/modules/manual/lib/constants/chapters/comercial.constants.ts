@@ -204,15 +204,36 @@ export const SALES_CHAPTER: ManualChapter = {
     },
     {
       id: "descuentos",
-      heading: "Descuentos y fechas pasadas",
+      heading: "Combos, descuentos y fechas pasadas",
       blocks: [
+        {
+          kind: "example",
+          title: "4 Combos Escuela de 50 USD, con tramo de 5% desde 10 piezas",
+          rows: [
+            { label: "Subtotal: 4 × 50", value: "200,00 USD" },
+            { label: "Piezas: 4 combos × 3 componentes", value: "12 piezas" },
+            { label: "Al mayor 5%", value: "−10,00 USD" },
+            { label: "Descuento manual 10% (sobre 190)", value: "−19,00 USD" },
+            { label: "Total", value: "171,00 USD", total: true },
+          ],
+        },
         {
           kind: "steps",
           items: [
             {
-              title: "Descuento",
+              title: "Combo",
               body:
-                "En porcentaje o monto, siempre con motivo. Queda guardado quién lo hizo. Staff tiene un máximo (10% por defecto); por encima, solo owner o admin.",
+                "Al agregar un combo se elige la talla y el color de **cada pieza**; con varios combos se pueden mezclar tallas. El combo lleva el precio y el stock se descuenta de cada pieza.",
+            },
+            {
+              title: "Descuento al mayor",
+              body:
+                "Se aplica **solo** según las piezas de la venta (un combo cuenta por sus componentes). Debajo del total se ve cuántas piezas faltan para el siguiente tramo.",
+            },
+            {
+              title: "Descuento manual",
+              body:
+                "En porcentaje o monto, siempre con motivo, sobre lo que queda después del descuento al mayor. Queda guardado quién lo hizo. Staff tiene un máximo (10% por defecto); por encima, solo owner o admin. El de al mayor no cuenta para ese límite.",
             },
             {
               title: "Venta de otro día",
@@ -396,6 +417,24 @@ export const CUSTOMERS_CHAPTER: ManualChapter = {
           ],
           conclusion:
             "El saldo vive en dólares de referencia. Cuando el cliente paga en Bs, se usa la tasa BCV **del día en que paga**: cuanto más se tarda, más valor real se puede perder.",
+        },
+      ],
+    },
+    {
+      id: "bloqueo",
+      heading: "Clientes bloqueados",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "Regla del negocio: un cliente que **cancela un pedido y recibe reembolso** queda [[cliente-bloqueado|bloqueado]] solo y no se le vende más. Al elegirlo en una venta o un pedido aparece un aviso y el botón no deja registrar.",
+        },
+        {
+          kind: "steps",
+          items: [
+            { title: "No se puede esquivar", body: "Si alguien intenta registrarlo de nuevo con el mismo teléfono, correo o cédula, el sistema lo reconoce." },
+            { title: "Desbloquear", body: "Solo owner o admin, con motivo, desde la ficha del cliente. Queda en el historial." },
+          ],
         },
       ],
     },

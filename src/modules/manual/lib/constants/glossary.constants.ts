@@ -119,6 +119,18 @@ export const GLOSSARY = {
     term: "Nota de entrega",
     definition: "El comprobante que se le da al cliente. No es factura fiscal.",
   },
+  "cliente-bloqueado": {
+    key: "cliente-bloqueado",
+    term: "Cliente bloqueado",
+    definition:
+      "Un cliente al que no se le puede vender, ni en el panel ni en la tienda. Pasa solo cuando cancela un pedido y recibe reembolso, o lo bloquean owner o admin con motivo. Se detecta también por su teléfono, correo o cédula.",
+  },
+  destajo: {
+    key: "destajo",
+    term: "Destajo",
+    definition: "Cobrar por pieza trabajada en vez de (o además de) un sueldo fijo. Las piezas se cuentan solas al terminar una etapa asignada.",
+    example: "20 filipinas cortadas a 0,50 USD = 10 USD.",
+  },
   negocio: {
     key: "negocio",
     term: "Negocio vs. personal",

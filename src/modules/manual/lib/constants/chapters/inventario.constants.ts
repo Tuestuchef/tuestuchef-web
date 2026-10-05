@@ -7,6 +7,7 @@ import {
   LayersIcon,
   PackageIcon,
   PackageMinusIcon,
+  PackageOpenIcon,
   PackagePlusIcon,
   ScissorsIcon,
   ShirtIcon,
@@ -30,6 +31,7 @@ export const INVENTORY_CHAPTER: ManualChapter = {
   roles: ROLE_GROUPS.ALL,
   screens: [
     { title: "Catálogo", url: ROUTES.PRODUCTS, roles: ROLE_GROUPS.ALL },
+    { title: "Combos", url: ROUTES.COMBOS, roles: ROLE_GROUPS.ALL },
     { title: "Stock", url: ROUTES.STOCK, roles: ROLE_GROUPS.ALL },
     { title: "Materia prima", url: ROUTES.RAW_MATERIALS, roles: ROLE_GROUPS.ALL },
     { title: "Carga inicial", url: ROUTES.INITIAL_STOCK, roles: ROLE_GROUPS.MANAGEMENT },
@@ -88,6 +90,34 @@ export const INVENTORY_CHAPTER: ManualChapter = {
             { icon: PackageMinusIcon, title: "Stock mínimo", effect: "Al llegar a ese número la variante se marca como stock bajo." },
             { icon: LayersIcon, title: "Inventario o por encargo", effect: "Por encargo: se fabrica al venderse y no lleva stock." },
           ],
+        },
+      ],
+    },
+    {
+      id: "combos",
+      heading: "Combos",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "Un **combo** junta varios productos con un precio propio por método de pago (p. ej. Combo Escuela: bandana, filipina, pantalón y delantal). Se crea en **Inventario → Combos** y se le agregan sus componentes con su cantidad.",
+        },
+        {
+          kind: "flow",
+          title: "Cómo se vende un combo",
+          nodes: [
+            { icon: PackageOpenIcon, title: "Se elige el combo", detail: "Con su precio para el método de pago." },
+            { icon: ShirtIcon, title: "Talla y color de cada pieza", detail: "Con varios combos se pueden mezclar tallas." },
+            { icon: PackageMinusIcon, title: "Sale el stock de cada pieza", detail: "Las piezas por encargo van a producción." },
+            { icon: ChartColumnIcon, title: "El ingreso se reparte", detail: "Entre sus productos, según el precio de cada uno.", chapter: "resultados" },
+          ],
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "Un combo no tiene stock propio",
+          body:
+            "Su disponibilidad es la de sus piezas. Su costo para el margen es la suma del costo promedio y la mano de obra de cada componente.",
         },
       ],
     },
