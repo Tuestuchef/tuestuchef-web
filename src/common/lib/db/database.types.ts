@@ -3643,6 +3643,431 @@ export type Database = {
           },
         ]
       }
+      quotes: {
+        Row: {
+          bcv_eur_rate: number | null
+          bcv_usd_rate: number | null
+          code: string
+          created_at: string
+          created_by: string
+          created_by_email: string | null
+          created_by_name: string
+          created_by_phone: string | null
+          currencies: Database["public"]["Enums"]["quote_currencies"]
+          customer_address: string | null
+          customer_contact_person: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_kind: Database["public"]["Enums"]["customer_kind"]
+          customer_legal_name: string | null
+          customer_name: string
+          customer_phone: string | null
+          customer_tax_id: string | null
+          customization_total_usd: number
+          discount_by: string | null
+          discount_reason: string | null
+          discount_type: Database["public"]["Enums"]["discount_type"] | null
+          discount_value: number | null
+          duplicated_from: string | null
+          group_by_size: boolean
+          header_image_path: string | null
+          id: string
+          igtf_note: string | null
+          igtf_note_enabled: boolean
+          issued_on: string
+          number: number
+          order_sale_id: string | null
+          pdf_path: string | null
+          pieces: number
+          public_token: string | null
+          replaces_id: string | null
+          status: Database["public"]["Enums"]["quote_status"]
+          status_changed_at: string
+          superseded_by: string | null
+          terms: string | null
+          token_revoked_at: string | null
+          updated_at: string
+          usd_discount: number
+          usd_line_discounts: number
+          usd_price_method_id: string | null
+          usd_subtotal: number
+          usd_total: number
+          usd_vat: number
+          usd_volume_discount: number
+          valid_until: string
+          vat_enabled: boolean
+          vat_percent: number
+          version: number
+          ves_discount: number
+          ves_line_discounts: number
+          ves_price_method_id: string | null
+          ves_rate: number | null
+          ves_subtotal: number
+          ves_total: number
+          ves_total_bs: number
+          ves_vat: number
+          ves_volume_discount: number
+          volume_discount_percent: number
+        }
+        Insert: {
+          bcv_eur_rate?: number | null
+          bcv_usd_rate?: number | null
+          code: string
+          created_at?: string
+          created_by?: string
+          created_by_email?: string | null
+          created_by_name?: string
+          created_by_phone?: string | null
+          currencies?: Database["public"]["Enums"]["quote_currencies"]
+          customer_address?: string | null
+          customer_contact_person?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_kind?: Database["public"]["Enums"]["customer_kind"]
+          customer_legal_name?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          customer_tax_id?: string | null
+          customization_total_usd?: number
+          discount_by?: string | null
+          discount_reason?: string | null
+          discount_type?: Database["public"]["Enums"]["discount_type"] | null
+          discount_value?: number | null
+          duplicated_from?: string | null
+          group_by_size?: boolean
+          header_image_path?: string | null
+          id?: string
+          igtf_note?: string | null
+          igtf_note_enabled?: boolean
+          issued_on?: string
+          number: number
+          order_sale_id?: string | null
+          pdf_path?: string | null
+          pieces?: number
+          public_token?: string | null
+          replaces_id?: string | null
+          status?: Database["public"]["Enums"]["quote_status"]
+          status_changed_at?: string
+          superseded_by?: string | null
+          terms?: string | null
+          token_revoked_at?: string | null
+          updated_at?: string
+          usd_discount?: number
+          usd_line_discounts?: number
+          usd_price_method_id?: string | null
+          usd_subtotal?: number
+          usd_total?: number
+          usd_vat?: number
+          usd_volume_discount?: number
+          valid_until: string
+          vat_enabled?: boolean
+          vat_percent?: number
+          version?: number
+          ves_discount?: number
+          ves_line_discounts?: number
+          ves_price_method_id?: string | null
+          ves_rate?: number | null
+          ves_subtotal?: number
+          ves_total?: number
+          ves_total_bs?: number
+          ves_vat?: number
+          ves_volume_discount?: number
+          volume_discount_percent?: number
+        }
+        Update: {
+          bcv_eur_rate?: number | null
+          bcv_usd_rate?: number | null
+          code?: string
+          created_at?: string
+          created_by?: string
+          created_by_email?: string | null
+          created_by_name?: string
+          created_by_phone?: string | null
+          currencies?: Database["public"]["Enums"]["quote_currencies"]
+          customer_address?: string | null
+          customer_contact_person?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_kind?: Database["public"]["Enums"]["customer_kind"]
+          customer_legal_name?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          customer_tax_id?: string | null
+          customization_total_usd?: number
+          discount_by?: string | null
+          discount_reason?: string | null
+          discount_type?: Database["public"]["Enums"]["discount_type"] | null
+          discount_value?: number | null
+          duplicated_from?: string | null
+          group_by_size?: boolean
+          header_image_path?: string | null
+          id?: string
+          igtf_note?: string | null
+          igtf_note_enabled?: boolean
+          issued_on?: string
+          number?: number
+          order_sale_id?: string | null
+          pdf_path?: string | null
+          pieces?: number
+          public_token?: string | null
+          replaces_id?: string | null
+          status?: Database["public"]["Enums"]["quote_status"]
+          status_changed_at?: string
+          superseded_by?: string | null
+          terms?: string | null
+          token_revoked_at?: string | null
+          updated_at?: string
+          usd_discount?: number
+          usd_line_discounts?: number
+          usd_price_method_id?: string | null
+          usd_subtotal?: number
+          usd_total?: number
+          usd_vat?: number
+          usd_volume_discount?: number
+          valid_until?: string
+          vat_enabled?: boolean
+          vat_percent?: number
+          version?: number
+          ves_discount?: number
+          ves_line_discounts?: number
+          ves_price_method_id?: string | null
+          ves_rate?: number | null
+          ves_subtotal?: number
+          ves_total?: number
+          ves_total_bs?: number
+          ves_vat?: number
+          ves_volume_discount?: number
+          volume_discount_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_usd_price_method_id_fkey"
+            columns: ["usd_price_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_ves_price_method_id_fkey"
+            columns: ["ves_price_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_discount_by_fkey"
+            columns: ["discount_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_order_sale_id_fkey"
+            columns: ["order_sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_items: {
+        Row: {
+          color_name: string | null
+          discount_percent: number
+          id: string
+          kind: Database["public"]["Enums"]["quote_item_kind"]
+          parent_item_id: string | null
+          position: number
+          product_name: string
+          quantity: number
+          quote_id: string
+          size_name: string | null
+          size_sort: number | null
+          sku: string
+          usd_line_total: number
+          usd_unit_price: number
+          variant_id: string
+          ves_line_total: number
+          ves_unit_price: number
+        }
+        Insert: {
+          color_name?: string | null
+          discount_percent?: number
+          id?: string
+          kind: Database["public"]["Enums"]["quote_item_kind"]
+          parent_item_id?: string | null
+          position: number
+          product_name: string
+          quantity: number
+          quote_id: string
+          size_name?: string | null
+          size_sort?: number | null
+          sku: string
+          usd_line_total?: number
+          usd_unit_price?: number
+          variant_id: string
+          ves_line_total?: number
+          ves_unit_price?: number
+        }
+        Update: {
+          color_name?: string | null
+          discount_percent?: number
+          id?: string
+          kind?: Database["public"]["Enums"]["quote_item_kind"]
+          parent_item_id?: string | null
+          position?: number
+          product_name?: string
+          quantity?: number
+          quote_id?: string
+          size_name?: string | null
+          size_sort?: number | null
+          sku?: string
+          usd_line_total?: number
+          usd_unit_price?: number
+          variant_id?: string
+          ves_line_total?: number
+          ves_unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_parent_item_id_fkey"
+            columns: ["parent_item_id"]
+            isOneToOne: false
+            referencedRelation: "quote_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_item_customizations: {
+        Row: {
+          customization_type_id: string
+          discount_percent: number
+          id: string
+          line_total_usd: number
+          note: string | null
+          position: string | null
+          quantity: number
+          quote_item_id: string
+          size_cm: number | null
+          text: string | null
+          type_name: string
+          unit_price_usd: number
+        }
+        Insert: {
+          customization_type_id: string
+          discount_percent?: number
+          id?: string
+          line_total_usd: number
+          note?: string | null
+          position?: string | null
+          quantity: number
+          quote_item_id: string
+          size_cm?: number | null
+          text?: string | null
+          type_name: string
+          unit_price_usd: number
+        }
+        Update: {
+          customization_type_id?: string
+          discount_percent?: number
+          id?: string
+          line_total_usd?: number
+          note?: string | null
+          position?: string | null
+          quantity?: number
+          quote_item_id?: string
+          size_cm?: number | null
+          text?: string | null
+          type_name?: string
+          unit_price_usd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_item_customizations_quote_item_id_fkey"
+            columns: ["quote_item_id"]
+            isOneToOne: false
+            referencedRelation: "quote_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_item_customizations_customization_type_id_fkey"
+            columns: ["customization_type_id"]
+            isOneToOne: false
+            referencedRelation: "customization_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_status_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          quote_id: string
+          status: Database["public"]["Enums"]["quote_status"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          quote_id: string
+          status: Database["public"]["Enums"]["quote_status"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          quote_id?: string
+          status?: Database["public"]["Enums"]["quote_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_status_events_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_status_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       current_salary_agreements: {
@@ -3862,8 +4287,63 @@ export type Database = {
         }
         Relationships: []
       }
+      quotes_overview: {
+        Row: {
+          id: string | null
+          code: string | null
+          number: number | null
+          version: number | null
+          status: Database["public"]["Enums"]["quote_status"] | null
+          effective_status: Database["public"]["Enums"]["quote_status"] | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_legal_name: string | null
+          issued_on: string | null
+          valid_until: string | null
+          currencies: Database["public"]["Enums"]["quote_currencies"] | null
+          usd_total: number | null
+          ves_total: number | null
+          ves_total_bs: number | null
+          vat_enabled: boolean | null
+          created_by: string | null
+          created_by_name: string | null
+          created_at: string | null
+          status_changed_at: string | null
+          order_sale_id: string | null
+          superseded_by: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      expire_quotes: {
+        Args: never
+        Returns: number
+      }
+      duplicate_quote: {
+        Args: { p_quote_id: string }
+        Returns: string
+      }
+      new_quote_version: {
+        Args: { p_quote_id: string }
+        Returns: string
+      }
+      discard_quote: {
+        Args: { p_quote_id: string; p_reason: string }
+        Returns: undefined
+      }
+      mark_quote: {
+        Args: { p_quote_id: string; p_status: Database["public"]["Enums"]["quote_status"]; p_note?: string }
+        Returns: undefined
+      }
+      send_quote: {
+        Args: { p_quote_id: string }
+        Returns: string
+      }
+      save_quote_draft: {
+        Args: { p_quote_id: string | null; p_payload: Json }
+        Returns: string
+      }
       set_outbound_message_status: {
         Args: { p_id: string; p_status: Database["public"]["Enums"]["message_status"]; p_provider_message_id?: string; p_error?: string }
         Returns: undefined
@@ -4224,6 +4704,8 @@ export type Database = {
       }
     }
     Enums: {
+      quote_item_kind: "product" | "combo" | "component"
+      quote_status: "draft" | "sent" | "accepted" | "rejected" | "expired" | "discarded" | "superseded"
       quote_currencies: "usd" | "ves" | "both"
       customer_kind: "person" | "company"
       message_status: "opened" | "queued" | "sent" | "delivered" | "read" | "failed"
@@ -4304,6 +4786,8 @@ export type Enums<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"]
 export const Constants = {
   public: {
     Enums: {
+      quote_item_kind: ["product", "combo", "component"],
+      quote_status: ["draft", "sent", "accepted", "rejected", "expired", "discarded", "superseded"],
       quote_currencies: ["usd", "ves", "both"],
       customer_kind: ["person", "company"],
       message_status: ["opened", "queued", "sent", "delivered", "read", "failed"],
