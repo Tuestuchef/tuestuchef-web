@@ -3391,6 +3391,111 @@ export type Database = {
           },
         ]
       }
+      message_templates: {
+        Row: {
+          body: string
+          enabled: boolean
+          kind: Database["public"]["Enums"]["message_kind"]
+          name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body: string
+          enabled?: boolean
+          kind: Database["public"]["Enums"]["message_kind"]
+          name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          enabled?: boolean
+          kind?: Database["public"]["Enums"]["message_kind"]
+          name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_messages: {
+        Row: {
+          body: string
+          channel: Database["public"]["Enums"]["message_channel"]
+          created_at: string
+          created_by: string
+          customer_id: string | null
+          error: string | null
+          id: string
+          kind: Database["public"]["Enums"]["message_kind"]
+          phone: string | null
+          provider_message_id: string | null
+          sale_id: string | null
+          status: Database["public"]["Enums"]["message_status"]
+          status_updated_at: string | null
+        }
+        Insert: {
+          body: string
+          channel?: Database["public"]["Enums"]["message_channel"]
+          created_at?: string
+          created_by?: string
+          customer_id?: string | null
+          error?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["message_kind"]
+          phone?: string | null
+          provider_message_id?: string | null
+          sale_id?: string | null
+          status?: Database["public"]["Enums"]["message_status"]
+          status_updated_at?: string | null
+        }
+        Update: {
+          body?: string
+          channel?: Database["public"]["Enums"]["message_channel"]
+          created_at?: string
+          created_by?: string
+          customer_id?: string | null
+          error?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["message_kind"]
+          phone?: string | null
+          provider_message_id?: string | null
+          sale_id?: string | null
+          status?: Database["public"]["Enums"]["message_status"]
+          status_updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_messages_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       current_salary_agreements: {
@@ -3612,6 +3717,14 @@ export type Database = {
       }
     }
     Functions: {
+      set_outbound_message_status: {
+        Args: { p_id: string; p_status: Database["public"]["Enums"]["message_status"]; p_provider_message_id?: string; p_error?: string }
+        Returns: undefined
+      }
+      log_outbound_message: {
+        Args: { p_kind: Database["public"]["Enums"]["message_kind"]; p_body: string; p_phone?: string; p_customer_id?: string; p_sale_id?: string }
+        Returns: string
+      }
       discard_offline_sale: {
         Args: { p_rejection_id: string; p_reason: string }
         Returns: undefined
@@ -3964,6 +4077,9 @@ export type Database = {
       }
     }
     Enums: {
+      message_status: "opened" | "queued" | "sent" | "delivered" | "read" | "failed"
+      message_channel: "wa_link" | "wa_api"
+      message_kind: "sale_note" | "payment_reminder" | "order_confirmed" | "order_ready" | "order_cancelled"
       notification_status: "sent" | "failed"
       notification_channel: "email" | "push"
       notification_kind: "late_orders" | "late_workshops" | "missing_rate" | "receivables_due" | "payables_due" | "low_stock"
@@ -4039,6 +4155,9 @@ export type Enums<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"]
 export const Constants = {
   public: {
     Enums: {
+      message_status: ["opened", "queued", "sent", "delivered", "read", "failed"],
+      message_channel: ["wa_link", "wa_api"],
+      message_kind: ["sale_note", "payment_reminder", "order_confirmed", "order_ready", "order_cancelled"],
       notification_status: ["sent", "failed"],
       notification_channel: ["email", "push"],
       notification_kind: ["late_orders", "late_workshops", "missing_rate", "receivables_due", "payables_due", "low_stock"],

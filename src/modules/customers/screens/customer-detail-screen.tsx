@@ -11,6 +11,7 @@ import { isRoleIn, ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import type { SessionUser } from "@/common/lib/types/session.types"
 import { formatDate } from "@/common/lib/utils/format-date.util"
+import MessageHistory from "@/modules/messages/components/message-history"
 import SaleList from "@/modules/sales/components/sale-list"
 import { listSales } from "@/modules/sales/lib/services/sales.service"
 
@@ -142,6 +143,8 @@ const CustomerDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
           <SaleList sales={sales} groupByDay={false} emptyMessage="Aún no tiene compras." />
         </CardContent>
       </Card>
+
+      <MessageHistory filter={{ customerId: customer.id }} />
     </div>
   )
 }

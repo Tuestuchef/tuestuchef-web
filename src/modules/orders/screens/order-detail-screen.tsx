@@ -1,4 +1,4 @@
-import { ChevronLeftIcon, ImageIcon, MessageCircleIcon } from "lucide-react"
+import { ChevronLeftIcon, ImageIcon } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
@@ -14,10 +14,12 @@ import type { SessionUser } from "@/common/lib/types/session.types"
 import { cn } from "@/common/lib/utils"
 import { formatDate, toCaracasDate } from "@/common/lib/utils/format-date.util"
 import { formatMoney, formatUsdt } from "@/common/lib/utils/format-money.util"
+import MessageActions from "@/modules/messages/components/message-actions"
+import MessageHistory from "@/modules/messages/components/message-history"
+import type { MessageKind } from "@/modules/messages/lib/types/messages.types"
 import AddPaymentDialog from "@/modules/sales/components/add-payment-dialog"
 import { formatSaleNumber, ITEM_STATUS_LABELS } from "@/modules/sales/lib/constants/sales.constants"
-import { getSaleDetail, getSaleFormData } from "@/modules/sales/lib/services/sales.service"
-import { buildSaleMessage, whatsappShareUrl } from "@/modules/sales/lib/utils/sale-message.util"
+import { getSaleFormData } from "@/modules/sales/lib/services/sales.service"
 
 import {
   AllowWithoutDepositDialog,
@@ -34,17 +36,21 @@ const STAGE_INDEX = (s: ProductionStage | null) => (s ? ASSIGNABLE_STAGES.indexO
 
 const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }) => {
   const canManage = isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)
-  const [order, sale, formData, assignees, quote] = await Promise.all([
+  const [order, formData, assignees, quote] = await Promise.all([
     getOrderDetail(id),
-    getSaleDetail(id),
     getSaleFormData(),
     listAssignees(),
     getCancellationQuote(id),
   ])
-  if (!order || !sale) notFound()
+  if (!order) notFound()
 
   const today = toCaracasDate()
   const open = order.status !== "delivered" && order.status !== "cancelled"
+  // Mensajes que aplican según el estado del pedido.
+  const messageKinds: MessageKind[] =
+    order.status === "cancelled"
+      ? ["order_cancelled"]
+      : [...(open ? (["order_confirmed"] as const) : []), ...(order.status === "ready" ? (["order_ready"] as const) : []), "sale_note"]
   const depositMissing = Math.max(order.depositRequiredUsd - order.paidUsd, 0)
 
   return (
@@ -133,12 +139,7 @@ const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }
         )}
         {order.status === "ready" && <DeliverOrderDialog saleId={order.saleId} balanceUsd={order.balanceUsd} canManage={canManage} />}
         {open && canManage && !order.canStart && <AllowWithoutDepositDialog saleId={order.saleId} />}
-        <Button asChild variant="outline" className="h-11 md:h-9">
-          <a href={whatsappShareUrl(buildSaleMessage(sale), sale.customer?.phone)} target="_blank" rel="noreferrer">
-            <MessageCircleIcon aria-hidden />
-            WhatsApp
-          </a>
-        </Button>
+        <MessageActions target={{ type: "sale", saleId: order.saleId }} kinds={messageKinds} />
         {open && <CancelOrderDialog saleId={order.saleId} quote={quote} canManage={canManage} />}
       </div>
 
@@ -232,6 +233,8 @@ const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }
           </CardContent>
         </Card>
       )}
+
+      <MessageHistory filter={{ saleId: order.saleId }} />
     </div>
   )
 }

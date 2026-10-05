@@ -200,6 +200,22 @@ export const ORDERS_CHAPTER: ManualChapter = {
       ],
     },
     {
+      id: "avisar",
+      heading: "Avisar al cliente por WhatsApp",
+      blocks: [
+        {
+          kind: "timeline",
+          title: "Mensajes según el estado del pedido",
+          steps: [
+            { title: "Pedido confirmado", detail: "Total, abono para empezar, lo pagado y la fecha de entrega." },
+            { title: "Pedido listo", detail: "Aparece cuando el pedido está listo: el saldo para entregarlo." },
+            { title: "Pedido cancelado", detail: "Aparece al cancelarlo: el reembolso en la moneda en que pagó (Bs, USD o USDT)." },
+          ],
+          note: "La nota de entrega se puede mandar en cualquier momento. El texto de cada mensaje se cambia en Configuración.",
+        },
+      ],
+    },
+    {
       id: "conexiones",
       heading: "Con qué se conecta",
       blocks: [

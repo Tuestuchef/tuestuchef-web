@@ -1,4 +1,4 @@
-import { ChevronLeftIcon, MessageCircleIcon, PrinterIcon } from "lucide-react"
+import { ChevronLeftIcon, PrinterIcon } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
@@ -14,6 +14,8 @@ import { cn } from "@/common/lib/utils"
 import type { SessionUser } from "@/common/lib/types/session.types"
 import { formatDate, formatTime } from "@/common/lib/utils/format-date.util"
 import { formatMoney, formatRate, formatUsdt } from "@/common/lib/utils/format-money.util"
+import MessageActions from "@/modules/messages/components/message-actions"
+import MessageHistory from "@/modules/messages/components/message-history"
 
 import AddPaymentDialog from "../components/add-payment-dialog"
 import { AdvanceItemButton, DeliverReadyButton } from "../components/item-status-controls"
@@ -26,7 +28,6 @@ import {
   ITEM_STATUS_LABELS,
 } from "../lib/constants/sales.constants"
 import { getSaleDetail, getSaleFormData } from "../lib/services/sales.service"
-import { buildSaleMessage, whatsappShareUrl } from "../lib/utils/sale-message.util"
 
 const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3 })
 const usd = (value: number) => formatMoney(value, "USD")
@@ -90,12 +91,7 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
           />
         )}
         {!isVoided && <DeliverReadyButton itemIds={readyItems} />}
-        <Button asChild variant="outline" className="h-11 md:h-9">
-          <a href={whatsappShareUrl(buildSaleMessage(sale), sale.customer?.phone)} target="_blank" rel="noreferrer">
-            <MessageCircleIcon aria-hidden />
-            WhatsApp
-          </a>
-        </Button>
+        {!isVoided && <MessageActions target={{ type: "sale", saleId: sale.id }} kinds={["sale_note"]} />}
         <Button asChild variant="outline" className="h-11 md:h-9">
           <Link href={ROUTES.SALE_NOTE(sale.id)}>
             <PrinterIcon aria-hidden />
@@ -234,6 +230,8 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
           )}
         </CardContent>
       </Card>
+
+      <MessageHistory filter={{ saleId: sale.id }} />
 
       {sale.authorName && (
         <p className="text-center text-xs text-muted-foreground">Registrada por {sale.authorName}</p>

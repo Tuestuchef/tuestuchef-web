@@ -37,6 +37,7 @@ export const SETTINGS_CHAPTER: ManualChapter = {
     { title: "Reglas de venta", url: ROUTES.SETTINGS_SALES, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Pedidos y personalización", url: ROUTES.SETTINGS_ORDERS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Avisos", url: ROUTES.SETTINGS_NOTIFICATIONS, roles: ROLE_GROUPS.MANAGEMENT },
+    { title: "Mensajes de WhatsApp", url: ROUTES.SETTINGS_MESSAGES, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Cuentas", url: ROUTES.SETTINGS_ACCOUNTS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Métodos de pago", url: ROUTES.SETTINGS_PAYMENT_METHODS, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Categorías de dinero", url: ROUTES.SETTINGS_CATEGORIES, roles: ROLE_GROUPS.MANAGEMENT },
@@ -250,6 +251,32 @@ export const SETTINGS_CHAPTER: ManualChapter = {
             { title: "Elegir quién y cuándo", body: "En cada aviso: canales, qué roles lo reciben y, en cobros y pagos, con cuántos días." },
             { title: "Probar", body: "'Enviarme una prueba' manda ahora, solo a ti, lo pendiente de cada aviso prendido." },
           ],
+        },
+      ],
+    },
+    {
+      id: "mensajes",
+      heading: "Mensajes de WhatsApp",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "Los mensajes que el equipo manda a los clientes ya vienen escritos: **nota de entrega**, **recordatorio de pago**, **pedido confirmado**, **pedido listo** y **pedido cancelado**. Los datos entre llaves, como {cliente} o {pendiente}, se completan solos con los de la venta o el pedido.",
+        },
+        {
+          kind: "steps",
+          items: [
+            { title: "Editar el texto", body: "En **Configuración → Mensajes de WhatsApp**, owner y admin cambian el nombre y el texto. Tocar un dato lo agrega donde está el cursor; la vista previa usa datos de ejemplo." },
+            { title: "Prender o apagar", body: "Un mensaje apagado no aparece en el botón de WhatsApp." },
+            { title: "Enviar", body: "En la venta, el pedido o Por cobrar: **WhatsApp** → elige el mensaje → revísalo (se puede ajustar solo para ese envío) → **Abrir WhatsApp** y toca enviar allá." },
+          ],
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "Queda registrado",
+          body:
+            "Cada mensaje queda en **Mensajes enviados** de la venta y del cliente, con quién lo preparó. Por ahora dice 'Abierto en WhatsApp' porque el envío lo confirma la persona en WhatsApp; más adelante, con la API de WhatsApp Business, saldrán solos y se verá si llegaron.",
         },
       ],
     },

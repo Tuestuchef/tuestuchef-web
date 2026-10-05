@@ -374,6 +374,13 @@ Migración: `20261008000000_dashboard.sql`. Pruebas: `src/common/lib/db/tests/da
 - **`offline_sale_refs`** (`client_ref` → venta) y **`offline_sale_rejections`** (datos, error, intentos, resolución): cada persona ve las suyas; owner y admin, todas.
 - `retry_offline_sale` y `discard_offline_sale` (con motivo): solo owner y admin. Pantalla: Ventas pendientes (`/ventas/pendientes`).
 
+## 15. Mensajes de WhatsApp (Fase 3, paso 6)
+
+- **`message_templates`** (uno por mensaje: `sale_note`, `payment_reminder`, `order_confirmed`, `order_ready`, `order_cancelled`): nombre, texto con datos entre llaves (`{cliente}`, `{pendiente}`…) y prendido. Todos leen; owner y admin editan. La app valida que el texto solo use los datos de ese mensaje.
+- **`outbound_messages`**: cada mensaje preparado, con tipo, canal (`wa_link` hoy, `wa_api` después), estado, cliente, venta, teléfono, texto final, id del proveedor y quién lo hizo. No se borra; solo cambian estado, id del proveedor y error. Staff ve los suyos; owner y admin, todos.
+- `log_outbound_message`: lo usan todos los roles (el recordatorio de pago, solo owner y admin); la plantilla debe estar prendida y el cliente sale de la venta. `set_outbound_message_status`: solo el servidor con la clave de servicio (para los webhooks de la API).
+- **Envío**: el servidor arma el texto desde la base (nunca desde el navegador), lo registra y el proveedor devuelve el enlace wa.me (`whatsapp-provider.service`). Con la API de WhatsApp Business se agrega otro proveedor que envía directo, sin cambiar las pantallas.
+
 ## Relaciones
 
 ```
@@ -456,3 +463,4 @@ no cuenta:           capital_contribution, traspasos
 | 2026-10-11 | Fase 3 · cierre de mes: bloquea toda fecha del mes cerrado para todos los roles (incluido owner hasta reabrir); reabre solo el owner con motivo; Excel mensual para el contador con exceljs |
 | 2026-10-12 | Fase 3 · avisos: resumen diario a las 7:00 por correo (Resend + React Email) y push (Web Push con VAPID); owner y admin prenden o apagan cada canal y cada aviso, eligen roles y anticipación; registro sin repeticiones por día |
 | 2026-10-13 | Fase 3 · sin conexión: solo Nueva venta funciona sin señal; cola en el teléfono con `client_ref` para no duplicar; al enviarse se revisan todas las reglas con la hora real y lo que no pasa queda en Ventas pendientes para reintentar o descartar |
+| 2026-10-14 | Fase 3 · WhatsApp: cinco plantillas editables con datos entre llaves; enlaces wa.me con vista previa editable; registro de cada mensaje con canal, estado e id de proveedor listo para la API de WhatsApp Business; reembolso en el mensaje en la moneda de cada pago |

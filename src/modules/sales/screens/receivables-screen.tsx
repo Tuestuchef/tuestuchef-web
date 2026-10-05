@@ -1,14 +1,12 @@
-import { MessageCircleIcon } from "lucide-react"
 import Link from "next/link"
 
 import PageHeader from "@/common/components/page-header"
 import StatusBadge from "@/common/components/status-badge"
-import { Button } from "@/common/components/ui/button"
 import { Card, CardContent } from "@/common/components/ui/card"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatDate } from "@/common/lib/utils/format-date.util"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
-import { whatsappUrl } from "@/modules/customers/lib/utils/normalize-contact.util"
+import MessageActions from "@/modules/messages/components/message-actions"
 
 import { formatSaleNumber } from "../lib/constants/sales.constants"
 import { listReceivables } from "../lib/services/sales.service"
@@ -61,13 +59,8 @@ const ReceivablesScreen = async () => {
                   </span>
                 </div>
                 <span className="font-semibold tabular-nums">{usd(group.balanceUsd)}</span>
-                {group.customerPhone && (
-                  <Button asChild variant="outline" size="sm">
-                    <a href={whatsappUrl(group.customerPhone)} target="_blank" rel="noreferrer">
-                      <MessageCircleIcon aria-hidden />
-                      WhatsApp
-                    </a>
-                  </Button>
+                {group.customerId && (
+                  <MessageActions target={{ type: "customer", customerId: group.customerId }} kinds={["payment_reminder"]} size="sm" />
                 )}
               </div>
               <ul className="divide-y border-t">

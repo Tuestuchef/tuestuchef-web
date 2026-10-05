@@ -138,6 +138,17 @@ export const SALES_CHAPTER: ManualChapter = {
       ],
     },
     {
+      id: "whatsapp",
+      heading: "Mandar la nota por WhatsApp",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "En la venta, **WhatsApp** prepara la nota de entrega con los productos, el total y lo pendiente. Revísala, toca **Abrir WhatsApp** y envíala allá (si el cliente no tiene teléfono, WhatsApp te deja elegir el contacto). Queda en **Mensajes enviados**, al final de la venta.",
+        },
+      ],
+    },
+    {
       id: "dinero",
       heading: "Cómo se calcula el dinero",
       blocks: [
@@ -446,6 +457,11 @@ export const CUSTOMERS_CHAPTER: ManualChapter = {
           ],
           conclusion:
             "El saldo vive en dólares de referencia. Cuando el cliente paga en Bs, se usa la tasa BCV **del día en que paga**: cuanto más se tarda, más valor real se puede perder.",
+        },
+        {
+          kind: "text",
+          body:
+            "Junto a cada cliente, **WhatsApp** prepara un **recordatorio de pago** con su saldo y cada venta pendiente. Lo que se le envió queda en su ficha, en **Mensajes enviados**.",
         },
       ],
     },

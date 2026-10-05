@@ -122,6 +122,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
           { title: "Pedidos y personalización", url: ROUTES.SETTINGS_ORDERS, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Tarifas a destajo", url: ROUTES.SETTINGS_PIECE_RATES, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Avisos", url: ROUTES.SETTINGS_NOTIFICATIONS, roles: ROLE_GROUPS.MANAGEMENT },
+          { title: "Mensajes de WhatsApp", url: ROUTES.SETTINGS_MESSAGES, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Cuentas", url: ROUTES.SETTINGS_ACCOUNTS, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Métodos de pago", url: ROUTES.SETTINGS_PAYMENT_METHODS, roles: ROLE_GROUPS.MANAGEMENT },
           { title: "Categorías de dinero", url: ROUTES.SETTINGS_CATEGORIES, roles: ROLE_GROUPS.MANAGEMENT },

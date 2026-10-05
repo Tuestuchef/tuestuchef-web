@@ -131,7 +131,7 @@ export const HELP_TOPICS = {
           "Registrar pago: para abonos o saldos. En Bs se usa la tasa del día del pago.",
           "Avanzar cada producto: por producir → en producción → listo → entregado.",
           "Marcar entregado: pasa a entregado todo lo que está listo.",
-          "WhatsApp: envía el resumen de la venta al cliente.",
+          "WhatsApp: elige el mensaje (nota de entrega), revísalo y se abre WhatsApp con el texto listo. Queda en Mensajes enviados.",
           "Nota de entrega: para imprimir o guardar como PDF. No es factura fiscal.",
           "Anular, con motivo: revierte los pagos y devuelve el inventario (owner y admin).",
         ],
@@ -360,6 +360,10 @@ export const HELP_TOPICS = {
           "Editar sus datos.",
           "Desactivarlo (owner y admin). Los clientes no se borran porque tienen ventas.",
         ],
+      },
+      {
+        heading: "Mensajes enviados",
+        items: ["Los mensajes de WhatsApp que se le prepararon desde ventas, pedidos y Por cobrar (staff ve los suyos)."],
       },
     ],
   },
@@ -704,6 +708,7 @@ export const HELP_TOPICS = {
           "Cada cliente con el total que debe y su venta pendiente más antigua.",
           "Las ventas rápidas sin cliente aparecen aparte.",
           "Abre una venta para registrar el abono.",
+          "WhatsApp: recordatorio de pago con el saldo y sus ventas, listo para enviar.",
         ],
       },
       {
@@ -872,6 +877,13 @@ export const HELP_TOPICS = {
           "El cliente queda bloqueado (regla de negocio).",
         ],
       },
+      {
+        heading: "Avisar al cliente",
+        items: [
+          "WhatsApp: pedido confirmado (abono y fecha), pedido listo (saldo para entregar), pedido cancelado (reembolso en la moneda en que pagó) y nota de entrega.",
+          "Solo aparecen los que aplican: 'listo' cuando el pedido está listo, 'cancelado' cuando se canceló.",
+        ],
+      },
     ],
   },
 
@@ -979,6 +991,30 @@ export const HELP_TOPICS = {
       {
         heading: "Probar",
         items: ["'Enviarme una prueba' te manda ahora, solo a ti, lo pendiente de cada aviso prendido."],
+      },
+    ],
+  },
+
+  messageTemplates: {
+    title: "Mensajes de WhatsApp",
+    chapter: "configuracion",
+    summary: "El texto de los mensajes listos para enviar a los clientes. Solo owner y admin los editan.",
+    sections: [
+      {
+        heading: "Cómo funciona",
+        items: [
+          "Cada mensaje tiene datos entre llaves, como {cliente} o {pendiente}, que se completan solos al enviarlo.",
+          "Toca un dato para agregarlo donde está el cursor. La vista previa usa datos de ejemplo.",
+          "Apagado, el mensaje no aparece en el botón de WhatsApp.",
+          "Antes de abrir WhatsApp se puede ajustar el texto solo para ese envío.",
+        ],
+      },
+      {
+        heading: "Recuerda",
+        items: [
+          "Por ahora se abre WhatsApp con el texto y la persona toca enviar: el registro dice 'Abierto en WhatsApp', no 'entregado'.",
+          "*texto* sale en negrita y _texto_ en cursiva.",
+        ],
       },
     ],
   },
