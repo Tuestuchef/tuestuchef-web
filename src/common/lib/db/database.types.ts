@@ -3443,6 +3443,8 @@ export type Database = {
       }
       outbound_messages: {
         Row: {
+          quote_id: string | null
+          email: string | null
           body: string
           channel: Database["public"]["Enums"]["message_channel"]
           created_at: string
@@ -3458,6 +3460,8 @@ export type Database = {
           status_updated_at: string | null
         }
         Insert: {
+          quote_id?: string | null
+          email?: string | null
           body: string
           channel?: Database["public"]["Enums"]["message_channel"]
           created_at?: string
@@ -3473,6 +3477,8 @@ export type Database = {
           status_updated_at?: string | null
         }
         Update: {
+          quote_id?: string | null
+          email?: string | null
           body?: string
           channel?: Database["public"]["Enums"]["message_channel"]
           created_at?: string
@@ -4068,6 +4074,38 @@ export type Database = {
           },
         ]
       }
+      quote_link_views: {
+        Row: {
+          allowed: boolean
+          created_at: string
+          id: string
+          ip_hash: string
+          quote_id: string | null
+        }
+        Insert: {
+          allowed: boolean
+          created_at?: string
+          id?: string
+          ip_hash: string
+          quote_id?: string | null
+        }
+        Update: {
+          allowed?: boolean
+          created_at?: string
+          id?: string
+          ip_hash?: string
+          quote_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_link_views_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       current_salary_agreements: {
@@ -4316,6 +4354,18 @@ export type Database = {
       }
     }
     Functions: {
+      revoke_quote_link: {
+        Args: { p_quote_id: string }
+        Returns: undefined
+      }
+      quote_public_lookup: {
+        Args: { p_token: string; p_ip_hash: string }
+        Returns: { quote_id: string | null; code: string | null; pdf_path: string | null; outcome: string }[]
+      }
+      log_quote_message: {
+        Args: { p_quote_id: string; p_channel: Database["public"]["Enums"]["message_channel"]; p_body: string; p_phone?: string; p_email?: string }
+        Returns: string
+      }
       set_quote_pdf_path: {
         Args: { p_quote_id: string; p_path: string }
         Returns: undefined
@@ -4713,8 +4763,8 @@ export type Database = {
       quote_currencies: "usd" | "ves" | "both"
       customer_kind: "person" | "company"
       message_status: "opened" | "queued" | "sent" | "delivered" | "read" | "failed"
-      message_channel: "wa_link" | "wa_api"
-      message_kind: "sale_note" | "payment_reminder" | "order_confirmed" | "order_ready" | "order_cancelled"
+      message_channel: "wa_link" | "wa_api" | "email"
+      message_kind: "sale_note" | "payment_reminder" | "order_confirmed" | "order_ready" | "order_cancelled" | "quote"
       notification_status: "sent" | "failed"
       notification_channel: "email" | "push"
       notification_kind: "late_orders" | "late_workshops" | "missing_rate" | "receivables_due" | "payables_due" | "low_stock"
@@ -4795,8 +4845,8 @@ export const Constants = {
       quote_currencies: ["usd", "ves", "both"],
       customer_kind: ["person", "company"],
       message_status: ["opened", "queued", "sent", "delivered", "read", "failed"],
-      message_channel: ["wa_link", "wa_api"],
-      message_kind: ["sale_note", "payment_reminder", "order_confirmed", "order_ready", "order_cancelled"],
+      message_channel: ["wa_link", "wa_api", "email"],
+      message_kind: ["sale_note", "payment_reminder", "order_confirmed", "order_ready", "order_cancelled", "quote"],
       notification_status: ["sent", "failed"],
       notification_channel: ["email", "push"],
       notification_kind: ["late_orders", "late_workshops", "missing_rate", "receivables_due", "payables_due", "low_stock"],

@@ -9,8 +9,18 @@ import { toUserError } from "@/common/lib/utils/to-user-error.util"
 
 import { QUOTE_MESSAGES } from "../constants/quotes.constants"
 import { headerImageUploadSchema } from "@/modules/business/lib/schemas/business-profile.schema"
+import { normalizeEmail, normalizePhone } from "@/modules/customers/lib/utils/normalize-contact.util"
+import { whatsappLink } from "@/modules/messages/lib/utils/render-template.util"
 
 import { discardQuoteSchema, markQuoteSchema, QUOTE_HEADER_PATH_PATTERN, saveQuoteSchema } from "../schemas/quote.schema"
+import {
+  buildQuoteWhatsappText,
+  getQuoteLink,
+  logQuoteMessage,
+  quotePublicUrl,
+  revokeQuoteLink,
+  sendQuoteEmail,
+} from "../services/quote-delivery.service"
 import { createQuoteHeaderUpload, verifyQuoteHeaderImage } from "../services/quote-header.service"
 import { storeQuotePdf } from "../services/quote-pdf.service"
 import {
@@ -39,23 +49,6 @@ export async function saveQuoteDraftAction(input: unknown): Promise<WithId> {
   if (error || !data) return { ok: false, error: toUserError(error, "No se pudo guardar el presupuesto.") }
   refresh()
   return { ok: true, id: data, message: QUOTE_MESSAGES.SAVED }
-}
-
-// Marcar como enviado: queda congelado y se guarda su PDF oficial (una sola vez).
-// El envío por correo y WhatsApp usa esta misma acción.
-export async function sendQuoteAction(id: string): Promise<Done> {
-  const auth = await authorizeAction(ROLE_GROUPS.ALL)
-  if (!auth.ok) return { ok: false, error: auth.error }
-  if (!idSchema.safeParse(id).success) return { ok: false, error: "Presupuesto inválido." }
-  const { error } = await sendQuote(id)
-  if (error) return { ok: false, error: toUserError(error) }
-
-  const quote = await getQuoteDetail(id)
-  const stored = quote ? await storeQuotePdf(quote) : { ok: true as const, stored: false }
-  refresh()
-  // El presupuesto ya quedó enviado; si el PDF no se pudo guardar, se genera al pedirlo con los mismos datos.
-  if (!stored.ok) console.error(`[quotes] PDF de ${quote?.code} no guardado: ${stored.error}`)
-  return { ok: true, message: QUOTE_MESSAGES.SENT }
 }
 
 // Firma la subida de una imagen de encabezado solo para un presupuesto.
@@ -117,4 +110,64 @@ export async function duplicateQuoteAction(id: string): Promise<WithId> {
   if (error || !data) return { ok: false, error: toUserError(error) }
   refresh()
   return { ok: true, id: data, message: QUOTE_MESSAGES.DUPLICATED }
+}
+
+const deliverSchema = z.object({
+  id: z.uuid(),
+  channel: z.enum(["email", "whatsapp", "none"]),
+  email: z.string().max(254).nullish(),
+  phone: z.string().max(30).nullish(),
+  note: z.string().trim().max(1000).nullish(),
+})
+
+// Enviar: si es borrador, primero queda enviado (y se guarda su PDF oficial); luego sale por
+// correo (PDF adjunto) o WhatsApp (devuelve el enlace wa.me para abrirlo). Sirve también para reenviar.
+export async function deliverQuoteAction(input: unknown): Promise<{ ok: true; message: string; url?: string } | Fail> {
+  const auth = await authorizeAction(ROLE_GROUPS.ALL)
+  if (!auth.ok) return { ok: false, error: auth.error }
+  const parsed = deliverSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: "Datos inválidos." }
+  const { id, channel } = parsed.data
+
+  const email = channel === "email" ? normalizeEmail(parsed.data.email) : null
+  if (channel === "email" && !email) return { ok: false, error: "Escribe un correo válido." }
+  const phone = channel === "whatsapp" ? normalizePhone(parsed.data.phone) : null
+  if (phone === undefined) return { ok: false, error: "Teléfono inválido. Ej.: 0414-123.45.67" }
+
+  let quote = await getQuoteDetail(id)
+  if (!quote) return { ok: false, error: "El presupuesto no existe." }
+  if (quote.status === "draft") {
+    const { error } = await sendQuote(id)
+    if (error) return { ok: false, error: toUserError(error) }
+    quote = await getQuoteDetail(id)
+    if (!quote) return { ok: false, error: "El presupuesto no existe." }
+    const stored = await storeQuotePdf(quote)
+    if (!stored.ok) console.error(`[quotes] PDF de ${quote.code} no guardado: ${stored.error}`)
+    quote = (await getQuoteDetail(id)) ?? quote
+  }
+  refresh()
+  if (channel === "none") return { ok: true, message: QUOTE_MESSAGES.SENT }
+
+  const link = quotePublicUrl({ ...(await getQuoteLink(id)), pdfPath: quote.pdfPath })
+  if (channel === "email") {
+    const sent = await sendQuoteEmail({ quote, to: email!, note: parsed.data.note ?? null, link })
+    if (!sent.ok) return { ok: false, error: sent.error }
+    return { ok: true, message: `Presupuesto enviado a ${email}.` }
+  }
+
+  const text = await buildQuoteWhatsappText(quote, link)
+  if (!text.ok) return { ok: false, error: text.error }
+  const { error } = await logQuoteMessage({ quoteId: id, channel: "wa_link", body: text.data, phone })
+  if (error) return { ok: false, error: toUserError(error) }
+  return { ok: true, message: "Se abrió WhatsApp con el mensaje.", url: whatsappLink(text.data, phone) }
+}
+
+export async function revokeQuoteLinkAction(id: string): Promise<Done> {
+  const auth = await authorizeAction(ROLE_GROUPS.ALL)
+  if (!auth.ok) return { ok: false, error: auth.error }
+  if (!idSchema.safeParse(id).success) return { ok: false, error: "Presupuesto inválido." }
+  const { error } = await revokeQuoteLink(id)
+  if (error) return { ok: false, error: toUserError(error) }
+  refresh()
+  return { ok: true, message: "Enlace revocado: ya no abre el presupuesto." }
 }

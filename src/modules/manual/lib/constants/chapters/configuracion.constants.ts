@@ -315,7 +315,7 @@ export const SETTINGS_CHAPTER: ManualChapter = {
           tone: "info",
           title: "Queda registrado",
           body:
-            "Cada mensaje queda en **Mensajes enviados** de la venta y del cliente, con quién lo preparó. Por ahora dice 'Abierto en WhatsApp' porque el envío lo confirma la persona en WhatsApp; más adelante, con la API de WhatsApp Business, saldrán solos y se verá si llegaron.",
+            "Cada mensaje queda en **Mensajes enviados** de la venta y del cliente, con quién lo preparó. Por ahora dice 'WhatsApp · Abierto' porque el envío lo confirma la persona en WhatsApp; más adelante, con la API de WhatsApp Business, saldrán solos y se verá si llegaron.",
         },
       ],
     },

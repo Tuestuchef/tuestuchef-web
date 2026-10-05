@@ -118,6 +118,34 @@ export const QUOTES_CHAPTER: ManualChapter = {
       ],
     },
     {
+      id: "enviar",
+      heading: "Enviarlo al cliente",
+      blocks: [
+        {
+          kind: "steps",
+          items: [
+            { title: "Toca Enviar", body: "En un borrador lo congela y guarda su PDF oficial. En uno ya enviado, **Reenviar** manda el mismo PDF." },
+            {
+              title: "Por correo",
+              body: "Sale del correo del sistema con el **PDF adjunto** y un enlace para verlo. Si el cliente responde, le llega a quien preparó el presupuesto.",
+            },
+            {
+              title: "Por WhatsApp",
+              body: "Se abre WhatsApp con el mensaje (su texto se cambia en Configuración → Mensajes de WhatsApp) y el enlace al PDF. Toca enviar allá.",
+            },
+            { title: "Solo marcar como enviado", body: "Si se lo entregaste de otra forma (impreso, por otro medio)." },
+          ],
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "El enlace del cliente",
+          body:
+            "Abre el PDF sin descargar nada y sin entrar al sistema. Funciona hasta **30 días después del vencimiento**, no aparece en buscadores y tiene un límite de aperturas. Si se envió a quien no era, **Revócalo**. En el detalle se ve cuántas veces se abrió, y cada envío queda en **Mensajes enviados**.",
+        },
+      ],
+    },
+    {
       id: "quien",
       heading: "Quién puede qué",
       blocks: [

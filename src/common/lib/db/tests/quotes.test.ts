@@ -217,6 +217,59 @@ describe("PDF congelado", () => {
   })
 })
 
+describe("envío y enlace público", () => {
+  const lookup = (token: string, ip = "ip-hash-0001") =>
+    one(service<{ quote_id: string | null; code: string | null; outcome: string }>("select * from public.quote_public_lookup($1, $2)", [token, ip]))
+
+  it("se registra cada envío por correo o WhatsApp, solo de un presupuesto enviado", async () => {
+    const id = await save(staff, payload())
+    await expect(staff("select public.log_quote_message($1, 'email', 'Hola', null, 'cliente@x.com')", [id])).rejects.toThrow(/ya enviado/)
+    await staff("select public.send_quote($1)", [id])
+    await expect(staff("select public.log_quote_message($1, 'email', 'Hola')", [id])).rejects.toThrow(/correo del cliente/)
+    await staff("select public.log_quote_message($1, 'email', 'Hola', null, 'Cliente@X.com')", [id])
+    await staff("select public.log_quote_message($1, 'wa_link', 'Hola', '+584141111111')", [id])
+    const rows = (
+      await owner<{ channel: string; email: string | null; kind: string; status: string }>(
+        "select channel, email, kind, status from public.outbound_messages where quote_id = $1 order by created_at",
+        [id]
+      )
+    ).rows
+    expect(rows).toEqual([
+      { channel: "email", email: "cliente@x.com", kind: "quote", status: "sent" },
+      { channel: "wa_link", email: null, kind: "quote", status: "opened" },
+    ])
+  })
+
+  it("el enlace abre un enviado; no uno revocado, reemplazado ni inexistente", async () => {
+    const id = await save(staff, payload())
+    const token = (await one(staff<{ token: string }>("select public.send_quote($1) as token", [id]))).token
+    expect(await lookup(token)).toMatchObject({ quote_id: id, outcome: "ok" })
+    expect((await lookup("0".repeat(64))).outcome).toBe("not_found")
+    expect((await lookup("no-es-un-token")).outcome).toBe("not_found")
+
+    await staff("select public.revoke_quote_link($1)", [id])
+    expect(await lookup(token)).toMatchObject({ quote_id: null, outcome: "revoked" })
+    await expect(staff("select public.revoke_quote_link($1)", [id])).rejects.toThrow(/enlace activo/)
+
+    const other = await save(staff, payload())
+    const otherToken = (await one(staff<{ token: string }>("select public.send_quote($1) as token", [other]))).token
+    await staff("select public.new_quote_version($1)", [other])
+    expect((await lookup(otherToken)).outcome).toBe("superseded")
+
+    // Las aperturas quedan registradas para el equipo.
+    expect((await staff("select id from public.quote_link_views where quote_id = $1 and allowed", [id])).rows).toHaveLength(1)
+  })
+
+  it("limita las solicitudes por IP y solo el servidor resuelve enlaces", async () => {
+    const id = await save(staff, payload())
+    const token = (await one(staff<{ token: string }>("select public.send_quote($1) as token", [id]))).token
+    for (let i = 0; i < 30; i++) await lookup(token, "ip-hash-rate")
+    expect((await lookup(token, "ip-hash-rate")).outcome).toBe("rate_limited")
+    expect((await lookup(token, "ip-hash-otra")).outcome).toBe("ok")
+    await expect(staff("select * from public.quote_public_lookup($1, 'ip-hash-0001')", [token])).rejects.toThrow(/permission denied/)
+  })
+})
+
 describe("cliente bloqueado y permisos", () => {
   it("un cliente bloqueado no recibe presupuestos", async () => {
     await expect(save(staff, payload({ customer_id: ids.blocked }))).rejects.toThrow(/bloqueado/)

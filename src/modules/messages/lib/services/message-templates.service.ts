@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.clie
 
 import type { MessageKind, MessageTemplate } from "../types/messages.types"
 
-const KIND_ORDER: MessageKind[] = ["sale_note", "payment_reminder", "order_confirmed", "order_ready", "order_cancelled"]
+const KIND_ORDER: MessageKind[] = ["sale_note", "payment_reminder", "order_confirmed", "order_ready", "order_cancelled", "quote"]
 
 // Una sola lectura por pedido aunque varios botones la pidan (p. ej. Por cobrar).
 export const listMessageTemplates = cache(async (): Promise<MessageTemplate[]> => {

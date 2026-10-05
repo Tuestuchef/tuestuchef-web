@@ -55,9 +55,9 @@ beforeAll(async () => {
 })
 
 describe("plantillas de mensajes", () => {
-  it("vienen las cinco; todos las leen y solo owner y admin las editan", async () => {
+  it("vienen las seis (incluido el de presupuesto); todos las leen y solo owner y admin las editan", async () => {
     const rows = (await staff<{ kind: string }>("select kind from public.message_templates order by kind")).rows
-    expect(rows).toHaveLength(5)
+    expect(rows).toHaveLength(6)
 
     await staff("update public.message_templates set body = 'x' where kind = 'sale_note'")
     expect((await one(owner<{ body: string }>("select body from public.message_templates where kind = 'sale_note'"))).body).not.toBe("x")

@@ -6,6 +6,7 @@ export const MESSAGE_KIND_LABELS: Record<MessageKind, string> = {
   order_confirmed: "Pedido confirmado",
   order_ready: "Pedido listo",
   order_cancelled: "Pedido cancelado",
+  quote: "Presupuesto",
 }
 
 export const MESSAGE_KIND_DESCRIPTIONS: Record<MessageKind, string> = {
@@ -14,6 +15,7 @@ export const MESSAGE_KIND_DESCRIPTIONS: Record<MessageKind, string> = {
   order_confirmed: "Abono para empezar y fecha de entrega. Desde el pedido.",
   order_ready: "El pedido está listo y lo que falta por pagar. Desde el pedido listo.",
   order_cancelled: "Cancelación y reembolso en la moneda en que pagó. Desde el pedido cancelado.",
+  quote: "El presupuesto con su total, vencimiento y el enlace para verlo. Desde el presupuesto enviado.",
 }
 
 // Datos que se pueden usar en cada mensaje, con un ejemplo para la vista previa.
@@ -59,10 +61,18 @@ export const MESSAGE_PLACEHOLDERS: Record<MessageKind, Placeholder[]> = {
     NUMBER,
     { key: "reembolso", label: "Reembolso (en la moneda pagada)", sample: "Bs 2.400,00 y $ 20,00" },
   ],
+  quote: [
+    CUSTOMER,
+    BUSINESS,
+    NUMBER,
+    TOTAL,
+    { key: "vence", label: "Fecha de vencimiento", sample: "12-10-2026" },
+    { key: "enlace", label: "Enlace para ver el PDF", sample: "https://tuestuchef.com/p/presupuesto/…" },
+  ],
 }
 
 export const MESSAGE_STATUS_LABELS: Record<MessageStatus, string> = {
-  opened: "Abierto en WhatsApp",
+  opened: "Abierto",
   queued: "En cola",
   sent: "Enviado",
   delivered: "Entregado",

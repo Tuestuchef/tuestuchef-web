@@ -9,18 +9,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/common/components/ui
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatDate, formatTime } from "@/common/lib/utils/format-date.util"
 import { getBusinessProfile, resolvePublicImageUrl } from "@/modules/business/lib/services/business-profile.service"
+import MessageHistory from "@/modules/messages/components/message-history"
 
 import QuoteActions from "../components/quote-actions"
 import QuoteDocument from "../components/quote-document"
+import QuoteLinkPanel from "../components/quote-link-panel"
 import QuotePdfButtons from "../components/quote-pdf-buttons"
 import QuoteStatusBadge from "../components/quote-status-badge"
 import { QUOTE_STATUS_LABELS } from "../lib/constants/quotes.constants"
+import { getQuoteLink, getQuoteLinkViews, isQuoteEmailConfigured, quotePublicUrl } from "../lib/services/quote-delivery.service"
 import { getQuoteDetail } from "../lib/services/quotes.service"
 
 const QuoteDetailScreen = async ({ id }: { id: string }) => {
   const [quote, business] = await Promise.all([getQuoteDetail(id), getBusinessProfile()])
   if (!quote) notFound()
   const headerImageUrl = quote.headerImagePath ? await resolvePublicImageUrl(quote.headerImagePath) : business.headerImageUrl
+  const shared = quote.status !== "draft" && quote.status !== "discarded"
+  const [link, views] = shared ? await Promise.all([getQuoteLink(quote.id), getQuoteLinkViews(quote.id)]) : [null, null]
 
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
@@ -55,11 +60,28 @@ const QuoteDetailScreen = async ({ id }: { id: string }) => {
         </StatusAlert>
       )}
 
-      <QuoteActions id={quote.id} status={quote.effectiveStatus} isLatest={!quote.supersededBy} />
+      <QuoteActions
+        id={quote.id}
+        code={quote.code}
+        status={quote.effectiveStatus}
+        isLatest={!quote.supersededBy}
+        delivery={{ defaultEmail: quote.customer.email, defaultPhone: quote.customer.phone, emailConfigured: isQuoteEmailConfigured() }}
+      />
+
+      {link && views && (
+        <QuoteLinkPanel
+          id={quote.id}
+          link={quotePublicUrl({ ...link, pdfPath: quote.pdfPath })}
+          revoked={link.tokenRevoked}
+          views={{ count: views.count, lastAtLabel: views.lastAt ? `${formatDate(views.lastAt)} · ${formatTime(views.lastAt)}` : null }}
+        />
+      )}
 
       <QuotePdfButtons id={quote.id} code={quote.code} />
 
       <QuoteDocument quote={quote} business={business} headerImageUrl={headerImageUrl} draft={quote.status === "draft"} />
+
+      <MessageHistory filter={{ quoteId: quote.id }} />
 
       <Card>
         <CardHeader>

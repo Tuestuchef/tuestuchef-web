@@ -2,10 +2,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { formatDate, formatTime } from "@/common/lib/utils/format-date.util"
 
 import { MESSAGE_KIND_LABELS, MESSAGE_STATUS_LABELS } from "../lib/constants/messages.constants"
-import { listOutboundMessages } from "../lib/services/outbound-messages.service"
+import { listOutboundMessages, type OutboundMessageFilter } from "../lib/services/outbound-messages.service"
 
 // "Mensajes enviados" de una venta o un cliente. No se muestra si no hay ninguno.
-const MessageHistory = async ({ filter }: { filter: { saleId: string } | { customerId: string } }) => {
+const CHANNEL_LABELS = { wa_link: "WhatsApp", wa_api: "WhatsApp", email: "Correo" } as const
+
+const MessageHistory = async ({ filter }: { filter: OutboundMessageFilter }) => {
   const messages = await listOutboundMessages(filter)
   if (messages.length === 0) return null
 
@@ -13,7 +15,7 @@ const MessageHistory = async ({ filter }: { filter: { saleId: string } | { custo
     <Card>
       <CardHeader>
         <CardTitle>Mensajes enviados</CardTitle>
-        <CardDescription>&quot;Abierto en WhatsApp&quot; significa que se preparó el mensaje; el envío se confirma en WhatsApp.</CardDescription>
+        <CardDescription>En WhatsApp, &quot;Abierto&quot; significa que se preparó el mensaje: el envío se confirma en WhatsApp. Los correos los envía el sistema.</CardDescription>
       </CardHeader>
       <CardContent>
         <ul className="divide-y">
@@ -23,7 +25,7 @@ const MessageHistory = async ({ filter }: { filter: { saleId: string } | { custo
                 <summary className="flex cursor-pointer flex-wrap items-center gap-x-2 text-sm">
                   <span className="font-medium">{MESSAGE_KIND_LABELS[m.kind]}</span>
                   <span className="text-xs text-muted-foreground">
-                    {formatDate(m.createdAt)} · {formatTime(m.createdAt)} · {m.authorName ?? "—"} · {MESSAGE_STATUS_LABELS[m.status]}
+                    {CHANNEL_LABELS[m.channel]} · {formatDate(m.createdAt)} · {formatTime(m.createdAt)} · {m.authorName ?? "—"} · {MESSAGE_STATUS_LABELS[m.status]}
                   </span>
                 </summary>
                 <p className="mt-2 rounded-md bg-muted p-2 text-sm whitespace-pre-wrap">{m.body}</p>

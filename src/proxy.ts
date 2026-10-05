@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 
 import {
+  PUBLIC_PREFIXES,
   PUBLIC_ROUTES,
   REDIRECT_PARAM,
   ROUTES,
@@ -11,7 +12,7 @@ import { updateSupabaseSession } from "@/common/lib/db/supabase-proxy.client"
 export async function proxy(request: NextRequest) {
   const { response, isAuthenticated } = await updateSupabaseSession(request)
   const { pathname, search } = request.nextUrl
-  const isPublic = PUBLIC_ROUTES.includes(pathname)
+  const isPublic = PUBLIC_ROUTES.includes(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
   if (!isAuthenticated && !isPublic) {
     const url = new URL(ROUTES.LOGIN, request.url)
@@ -31,6 +32,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Todo excepto estáticos, imágenes, íconos y el manifest de la PWA.
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icon|apple-icon|sw.js|offline.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|robots.txt|icon|apple-icon|sw.js|offline.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 }

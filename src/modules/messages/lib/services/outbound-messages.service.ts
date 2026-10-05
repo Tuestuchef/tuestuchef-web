@@ -16,14 +16,22 @@ export async function logOutboundMessage(input: { kind: MessageKind; body: strin
 }
 
 // Mensajes de una venta o de un cliente (RLS: staff ve los suyos; owner y admin, todos).
-export async function listOutboundMessages(filter: { saleId: string } | { customerId: string }): Promise<OutboundMessage[]> {
+export type OutboundMessageFilter = { saleId: string } | { customerId: string } | { quoteId: string }
+
+// Mensajes de una venta, un cliente o un presupuesto (RLS: staff ve los suyos; owner y admin, todos).
+export async function listOutboundMessages(filter: OutboundMessageFilter): Promise<OutboundMessage[]> {
   const supabase = await createSupabaseServerClient()
   let query = supabase
     .from("outbound_messages")
     .select("*, author:profiles!outbound_messages_created_by_fkey(full_name)")
     .order("created_at", { ascending: false })
     .limit(30)
-  query = "saleId" in filter ? query.eq("sale_id", filter.saleId) : query.eq("customer_id", filter.customerId)
+  query =
+    "saleId" in filter
+      ? query.eq("sale_id", filter.saleId)
+      : "quoteId" in filter
+        ? query.eq("quote_id", filter.quoteId)
+        : query.eq("customer_id", filter.customerId)
   const { data, error } = await query
   if (error) throw error
   return data.map((m) => ({

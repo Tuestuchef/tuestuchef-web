@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckIcon, CopyIcon, FilePlus2Icon, PencilIcon, SendIcon, Trash2Icon, XIcon } from "lucide-react"
+import { CheckIcon, CopyIcon, FilePlus2Icon, PencilIcon, Trash2Icon, XIcon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
@@ -12,14 +12,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/common/components/ui/textarea"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 
-import {
-  discardQuoteAction,
-  duplicateQuoteAction,
-  markQuoteAction,
-  newQuoteVersionAction,
-  sendQuoteAction,
-} from "../lib/actions/quotes.action"
+import { discardQuoteAction, duplicateQuoteAction, markQuoteAction, newQuoteVersionAction } from "../lib/actions/quotes.action"
 import type { QuoteStatus } from "../lib/types/quotes.types"
+import QuoteSendDialog from "./quote-send-dialog"
 
 type Result = { ok: true; message: string; id?: string } | { ok: false; error: string }
 
@@ -77,11 +72,17 @@ const NoteDialog = ({
   )
 }
 
-type QuoteActionsProps = { id: string; status: QuoteStatus; isLatest: boolean }
+type QuoteActionsProps = {
+  id: string
+  code: string
+  status: QuoteStatus
+  isLatest: boolean
+  delivery: { defaultEmail: string | null; defaultPhone: string | null; emailConfigured: boolean }
+}
 
 // Acciones según el estado: un borrador se edita, envía o descarta; un enviado se acepta,
 // rechaza o se cambia con una versión nueva; cualquiera se duplica.
-const QuoteActions = ({ id, status, isLatest }: QuoteActionsProps) => {
+const QuoteActions = ({ id, code, status, isLatest, delivery }: QuoteActionsProps) => {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
 
@@ -102,15 +103,12 @@ const QuoteActions = ({ id, status, isLatest }: QuoteActionsProps) => {
     <div className="flex flex-wrap gap-2">
       {status === "draft" && (
         <>
-          <Button asChild className={button}>
+          <QuoteSendDialog id={id} code={code} mode="send" {...delivery} />
+          <Button asChild variant="outline" className={button}>
             <Link href={ROUTES.EDIT_QUOTE(id)}>
               <PencilIcon aria-hidden />
               Editar
             </Link>
-          </Button>
-          <Button variant="outline" className={button} disabled={pending} onClick={() => run(() => sendQuoteAction(id))}>
-            <SendIcon aria-hidden />
-            Marcar como enviado
           </Button>
           <NoteDialog
             trigger={
@@ -161,6 +159,8 @@ const QuoteActions = ({ id, status, isLatest }: QuoteActionsProps) => {
           />
         </>
       )}
+
+      {isLatest && ["sent", "accepted", "rejected"].includes(status) && <QuoteSendDialog id={id} code={code} mode="resend" {...delivery} />}
 
       {isLatest && ["sent", "rejected", "expired"].includes(status) && (
         <Button variant="outline" className={button} disabled={pending} onClick={() => run(() => newQuoteVersionAction(id), ROUTES.EDIT_QUOTE)}>

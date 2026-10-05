@@ -1067,7 +1067,9 @@ export const HELP_TOPICS = {
       {
         heading: "Qué puedes hacer",
         items: [
-          "Borrador: editar, marcar como enviado o descartar con motivo. Para enviarlo debe ser de hoy (si no, guárdalo de nuevo).",
+          "Borrador: editar, enviar o descartar con motivo. Para enviarlo debe ser de hoy (si no, guárdalo de nuevo).",
+          "Enviar: por correo (con el PDF adjunto; las respuestas le llegan a quien lo preparó), por WhatsApp (mensaje con el enlace al PDF) o solo marcarlo como enviado. Reenviar manda el mismo PDF.",
+          "Enlace para el cliente: abre el PDF sin descargar nada, hasta 30 días después del vencimiento. Puedes copiarlo, revocarlo y ver cuántas veces se abrió.",
           "Enviado: marcar aceptado o rechazado cuando el cliente responda.",
           "Nueva versión: para cambiar uno enviado, rechazado o vencido. Mismo número con -v2; el anterior queda reemplazado.",
           "Duplicar: un presupuesto nuevo con el mismo contenido y precios de hoy.",
@@ -1132,7 +1134,7 @@ export const HELP_TOPICS = {
       {
         heading: "Recuerda",
         items: [
-          "Por ahora se abre WhatsApp con el texto y la persona toca enviar: el registro dice 'Abierto en WhatsApp', no 'entregado'.",
+          "Por ahora se abre WhatsApp con el texto y la persona toca enviar: el registro dice 'WhatsApp · Abierto', no 'entregado'.",
           "*texto* sale en negrita y _texto_ en cursiva.",
         ],
       },

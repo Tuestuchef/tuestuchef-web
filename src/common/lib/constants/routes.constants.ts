@@ -81,6 +81,9 @@ export const PUBLIC_ROUTES: readonly string[] = [
   "/api/cron/notifications",
 ]
 
+// Prefijos públicos (sin sesión): enlaces que recibe el cliente, p. ej. /p/presupuesto/<token>.
+export const PUBLIC_PREFIXES: readonly string[] = ["/p/"]
+
 // Parámetro con la ruta a la que volver tras iniciar sesión.
 export const REDIRECT_PARAM = "next"
 
