@@ -166,7 +166,10 @@ export const SALES_CHAPTER: ManualChapter = {
               title: "Lee el total de cada método",
               body: "Cada método usa su propia lista de precios: los Bs salen del precio de ese método × la tasa BCV de hoy, igual que al vender. Los métodos que dan lo mismo van juntos (\"Efectivo / Zelle\"). El descuento al mayor se aplica solo.",
             },
-            { title: "Copia para WhatsApp", body: "**Copiar para WhatsApp** arma la respuesta con los productos y los totales, lista para pegar." },
+            {
+              title: "Copia para WhatsApp",
+              body: "**Copiar para WhatsApp** arma la respuesta, lista para pegar: el título \"Tuestuchef - Lista de Precios\", los productos y el total en Bs (pago móvil) y en **USD** (el precio en efectivo). Zelle y USDT no van en el mensaje: si el cliente los pide, están en pantalla.",
+            },
           ],
         },
         {

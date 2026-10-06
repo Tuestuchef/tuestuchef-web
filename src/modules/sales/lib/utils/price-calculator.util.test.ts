@@ -85,8 +85,16 @@ describe("calculadora de precios", () => {
       { productId: "gor", quantity: 2 },
     ]
     const text = calculatorWhatsappText(lines, PRODUCTS, totals(lines))
-    expect(text).toContain("• 1 × Filipina vinotinto")
-    expect(text).toContain("• Efectivo / Zelle: $ 43,00")
-    expect(text).toContain("• Pago móvil: Bs 1.920,00")
+    expect(text.split("\n")).toEqual([
+      "*Tuestuchef - Lista de Precios*",
+      "",
+      "• 1 × Filipina vinotinto",
+      "• 2 × Gorro de sushi",
+      "",
+      "Total:",
+      // Solo Bs y un precio en dólares (el del primer método en USD), sin Zelle ni USDT.
+      "• USD: $ 43,00",
+      "• Pago móvil: Bs 1.920,00",
+    ])
   })
 })

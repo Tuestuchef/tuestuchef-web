@@ -1187,7 +1187,7 @@ export const HELP_TOPICS = {
         items: [
           "Toca un producto para sumarlo; la búsqueda encuentra también colores.",
           "En la lista cambias la cantidad con − y +, o la vacías.",
-          "Copiar para WhatsApp arma la respuesta con los productos y los totales.",
+          "Copiar para WhatsApp arma la respuesta: \"Tuestuchef - Lista de Precios\", los productos y el total en Bs (pago móvil) y en USD (efectivo). Zelle y USDT no van en el mensaje.",
         ],
       },
       {
