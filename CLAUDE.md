@@ -41,10 +41,10 @@ La marca ya está aplicada. Paleta: `#960d13` (rojo de marca), `#d73a2c` (rojo),
   - `color`: `auto` (sigue el tema), `black` y `white` (fijos, tokens `ink` y `paper`) o `current`. En `gradient-full` es el color de las letras.
   - `layout`: `stacked` (letras debajo) o `inline` (al lado). El tamaño lo da la altura (`className="h-8"`).
 - **Assets de marca** en `src/common/assets/brand/` (favicon, íconos de la app, imagen para redes); salen del ícono a color.
-- **Tipografía por variable** (`--font-sans`, `--font-heading`): Open Sauce Sans (OFL, servida desde `src/common/assets/fonts/`) para el texto y Helvetica del sistema para los títulos. Helvetica no se incrusta: hace falta una licencia web.
+- **Tipografía por variable** (`--font-sans`, `--font-heading`): Open Sauce Sans (OFL, servida desde `src/common/assets/fonts/`) para el texto y TeX Gyre Heros (clon libre de Helvetica, licencia GUST, en la misma carpeta) para los títulos. No se usan archivos de Helvetica: incrustarla requiere una licencia web de Monotype. El PDF usa la Helvetica estándar de PDF (no se incrusta) y los correos la piden por nombre.
 - **Modo oscuro** con las mismas variables.
 - **Estados sin depender del color.** Éxito, advertencia y error se distinguen con icono y texto, en grises.
-- **Documentos y correos:** el PDF usa `document-theme.config.ts` (copia de los tokens claros, con prueba que lo verifica); los correos no usan colores fijos.
+- **Documentos y correos:** el PDF y los correos usan `document-theme.config.ts` (copia de los tokens claros, con prueba que lo verifica). Todo correo va dentro de `EmailLayout` (`src/common/components/email/`): encabezado negro con el logo (`public/email/header.png`), línea del rojo de marca, tarjeta blanca y botones negros, en Helvetica. Las plantillas de acceso de Supabase (`src/common/lib/supabase/templates/`) se generan desde `src/modules/auth/components/emails/` con `npm run email:auth`; no se editan a mano.
 - **Gráficas** con `--chart-*` (grises), distinguibles por patrón o etiqueta; verde y rojo solo si son de dinero.
 
 ## Arquitectura: Screaming Architecture

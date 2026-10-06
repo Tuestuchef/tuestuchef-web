@@ -34,7 +34,7 @@ export const brandConfig = {
   // Nombres de referencia. La carga real está en fonts.config.ts y globals.css.
   typography: {
     sans: "Open Sauce Sans",
-    heading: "Helvetica",
+    heading: "TeX Gyre Heros",
   },
 
   // El contacto (correo, teléfono, RIF…) no va aquí: owner y admin lo editan en

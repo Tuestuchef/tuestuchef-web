@@ -17,8 +17,8 @@
 
 @theme inline {
   --font-sans: var(--typeface-sans), ui-sans-serif, system-ui, sans-serif;
-  /* Títulos en Helvetica del sistema (Arial en Windows y Android); ver fonts.config.ts. */
-  --font-heading: "Helvetica Neue", Helvetica, Arial, var(--typeface-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Títulos en TeX Gyre Heros (clon libre de Helvetica); ver fonts.config.ts. */
+  --font-heading: var(--typeface-heading), "Helvetica Neue", Helvetica, Arial, ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--typeface-mono), ui-monospace, monospace;
 
   --color-background: var(--background);
