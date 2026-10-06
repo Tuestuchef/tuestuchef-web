@@ -1,0 +1,101 @@
+import type { Currency } from "@/common/lib/constants/currency.constants"
+import { formatMoney } from "@/common/lib/utils/format-money.util"
+
+import type { CalculatorProduct, SalePaymentMethod, VolumeTier } from "../types/sales.types"
+import { lineTotal, round, type SaleRates, usdToMethodAmount, volumePercent } from "./sale-math.util"
+
+// Calculadora de precios: las mismas cuentas que Nueva venta (precio por método, descuento al mayor
+// por piezas, Bs = USD × tasa del método), sin guardar nada.
+
+export type CalculatorLine = { productId: string; quantity: number }
+
+export type CalculatorMethodTotal = {
+  // Métodos que dan el mismo total en la misma moneda van juntos ("Efectivo / Zelle").
+  names: string[]
+  currency: Currency
+  totalUsd: number
+  // En la moneda del método; null si cobra en Bs y no hay tasa.
+  amount: number | null
+  // Productos de la lista sin precio para este método (no entran en su total).
+  missing: string[]
+}
+
+export type CalculatorTotals = {
+  pieces: number
+  volumePercent: number
+  // Siguiente tramo al mayor, para avisar cuánto falta.
+  nextTier: VolumeTier | null
+  methods: CalculatorMethodTotal[]
+}
+
+export function calculatorTotals(input: {
+  lines: CalculatorLine[]
+  products: ReadonlyMap<string, CalculatorProduct>
+  methods: SalePaymentMethod[]
+  volumeTiers: VolumeTier[]
+  rates: SaleRates | null
+}): CalculatorTotals {
+  const lines = input.lines.flatMap((line) => {
+    const product = input.products.get(line.productId)
+    return product && line.quantity > 0 ? [{ product, quantity: line.quantity }] : []
+  })
+  const pieces = lines.reduce((sum, l) => sum + l.quantity * l.product.piecesPerUnit, 0)
+  const pct = volumePercent(input.volumeTiers, pieces)
+
+  const perMethod = input.methods.flatMap((method): CalculatorMethodTotal[] => {
+    const priced = lines.filter((l) => l.product.pricesUsd[method.id] !== undefined)
+    // Un método sin precio para nada de la lista no se muestra.
+    if (lines.length === 0 || priced.length === 0) return []
+    const subtotal = round(priced.reduce((sum, l) => sum + lineTotal(l.product.pricesUsd[method.id], l.quantity), 0))
+    const totalUsd = round(subtotal - round((subtotal * pct) / 100))
+    const convertsInPlace = method.rateKind === "none" && method.currency !== "USDT"
+    return [
+      {
+        names: [method.name],
+        currency: method.currency,
+        totalUsd,
+        amount: input.rates ? usdToMethodAmount(totalUsd, method, input.rates) : convertsInPlace ? totalUsd : null,
+        missing: lines.filter((l) => l.product.pricesUsd[method.id] === undefined).map((l) => l.product.name),
+      },
+    ]
+  })
+
+  // Juntar los métodos que dan exactamente lo mismo, en el orden de los métodos.
+  const grouped: CalculatorMethodTotal[] = []
+  for (const total of perMethod) {
+    const same = grouped.find(
+      (g) => g.currency === total.currency && g.amount === total.amount && g.missing.join("|") === total.missing.join("|")
+    )
+    if (same) same.names.push(...total.names)
+    else grouped.push(total)
+  }
+
+  return {
+    pieces,
+    volumePercent: pct,
+    nextTier: input.volumeTiers.find((t) => t.minQuantity > pieces) ?? null,
+    methods: grouped,
+  }
+}
+
+// Respuesta lista para pegar en WhatsApp.
+export function calculatorWhatsappText(
+  lines: CalculatorLine[],
+  products: ReadonlyMap<string, CalculatorProduct>,
+  totals: CalculatorTotals
+): string {
+  const items = lines.flatMap((line) => {
+    const product = products.get(line.productId)
+    return product ? [`• ${line.quantity} × ${product.name}`] : []
+  })
+  const methods = totals.methods
+    .filter((m) => m.amount !== null)
+    .map((m) => `• ${m.names.join(" / ")}: ${formatMoney(m.amount!, m.currency)}${m.missing.length ? ` (sin ${m.missing.join(", ")})` : ""}`)
+  return [
+    ...items,
+    "",
+    "Total:",
+    ...methods,
+    ...(totals.volumePercent > 0 ? ["", `Incluye ${totals.volumePercent}% de descuento al mayor.`] : []),
+  ].join("\n")
+}

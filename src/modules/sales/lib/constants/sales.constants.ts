@@ -68,3 +68,11 @@ export const SALES_MESSAGES = {
   NO_PRICE: (product: string, method: string) =>
     `"${product}" no tiene precio para ${method}. Pide a owner o admin que lo cargue.`,
 } as const
+
+// Calculadora de precios: la lista se guarda solo en este navegador mientras está abierto.
+export const PRICE_CALCULATOR_STORAGE_KEY = "tuestuchef:price-calculator"
+
+export const PRICE_CALCULATOR_MESSAGES = {
+  COPIED: "Copiado. Pégalo en WhatsApp.",
+  COPY_FAILED: "No se pudo copiar. Selecciona el texto y cópialo a mano.",
+}

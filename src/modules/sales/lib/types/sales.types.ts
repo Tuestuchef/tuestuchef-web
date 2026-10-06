@@ -155,3 +155,26 @@ export type ReceivableGroup = {
     daysOutstanding: number
   }[]
 }
+
+// Calculadora de precios: un producto (no cada variante: el precio es por producto y método).
+export type CalculatorProduct = {
+  id: string
+  name: string
+  isCombo: boolean
+  categoryId: string | null
+  categoryName: string
+  // Colores de sus variantes: para encontrar "filipina vinotinto".
+  colors: string[]
+  imageUrl: string | null
+  pricesUsd: Record<string, number>
+  // Piezas que cuenta para el descuento al mayor (un combo, las de sus componentes).
+  piecesPerUnit: number
+}
+
+export type PriceCalculatorData = {
+  products: CalculatorProduct[]
+  categories: { id: string; name: string }[]
+  methods: SalePaymentMethod[]
+  rates: { bcvUsd: number; bcvEur: number; usdUsdt: number; isCurrent: boolean } | null
+  volumeTiers: VolumeTier[]
+}

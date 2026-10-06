@@ -35,6 +35,7 @@ export const SALES_CHAPTER: ManualChapter = {
     { title: "Nueva venta", url: ROUTES.NEW_SALE, roles: ROLE_GROUPS.ALL },
     { title: "Por cobrar", url: ROUTES.RECEIVABLES, roles: ROLE_GROUPS.MANAGEMENT },
     { title: "Ventas pendientes", url: ROUTES.OFFLINE_SALES, roles: ROLE_GROUPS.ALL },
+    { title: "Calculadora de precios", url: ROUTES.PRICE_CALCULATOR, roles: ROLE_GROUPS.ALL },
     { title: "Reglas de venta", url: ROUTES.SETTINGS_SALES, roles: ROLE_GROUPS.MANAGEMENT },
   ],
   related: ["tesoreria", "clientes", "inventario", "resultados"],
@@ -145,6 +146,34 @@ export const SALES_CHAPTER: ManualChapter = {
           kind: "text",
           body:
             "En la venta, **WhatsApp** prepara la nota de entrega con los productos, el total y lo pendiente. Revísala, toca **Abrir WhatsApp** y envíala allá (si el cliente no tiene teléfono, WhatsApp te deja elegir el contacto). Queda en **Mensajes enviados**, al final de la venta.",
+        },
+      ],
+    },
+    {
+      id: "calculadora",
+      heading: "¿Cuánto cuesta? La calculadora",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "Para contestar rápido \"¿cuánto cuesta la filipina vinotinto y el gorro de sushi?\": abre **Comercial → Calculadora** (o la flecha junto a **Registrar venta** → **Calcular un precio**), busca o toca los productos y abajo sale el total **por método de pago**, cada uno en su moneda. No registra nada: no es una venta ni un presupuesto.",
+        },
+        {
+          kind: "steps",
+          items: [
+            { title: "Toca los productos", body: "Cada toque suma uno. La búsqueda encuentra también colores (\"vinotinto\"). En la lista cambias la cantidad con − y +." },
+            {
+              title: "Lee el total de cada método",
+              body: "Cada método usa su propia lista de precios: los Bs salen del precio de ese método × la tasa BCV de hoy, igual que al vender. Los métodos que dan lo mismo van juntos (\"Efectivo / Zelle\"). El descuento al mayor se aplica solo.",
+            },
+            { title: "Copia para WhatsApp", body: "**Copiar para WhatsApp** arma la respuesta con los productos y los totales, lista para pegar." },
+          ],
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "¿Y si el cliente se decide?",
+          body: "Registra la venta como siempre en **Nueva venta**, o un **presupuesto** si necesita algo formal. La lista de la calculadora queda en ese navegador hasta que la vacíes.",
         },
       ],
     },

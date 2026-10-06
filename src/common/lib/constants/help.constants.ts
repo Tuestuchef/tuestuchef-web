@@ -1177,6 +1177,31 @@ export const HELP_TOPICS = {
     ],
   },
 
+  priceCalculator: {
+    title: "Calculadora de precios",
+    chapter: "ventas",
+    summary: "Para contestar \"¿cuánto cuesta…?\" rápido. No registra nada.",
+    sections: [
+      {
+        heading: "Cómo se usa",
+        items: [
+          "Toca un producto para sumarlo; la búsqueda encuentra también colores.",
+          "En la lista cambias la cantidad con − y +, o la vacías.",
+          "Copiar para WhatsApp arma la respuesta con los productos y los totales.",
+        ],
+      },
+      {
+        heading: "Los totales",
+        items: [
+          "Uno por método de pago, con su propia lista de precios y en su moneda.",
+          "Los Bs son el precio de ese método × la tasa BCV de hoy, igual que al vender.",
+          "El descuento al mayor se aplica solo, por piezas (un combo cuenta sus piezas).",
+          "Si un producto no tiene precio en un método, se avisa y no entra en ese total.",
+        ],
+      },
+    ],
+  },
+
   offlineSales: {
     title: "Ventas pendientes",
     chapter: "ventas",

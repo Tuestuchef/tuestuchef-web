@@ -24,6 +24,7 @@ export const ROUTES = {
   SALE_NOTE: (id: string) => `/ventas/${id}/nota`,
   RECEIVABLES: "/ventas/por-cobrar",
   OFFLINE_SALES: "/ventas/pendientes",
+  PRICE_CALCULATOR: "/ventas/calculadora",
   PURCHASES: "/compras",
   NEW_PURCHASE: "/compras/nueva",
   PURCHASE: (id: string) => `/compras/${id}`,
