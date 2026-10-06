@@ -99,7 +99,8 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[90svh] overflow-y-auto">
+      {/* Más ancho que el diálogo por defecto: la fila de género, cierre y corte necesita tres columnas. */}
+      <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{product ? `Editar ${noun}` : isRaw ? "Nueva materia prima" : `Nuevo ${noun}`}</DialogTitle>
           <DialogDescription>
@@ -119,7 +120,7 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
             <Input id="product-name" name="name" defaultValue={product?.name} className="h-11 md:h-9" />
           </FormField>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
             <FormField label="Categoría" htmlFor="product-category" error={errors.category_id}>
               <Select name="category_id" defaultValue={product?.category_id}>
                 <SelectTrigger id="product-category" className="h-11 w-full md:h-9">
@@ -171,7 +172,7 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
           </div>
 
           {!isRaw && !isCombo && (
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-3 [&>*]:min-w-0">
               <OptionalSelect
                 id="product-gender"
                 name="gender"
