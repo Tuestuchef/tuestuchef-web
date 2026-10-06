@@ -9,6 +9,7 @@ import {
 
 export type SkuParts = {
   categoryCode: string
+  modelCode?: string | null
   gender?: ProductGender | null
   closure?: ProductClosure | null
   fit?: ProductFit | null
@@ -16,11 +17,12 @@ export type SkuParts = {
   sizeCode?: string | null
 }
 
-// CAT-GÉNERO-CIERRE/CORTE-COLOR-TALLA, omitiendo lo que el producto no tiene.
-// Ej.: Filipina dama broche vinotinta M → FIL-D-BR-VIN-M.
+// CAT-MODELO-GÉNERO-CIERRE/CORTE-COLOR-TALLA, omitiendo lo que el producto no tiene.
+// Ej.: Filipina dama broche vinotinta M → FIL-D-BR-VIN-M; con modelo MC (manga corta) → FIL-MC-D-BR-VIN-M.
 export function buildSku(parts: SkuParts): string {
   return [
     parts.categoryCode,
+    parts.modelCode,
     parts.gender ? GENDER_CODES[parts.gender] : null,
     parts.closure ? CLOSURE_CODES[parts.closure] : null,
     parts.fit ? FIT_CODES[parts.fit] : null,

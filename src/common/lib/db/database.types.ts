@@ -626,6 +626,7 @@ export type Database = {
       products: {
         Row: {
           labor_cost_usdt: number
+          model_code: string | null
           category_id: string
           closure: Database["public"]["Enums"]["product_closure"] | null
           created_at: string
@@ -644,6 +645,7 @@ export type Database = {
         }
         Insert: {
           labor_cost_usdt?: number
+          model_code?: string | null
           category_id: string
           closure?: Database["public"]["Enums"]["product_closure"] | null
           created_at?: string
@@ -662,6 +664,7 @@ export type Database = {
         }
         Update: {
           labor_cost_usdt?: number
+          model_code?: string | null
           category_id?: string
           closure?: Database["public"]["Enums"]["product_closure"] | null
           created_at?: string

@@ -10,7 +10,7 @@ type Result<T = undefined> = { ok: true; data: T } | { ok: false; error: string;
 async function loadSkuContext(productId: string) {
   const supabase = await createSupabaseServerClient()
   const [{ data: product }, { data: colors }, { data: sizes }, { data: skus }] = await Promise.all([
-    supabase.from("products").select("gender, closure, fit, category:product_categories(code)").eq("id", productId).maybeSingle(),
+    supabase.from("products").select("gender, closure, fit, model_code, category:product_categories(code)").eq("id", productId).maybeSingle(),
     supabase.from("colors").select("id, code"),
     supabase.from("sizes").select("id, code"),
     supabase.from("product_variants").select("sku"),
@@ -30,6 +30,7 @@ export async function saveVariant(input: VariantInput): Promise<Result> {
 
   const generated = buildSku({
     categoryCode: ctx.product.category?.code ?? "",
+    modelCode: ctx.product.model_code,
     gender: ctx.product.gender,
     closure: ctx.product.closure,
     fit: ctx.product.fit,
@@ -82,6 +83,7 @@ export async function createVariantCombinations(
       const sku = uniqueSku(
         buildSku({
           categoryCode: ctx.product.category?.code ?? "",
+    modelCode: ctx.product.model_code,
           gender: ctx.product.gender,
           closure: ctx.product.closure,
           fit: ctx.product.fit,

@@ -66,6 +66,7 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
       ? { url: ROUTES.COMBOS, label: "Combos" }
       : { url: ROUTES.PRODUCTS, label: "Productos" }
   const attributes = [
+    product.model_code && `Modelo ${product.model_code}`,
     product.gender && GENDER_LABELS[product.gender],
     product.closure && CLOSURE_LABELS[product.closure],
     product.fit && FIT_LABELS[product.fit],

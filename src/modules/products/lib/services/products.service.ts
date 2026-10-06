@@ -128,6 +128,7 @@ export async function saveProduct(input: ProductInput) {
     gender: input.gender,
     closure: input.closure,
     fit: input.fit,
+    model_code: input.model_code,
     labor_cost_usdt: input.labor_cost_usdt,
     is_active: input.is_active,
   }

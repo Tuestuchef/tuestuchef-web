@@ -16,6 +16,9 @@ describe("SKU", () => {
   })
   it("estuche sin talla ni género", () => {
     expect(buildSku({ categoryCode: "EST", colorCode: "NEG" })).toBe("EST-NEG")
+    // El código del modelo va después de la categoría y distingue modelos parecidos.
+    expect(buildSku({ categoryCode: "EST", modelCode: "MAXI", colorCode: "NEG" })).toBe("EST-MAXI-NEG")
+    expect(buildSku({ categoryCode: "FIL", modelCode: "MC", closure: "snap", colorCode: "NEG", sizeCode: "S" })).toBe("FIL-MC-BR-NEG-S")
   })
   it("normaliza lo escrito a mano", () => {
     expect(normalizeSku(" fil d  br-vinótinta-m ")).toBe("FIL-D-BR-VINOTINTA-M")

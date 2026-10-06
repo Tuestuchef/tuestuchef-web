@@ -53,6 +53,19 @@ export const productSchema = z.object({
   gender: optionalEnum(E.product_gender),
   closure: optionalEnum(E.product_closure),
   fit: optionalEnum(E.product_fit),
+  // Código del modelo para el SKU (ej.: MC = manga corta, MAXI). Opcional; vacío = sin código.
+  model_code: z
+    .string()
+    .optional()
+    .transform((value, ctx) => {
+      const code = normalizeSkuPart(value ?? "")
+      if (!code) return null
+      if (code.length > 6) {
+        ctx.addIssue({ code: "custom", message: "Máximo 6 letras o números." })
+        return z.NEVER
+      }
+      return code
+    }),
   // Mano de obra por unidad en USDT: solo para el margen (nunca se resta de la utilidad).
   labor_cost_usdt: z
     .string()

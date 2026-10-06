@@ -73,14 +73,15 @@ export const INVENTORY_CHAPTER: ManualChapter = {
           title: "Cómo se arma un SKU",
           rows: [
             { label: "Categoría (Filipinas)", value: "FIL" },
+            { label: "Modelo (manga corta), opcional", value: "MC" },
             { label: "Género (dama)", value: "D" },
             { label: "Cierre o corte (broche)", value: "BR" },
             { label: "Color (Negro)", value: "NEG" },
             { label: "Talla (M)", value: "M" },
-            { label: "SKU de la variante", value: "FIL-D-BR-NEG-M", total: true },
+            { label: "SKU de la variante", value: "FIL-MC-D-BR-NEG-M", total: true },
           ],
           conclusion:
-            "Los códigos salen de Configuración (categorías, colores y tallas). “Colores × tallas” crea todas las combinaciones de una vez.",
+            "Los códigos salen de Configuración (categorías, colores y tallas) y del **código del modelo** de cada producto, que distingue modelos de la misma categoría (manga corta MC, 3/4 M34, larga ML; estuche MAXI, STARK…). Lo que el producto no tiene se omite. “Colores × tallas” crea todas las combinaciones de una vez. Los códigos se usan al crear las variantes: ponlos antes.",
         },
         {
           kind: "effects",

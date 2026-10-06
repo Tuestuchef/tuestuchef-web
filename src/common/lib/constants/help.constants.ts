@@ -205,7 +205,8 @@ export const HELP_TOPICS = {
         heading: "Variantes",
         items: [
           "'Colores × tallas' crea todas las combinaciones de una vez, con su SKU.",
-          "El SKU se genera con los códigos (categoría, género, cierre o corte, color y talla). Puedes editarlo mientras la variante no tenga movimientos.",
+          "El SKU se genera con los códigos (categoría, código del modelo, género, cierre o corte, color y talla). Puedes editarlo mientras la variante no tenga movimientos.",
+          "El código del modelo (en Editar) distingue modelos de la misma categoría, p. ej. MC → FIL-MC-BR-NEG-S. Ponlo antes de crear las variantes.",
           "Stock mínimo: al llegar a ese número se marca como stock bajo.",
         ],
       },

@@ -197,6 +197,26 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
             </div>
           )}
 
+          {!isCombo && (
+            <FormField
+              label="Código del modelo"
+              htmlFor="product-model-code"
+              error={errors.model_code}
+              optional
+              hint={`Va en el SKU para distinguir modelos de la misma categoría (ej.: MC → FIL-MC-BR-NEG-S). Hasta 6 letras o números. Se usa al crear variantes: cambiarlo no toca los SKU que ya existen.`}
+            >
+              <Input
+                id="product-model-code"
+                name="model_code"
+                defaultValue={product?.model_code ?? ""}
+                maxLength={6}
+                autoCapitalize="characters"
+                placeholder="MC"
+                className="h-11 uppercase md:h-9"
+              />
+            </FormField>
+          )}
+
           {!isRaw && !isCombo && (
             <FormField
               label="Mano de obra por unidad (USDT)"
