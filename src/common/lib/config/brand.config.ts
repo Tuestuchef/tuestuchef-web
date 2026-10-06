@@ -1,32 +1,22 @@
 import type { StaticImageData } from "next/image"
 
 import appleTouchIcon from "@/common/assets/brand/apple-touch-icon.png"
-import favicon from "@/common/assets/brand/favicon.svg"
-import logoFullDark from "@/common/assets/brand/logo-full-dark.svg"
-import logoFull from "@/common/assets/brand/logo-full.svg"
-import logoIconDark from "@/common/assets/brand/logo-icon-dark.svg"
-import logoIcon from "@/common/assets/brand/logo-icon.svg"
+import favicon from "@/common/assets/brand/favicon.png"
 import pwaIcon192 from "@/common/assets/brand/pwa-icon-192.png"
 import pwaIcon512 from "@/common/assets/brand/pwa-icon-512.png"
 import socialImage from "@/common/assets/brand/social-image.png"
 
-// Única fuente de verdad de la marca. Para aplicar la identidad final:
-// 1. Reemplazar los archivos de src/common/assets/brand (mismos nombres).
-// 2. Poner `logo.ready` en true.
-// 3. Cambiar los valores de los tokens en src/app/globals.css.
+// Única fuente de verdad de la marca.
+// - El logo se usa siempre con <Logo> (src/common/components/logo); sus archivos están en
+//   src/common/assets/logo. Los íconos de abajo salen del ícono a color.
+// - Los colores y las fuentes viven en src/app/globals.css y fonts.config.ts.
 export const brandConfig = {
   name: "Tuestuchef",
   shortName: "Tuestuchef",
   slogan: "Indumentaria gastronómica",
   description: "Panel administrativo de Tuestuchef",
-  // Se muestra mientras no haya logo final.
+  // Último recurso del PDF si no se puede leer el logo.
   monogram: "TC",
-
-  logo: {
-    ready: false,
-    full: { light: logoFull as StaticImageData, dark: logoFullDark as StaticImageData },
-    icon: { light: logoIcon as StaticImageData, dark: logoIconDark as StaticImageData },
-  },
 
   icons: {
     favicon: favicon as StaticImageData,
@@ -37,14 +27,18 @@ export const brandConfig = {
 
   socialImage,
 
-  // Nombres de referencia (recibos, correos). La carga real está en fonts.config.ts.
+  // Para la app instalada (barra del sistema y pantalla de inicio): no leen variables CSS.
+  // Es el mismo negro de --ink en globals.css.
+  appColor: "#0f0f0f",
+
+  // Nombres de referencia. La carga real está en fonts.config.ts y globals.css.
   typography: {
-    sans: "Geist",
-    heading: "Geist",
+    sans: "Open Sauce Sans",
+    heading: "Helvetica",
   },
 
   // El contacto (correo, teléfono, RIF…) no va aquí: owner y admin lo editan en
-  // Configuración → Datos del negocio (tabla business_profile).
+  // Configuración → Datos de la empresa (tabla business_profile).
 } as const
 
 export type BrandConfig = typeof brandConfig

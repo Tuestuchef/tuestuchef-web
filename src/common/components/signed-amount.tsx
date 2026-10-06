@@ -1,22 +1,27 @@
 import { MinusIcon, TrendingDownIcon, TrendingUpIcon } from "lucide-react"
 
+import type { Currency } from "@/common/lib/constants/currency.constants"
 import { cn } from "@/common/lib/utils"
-import { formatUsdt } from "@/common/lib/utils/format-money.util"
+import { formatMoney } from "@/common/lib/utils/format-money.util"
 
 type SignedAmountProps = {
   value: number
-  // "result": verde si es positivo, rojo si es negativo (utilidad, saldo).
-  // "income" / "expense": siempre verde o rojo, sin importar el signo.
+  // Moneda del monto (por defecto, valor real en USDT).
+  currency?: Currency
+  // "result": verde si es positivo, rojo si es negativo (utilidad, movimientos).
+  // "income" / "expense": siempre verde o rojo (cobros, pagos), con su signo.
   tone?: "result" | "income" | "expense"
   className?: string
   iconClassName?: string
 }
 
-// Monto en USDT con color, signo y flecha: se entiende también sin color.
-const SignedAmount = ({ value, tone = "result", className, iconClassName }: SignedAmountProps) => {
+// Dinero que entra o sale: color, signo y flecha, así se entiende también sin color.
+// Verde y rojo son solo para esto (ver globals.css); totales y saldos van en el color del texto.
+const SignedAmount = ({ value, currency = "USDT", tone = "result", className, iconClassName }: SignedAmountProps) => {
   const positive = tone === "income" || (tone === "result" && value > 0)
   const negative = tone === "expense" || (tone === "result" && value < 0)
   const Icon = positive ? TrendingUpIcon : negative ? TrendingDownIcon : MinusIcon
+  const signedValue = tone === "income" ? Math.abs(value) : tone === "expense" ? -Math.abs(value) : value
 
   return (
     <span
@@ -28,7 +33,7 @@ const SignedAmount = ({ value, tone = "result", className, iconClassName }: Sign
       )}
     >
       <Icon className={cn("size-4 shrink-0", iconClassName)} aria-hidden />
-      {formatUsdt(tone === "result" ? value : Math.abs(value), { signed: tone === "result" })}
+      {formatMoney(signedValue, currency, { signed: true })}
       <span className="sr-only">{positive ? "(a favor)" : negative ? "(en contra)" : ""}</span>
     </span>
   )

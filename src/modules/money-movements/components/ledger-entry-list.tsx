@@ -1,5 +1,6 @@
 import { PaperclipIcon } from "lucide-react"
 
+import SignedAmount from "@/common/components/signed-amount"
 import StatusBadge from "@/common/components/status-badge"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatDayHeading, formatTime, toCaracasDate } from "@/common/lib/utils/format-date.util"
@@ -59,9 +60,7 @@ const LedgerEntryList = ({ entries, canReverse, showAuthor }: LedgerEntryListPro
                     </span>
                   </div>
                   <div className="grid shrink-0 text-right tabular-nums">
-                    <span className="font-semibold">
-                      {formatMoney(entry.amount, entry.currency, { signed: true })}
-                    </span>
+                    <SignedAmount value={entry.amount} currency={entry.currency} className="justify-end font-semibold" />
                     {entry.currency !== "USDT" && (
                       <span className="text-xs text-muted-foreground">{formatUsdt(entry.usdtValue, { signed: true })}</span>
                     )}

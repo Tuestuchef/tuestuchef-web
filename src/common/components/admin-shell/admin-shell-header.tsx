@@ -1,4 +1,4 @@
-import BrandLogo from "@/common/components/brand-logo"
+import Logo from "@/common/components/logo/logo"
 import { Separator } from "@/common/components/ui/separator"
 import { SidebarTrigger } from "@/common/components/ui/sidebar"
 
@@ -10,7 +10,7 @@ const AdminShellHeader = () => (
       className="mx-2 data-vertical:h-4 data-vertical:self-auto md:hidden"
     />
     {/* En el celular el sidebar está oculto: la marca va en la barra superior. */}
-    <BrandLogo className="md:hidden" />
+    <Logo variant="gradient-full" layout="inline" className="h-7 md:hidden" />
   </header>
 )
 

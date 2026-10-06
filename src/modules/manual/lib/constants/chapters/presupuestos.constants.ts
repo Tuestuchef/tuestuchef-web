@@ -106,7 +106,7 @@ export const QUOTES_CHAPTER: ManualChapter = {
         {
           kind: "text",
           body:
-            "Arriba va la **imagen del encabezado** (la de Configuración → Datos de la empresa, u otra solo para ese presupuesto) con los datos de la empresa, el número, la fecha, el vencimiento y el total; luego el cliente, la tabla de artículos, los totales y las condiciones. Sin imagen, sale el monograma de la marca.",
+            "Arriba va la **imagen del encabezado** (la de Configuración → Datos de la empresa, u otra solo para ese presupuesto) con los datos de la empresa, el número, la fecha, el vencimiento y el total; luego el cliente, la tabla de artículos, los totales y las condiciones. Sin imagen, sale el logo de la marca.",
         },
         {
           kind: "callout",

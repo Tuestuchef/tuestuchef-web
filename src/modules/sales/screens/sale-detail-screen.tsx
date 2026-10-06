@@ -2,6 +2,7 @@ import { ChevronLeftIcon, PrinterIcon } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import SignedAmount from "@/common/components/signed-amount"
 import PageHeader from "@/common/components/page-header"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
@@ -224,7 +225,7 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
                     </span>
                   </div>
                   <div className="grid justify-items-end gap-0.5 text-sm tabular-nums">
-                    <span className="font-medium">{formatMoney(payment.amount, payment.currency)}</span>
+                    <SignedAmount value={payment.amount} currency={payment.currency} tone="income" className="font-medium" />
                     <span className="text-xs text-muted-foreground">
                       = {usd(payment.usdAmount)}
                       {canManage && ` · ${formatUsdt(payment.usdtValue)}`}

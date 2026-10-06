@@ -28,23 +28,24 @@ npx shadcn@latest add sidebar-07
 
 Mobile-first: el equipo registra datos sobre todo desde el celular. El admin debe funcionar como PWA. Registrar una venta debe tomar menos de 20 segundos.
 
-## Marca y tema (blanco y negro ahora, colores y logos después)
+## Marca y tema
 
-El sistema se construye en blanco y negro, pero la marca se aplicará más adelante sin tocar componentes.
+La marca ya está aplicada. Paleta: `#960d13` (rojo de marca), `#d73a2c` (rojo), `#f2f2f1`, `#a6a6a6` y `#0f0f0f`.
 
 - **Sin colores fijos.** Prohibido usar colores directos (`bg-black`, `text-[#333]`, hex en componentes). Todo va por tokens semánticos de shadcn (`bg-background`, `text-foreground`, `bg-primary`, `border`, etc.), definidos como variables CSS en un solo archivo (`globals.css`).
-- **Tema en escala de grises ahora.** Las variables (`--primary`, `--accent`, `--ring`, `--chart-1..5`, `--sidebar-*`) se definen en grises. Para aplicar la marca solo se cambian esos valores.
-- **Configuración de marca centralizada** en `src/common/lib/config/brand.config.ts`: nombre comercial, eslogan, rutas de logo (completo, isotipo, versión clara y oscura), favicon y tipografías. Los datos de contacto para recibos y correos (correo, teléfono, WhatsApp, Instagram, dirección, RIF) viven en la base (`business_profile`) y owner/admin los editan en Configuración → Datos de la empresa.
-- **Placeholders de logo:**
-  - Componente `BrandLogo` en `src/common/components/` con variantes (`full`, `icon`) que lee `brand.config.ts`.
-  - Mientras no exista logo, muestra un placeholder (monograma o iniciales sobre un recuadro gris).
-  - Se usa en el sidebar, el login, los recibos y los correos. Ningún lugar importa una imagen de logo directamente.
-- **Assets de marca** en `src/common/assets/brand/` (logo, favicon, imagen para redes); se sirven desde ahí o desde `tuestuchef-public`. Mientras tanto, archivos placeholder con el mismo nombre final.
-- **Tipografía por variable** (`--font-sans`, `--font-heading`); ahora una fuente neutra.
-- **Modo oscuro** listo desde el inicio, con las mismas variables.
-- **Estados sin depender del color.** En blanco y negro, éxito, advertencia y error se distinguen con icono y texto (no solo por color). Cuando llegue la marca, el color se suma a eso.
-- **Correos y recibos** usan los mismos tokens y `brand.config.ts` (React Email con variables de tema, nunca colores fijos).
-- **Gráficas** con `--chart-*`, distinguibles por patrón o etiqueta además del tono.
+- **Negro, blanco y grises.** La interfaz usa `#0f0f0f`, `#f2f2f1`, `#a6a6a6` y grises intermedios. El sidebar es negro en ambos modos (usa los tokens `--sidebar-*`, nunca `primary` ni `muted`). `#a6a6a6` no se usa como texto sobre fondo claro: no se lee.
+- **El rojo es del dinero.** Verde (`text-positive`) y rojo (`text-negative`, el `#d73a2c`) solo marcan dinero que entra o sale, siempre con `SignedAmount` (signo y flecha). Se usan en movimientos, flujo de caja y cobros o pagos; totales, saldos y precios van en el color del texto. Errores y acciones destructivas son neutros, con icono y texto. El rojo de marca `#960d13` (`--brand`) va solo en el logo y los documentos.
+- **Configuración de marca centralizada** en `src/common/lib/config/brand.config.ts`: nombre comercial, eslogan, íconos (favicon, PWA, imagen para redes) y nombres de las tipografías. Los datos de contacto para recibos y correos (correo, teléfono, WhatsApp, Instagram, dirección, RIF) viven en la base (`business_profile`) y owner/admin los editan en Configuración → Datos de la empresa.
+- **Logo:** siempre con `<Logo>` (`src/common/components/logo/logo.tsx`); nadie importa los archivos de `src/common/assets/logo/` directamente.
+  - Variantes: `full`, `icon`, `lettering` (un trazo en `currentColor`), `gradient` (ícono a color, imagen) y `gradient-full` (ícono a color + letras).
+  - `color`: `auto` (sigue el tema), `black` y `white` (fijos, tokens `ink` y `paper`) o `current`. En `gradient-full` es el color de las letras.
+  - `layout`: `stacked` (letras debajo) o `inline` (al lado). El tamaño lo da la altura (`className="h-8"`).
+- **Assets de marca** en `src/common/assets/brand/` (favicon, íconos de la app, imagen para redes); salen del ícono a color.
+- **Tipografía por variable** (`--font-sans`, `--font-heading`): Open Sauce Sans (OFL, servida desde `src/common/assets/fonts/`) para el texto y Helvetica del sistema para los títulos. Helvetica no se incrusta: hace falta una licencia web.
+- **Modo oscuro** con las mismas variables.
+- **Estados sin depender del color.** Éxito, advertencia y error se distinguen con icono y texto, en grises.
+- **Documentos y correos:** el PDF usa `document-theme.config.ts` (copia de los tokens claros, con prueba que lo verifica); los correos no usan colores fijos.
+- **Gráficas** con `--chart-*` (grises), distinguibles por patrón o etiqueta; verde y rojo solo si son de dinero.
 
 ## Arquitectura: Screaming Architecture
 

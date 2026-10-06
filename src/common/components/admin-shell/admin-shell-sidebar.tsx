@@ -2,7 +2,7 @@ import Link from "next/link"
 
 import AdminShellNav from "@/common/components/admin-shell/admin-shell-nav"
 import AdminShellUser from "@/common/components/admin-shell/admin-shell-user"
-import BrandLogo from "@/common/components/brand-logo"
+import Logo from "@/common/components/logo/logo"
 import {
   Sidebar,
   SidebarContent,
@@ -29,7 +29,12 @@ const AdminShellSidebar = ({ user }: AdminShellSidebarProps) => {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild tooltip={brandConfig.name}>
               <Link href={ROUTES.HOME}>
-                <BrandLogo className="min-w-0" />
+                {/* El sidebar es negro en ambos modos: letras blancas. Colapsado, solo el ícono. */}
+                <Logo variant="gradient" className="size-8 shrink-0" priority />
+                {/* El botón fuerza a 16px todos sus <svg> ([&_svg]:size-4): las letras lo anulan con "!". */}
+                <span className="flex min-w-0 group-data-[collapsible=icon]:hidden">
+                  <Logo variant="lettering" color="white" decorative className="h-2! w-auto!" />
+                </span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

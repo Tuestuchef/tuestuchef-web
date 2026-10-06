@@ -1,4 +1,4 @@
-import BrandLogo from "@/common/components/brand-logo"
+import Logo from "@/common/components/logo/logo"
 import {
   Card,
   CardContent,
@@ -20,7 +20,7 @@ type AuthCardProps = {
 // Marco de las pantallas de acceso: login y verificación en dos pasos.
 const AuthCard = ({ title, description, children, showSignOut }: AuthCardProps) => (
   <main className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-4 md:p-10">
-    <BrandLogo variant="full" priority />
+    <Logo variant="gradient-full" className="h-28" imageSize={256} priority />
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle className="text-xl">{title}</CardTitle>

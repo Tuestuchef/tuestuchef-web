@@ -2,6 +2,7 @@ import { ChevronLeftIcon } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import SignedAmount from "@/common/components/signed-amount"
 import PageHeader from "@/common/components/page-header"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
@@ -153,7 +154,7 @@ const PurchaseDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
                     </span>
                   </div>
                   <div className="grid justify-items-end gap-0.5 text-sm tabular-nums">
-                    <span className="font-medium">{formatMoney(p.amount, p.currency)}</span>
+                    <SignedAmount value={p.amount} currency={p.currency} tone="expense" className="font-medium" />
                     <span className="text-xs text-muted-foreground">
                       = {usd(p.usdAmount)}
                       {canManage && ` · ${formatUsdt(p.usdtValue)}`}

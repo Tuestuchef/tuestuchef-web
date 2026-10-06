@@ -1,13 +1,13 @@
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"
 
+import SignedAmount from "@/common/components/signed-amount"
 import PageHeader from "@/common/components/page-header"
 import { Button } from "@/common/components/ui/button"
 import { Card, CardContent } from "@/common/components/ui/card"
 import { isRoleIn, ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import type { SessionUser } from "@/common/lib/types/session.types"
-import { formatUsdt } from "@/common/lib/utils/format-money.util"
 import { listAccounts } from "@/modules/treasury/lib/services/accounts.service"
 
 import LedgerEntryList from "../components/ledger-entry-list"
@@ -48,11 +48,11 @@ const MovementsScreen = async ({ user, filters }: MovementsScreenProps) => {
         <CardContent className="grid grid-cols-2 gap-4 tabular-nums">
           <div className="grid gap-0.5">
             <span className="text-xs text-muted-foreground">Ingresos del período</span>
-            <span className="text-lg font-semibold">{formatUsdt(totals.incomeUsdt)}</span>
+            <SignedAmount value={totals.incomeUsdt} tone="income" className="text-lg font-semibold" />
           </div>
           <div className="grid gap-0.5">
             <span className="text-xs text-muted-foreground">Egresos del período</span>
-            <span className="text-lg font-semibold">{formatUsdt(totals.expenseUsdt)}</span>
+            <SignedAmount value={totals.expenseUsdt} tone="expense" className="text-lg font-semibold" />
           </div>
         </CardContent>
       </Card>

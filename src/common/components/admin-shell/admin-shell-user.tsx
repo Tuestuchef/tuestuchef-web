@@ -39,7 +39,8 @@ const AdminShellUser = ({ user }: AdminShellUserProps) => {
       </Avatar>
       <div className="grid flex-1 text-left text-sm leading-tight">
         <span className="truncate font-medium">{displayName}</span>
-        <span className="truncate text-xs text-muted-foreground">
+        {/* Se usa en el sidebar (negro) y en el menú (claro): hereda el color de cada uno. */}
+        <span className="truncate text-xs text-current/70">
           {ROLE_LABELS[user.role]}
         </span>
       </div>

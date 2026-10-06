@@ -1,5 +1,8 @@
 import "server-only"
 
+import { readFile } from "node:fs/promises"
+import { join } from "node:path"
+
 import { type DocumentProps, renderToBuffer } from "@react-pdf/renderer"
 import { createElement, type ReactElement } from "react"
 
@@ -28,10 +31,19 @@ async function loadImage(path: string | null, bucket: "public" | "private" = "pu
   }
 }
 
+// Sin imagen de encabezado, va el ícono a color de la marca (archivo incluido en el build: next.config.ts).
+async function loadBrandLogo(): Promise<PdfImage> {
+  try {
+    return { data: await readFile(join(process.cwd(), "src/common/assets/logo/logo-gradient.png")), format: "png" }
+  } catch {
+    return null
+  }
+}
+
 // Genera el PDF de un presupuesto (con los datos guardados: no recalcula nada).
 export async function renderQuotePdf(quote: QuoteDetail): Promise<Buffer> {
   const business = await getBusinessProfile()
-  const image = await loadImage(quote.headerImagePath ?? business.headerImagePath)
+  const image = (await loadImage(quote.headerImagePath ?? business.headerImagePath)) ?? (await loadBrandLogo())
   // QuotePdf devuelve un <Document>: es lo que espera renderToBuffer.
   const element = createElement(QuotePdf, { quote, business, image, draft: quote.status === "draft" }) as ReactElement<DocumentProps>
   return renderToBuffer(element)

@@ -23,7 +23,7 @@ const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3
 const variantText = (item: Pick<QuoteItem, "colorName" | "sizeName">) => [item.colorName, item.sizeName].filter(Boolean).join(" · ")
 
 const s = StyleSheet.create({
-  page: { paddingTop: 36, paddingBottom: 56, paddingHorizontal: 40, fontFamily: "Helvetica", fontSize: 9, color: t.foreground, backgroundColor: t.background },
+  page: { paddingTop: 36, paddingBottom: 56, paddingHorizontal: 40, fontFamily: "Helvetica", fontSize: 9, color: t.foreground, backgroundColor: t.card },
   header: { flexDirection: "row", gap: 16, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: t.border },
   logoBox: { width: 120, height: 80, alignItems: "center", justifyContent: "center" },
   logo: { maxWidth: 120, maxHeight: 80, objectFit: "contain" },

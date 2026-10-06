@@ -2,7 +2,7 @@ import { ChevronLeftIcon } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import BrandLogo from "@/common/components/brand-logo"
+import Logo from "@/common/components/logo/logo"
 import { Button } from "@/common/components/ui/button"
 import { brandConfig } from "@/common/lib/config/brand.config"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
@@ -44,7 +44,7 @@ const SaleNoteScreen = async ({ id }: { id: string }) => {
       <article className="grid gap-6 rounded-lg border bg-card p-6 text-card-foreground print:border-0 print:p-0">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="grid gap-1">
-            <BrandLogo variant="full" />
+            <Logo variant="gradient-full" layout="inline" className="h-10" />
             <p className="text-xs text-muted-foreground">{brandConfig.slogan}</p>
             {contactLine.length > 0 && <p className="text-xs text-muted-foreground">{contactLine.join(" · ")}</p>}
             {business.address && <p className="text-xs text-muted-foreground">{business.address}</p>}

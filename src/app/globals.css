@@ -7,15 +7,18 @@
 /*
  * TEMA DE TUESTUCHEF
  * Este es el ÚNICO lugar con valores de color y tipografía.
- * Hoy todo está en escala de grises (chroma 0). Para aplicar la marca
- * se cambian solo los valores de :root y .dark; ningún componente se toca.
- * Los estados (éxito, advertencia, error, info) nunca dependen solo del color:
- * siempre van con icono y texto (ver StatusBadge / StatusAlert).
+ * Paleta de marca: #960d13 (rojo de marca), #d73a2c (rojo), #f2f2f1, #a6a6a6, #0f0f0f.
+ * - La interfaz es negro, blanco y grises. El rojo de marca va solo en el logo y los documentos.
+ * - Verde y rojo se reservan para el dinero (entra / sale), siempre con signo y flecha.
+ * - Errores y acciones destructivas son neutros: se distinguen por icono y texto, no por color.
+ * Los estados (éxito, advertencia, error, info) nunca dependen solo del color
+ * (ver StatusBadge / StatusAlert).
  */
 
 @theme inline {
   --font-sans: var(--typeface-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--typeface-heading), var(--typeface-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Títulos en Helvetica del sistema (Arial en Windows y Android); ver fonts.config.ts. */
+  --font-heading: "Helvetica Neue", Helvetica, Arial, var(--typeface-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--typeface-mono), ui-monospace, monospace;
 
   --color-background: var(--background);
@@ -46,6 +49,9 @@
   --color-qr-surface: var(--qr-surface);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
+  --color-brand: var(--brand);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -74,104 +80,114 @@
 :root {
   --radius: 0.625rem;
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.205 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* Marca: solo logo y documentos, nunca para estados ni dinero. */
+  --brand: #960d13;
+  /* Negro y blanco de la marca, iguales en ambos modos (logo sobre fondos fijos). */
+  --ink: #0f0f0f;
+  --paper: #f2f2f1;
 
-  /* Estados: grises por ahora; la marca les dará tono. */
-  --success: oklch(0.97 0 0);
-  --success-foreground: oklch(0.205 0 0);
-  --warning: oklch(0.97 0 0);
-  --warning-foreground: oklch(0.205 0 0);
-  --info: oklch(0.97 0 0);
-  --info-foreground: oklch(0.205 0 0);
+  /* Fondo del contenido (al lado del sidebar) y superficies encima. */
+  --background: #f2f2f1;
+  --foreground: #0f0f0f;
+  --card: #ffffff;
+  --card-foreground: #0f0f0f;
+  --popover: #ffffff;
+  --popover-foreground: #0f0f0f;
+  --primary: #0f0f0f;
+  --primary-foreground: #f2f2f1;
+  --secondary: #e6e6e4;
+  --secondary-foreground: #0f0f0f;
+  --muted: #e6e6e4;
+  /* #a6a6a6 no se lee sobre blanco: el texto secundario usa un gris más oscuro. */
+  --muted-foreground: #6b6b6b;
+  --accent: #e6e6e4;
+  --accent-foreground: #0f0f0f;
+  --destructive: #0f0f0f;
+  --border: #dcdcda;
+  --input: #d4d4d2;
+  --ring: #a6a6a6;
+
+  /* Estados: neutros, con icono y texto. */
+  --success: #e6e6e4;
+  --success-foreground: #0f0f0f;
+  --warning: #e6e6e4;
+  --warning-foreground: #0f0f0f;
+  --info: #e6e6e4;
+  --info-foreground: #0f0f0f;
 
   /* Fondo del código QR: siempre claro para que la cámara lo lea (también en modo oscuro). */
-  --qr-surface: oklch(1 0 0);
+  --qr-surface: #ffffff;
 
-  /* Finanzas: verde = entra / ganancia, rojo = sale / pérdida (aprobado para analítica).
-     Siempre acompañados de signo y flecha (▲ ▼), nunca solo el color. */
-  --positive: oklch(0.55 0.15 150);
-  --negative: oklch(0.56 0.2 27);
+  /* Dinero: verde = entra / ganancia, rojo = sale / pérdida. Siempre con signo y flecha (▲ ▼).
+     El rojo es #d73a2c apenas oscurecido para leerse sobre #f2f2f1. */
+  --positive: #237a40;
+  --negative: #c9352a;
 
-  /* Gráficas: siempre acompañadas de patrón o etiqueta. */
-  --chart-1: oklch(0.205 0 0);
-  --chart-2: oklch(0.371 0 0);
-  --chart-3: oklch(0.556 0 0);
-  --chart-4: oklch(0.708 0 0);
-  --chart-5: oklch(0.87 0 0);
+  /* Gráficas: grises, siempre con patrón o etiqueta. Verde y rojo solo si la gráfica es de dinero. */
+  --chart-1: #0f0f0f;
+  --chart-2: #3d3d3d;
+  --chart-3: #6b6b6b;
+  --chart-4: #a6a6a6;
+  --chart-5: #d4d4d2;
 
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Sidebar: negro en ambos modos. */
+  --sidebar: #0f0f0f;
+  --sidebar-foreground: #f2f2f1;
+  --sidebar-primary: #f2f2f1;
+  --sidebar-primary-foreground: #0f0f0f;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #f2f2f1;
+  --sidebar-border: #262626;
+  --sidebar-ring: #6b6b6b;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.922 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: #181818;
+  --foreground: #f2f2f1;
+  --card: #202020;
+  --card-foreground: #f2f2f1;
+  --popover: #202020;
+  --popover-foreground: #f2f2f1;
+  --primary: #f2f2f1;
+  --primary-foreground: #0f0f0f;
+  --secondary: #2a2a2a;
+  --secondary-foreground: #f2f2f1;
+  --muted: #2a2a2a;
+  --muted-foreground: #a6a6a6;
+  --accent: #2a2a2a;
+  --accent-foreground: #f2f2f1;
+  --destructive: #f2f2f1;
+  --border: #2e2e2e;
+  --input: #383838;
+  --ring: #6b6b6b;
 
-  --success: oklch(0.269 0 0);
-  --success-foreground: oklch(0.985 0 0);
-  --warning: oklch(0.269 0 0);
-  --warning-foreground: oklch(0.985 0 0);
-  --info: oklch(0.269 0 0);
-  --info-foreground: oklch(0.985 0 0);
+  --success: #2a2a2a;
+  --success-foreground: #f2f2f1;
+  --warning: #2a2a2a;
+  --warning-foreground: #f2f2f1;
+  --info: #2a2a2a;
+  --info-foreground: #f2f2f1;
 
-  --qr-surface: oklch(1 0 0);
+  --qr-surface: #ffffff;
 
-  --positive: oklch(0.74 0.17 150);
-  --negative: oklch(0.7 0.19 25);
+  /* Más claros para leerse sobre fondo oscuro. */
+  --positive: #4cc27a;
+  --negative: #ef6a5c;
 
-  --chart-1: oklch(0.985 0 0);
-  --chart-2: oklch(0.87 0 0);
-  --chart-3: oklch(0.708 0 0);
-  --chart-4: oklch(0.556 0 0);
-  --chart-5: oklch(0.371 0 0);
+  --chart-1: #f2f2f1;
+  --chart-2: #d4d4d2;
+  --chart-3: #a6a6a6;
+  --chart-4: #6b6b6b;
+  --chart-5: #3d3d3d;
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.922 0 0);
-  --sidebar-primary-foreground: oklch(0.205 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #0f0f0f;
+  --sidebar-foreground: #f2f2f1;
+  --sidebar-primary: #f2f2f1;
+  --sidebar-primary-foreground: #0f0f0f;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #f2f2f1;
+  --sidebar-border: #262626;
+  --sidebar-ring: #6b6b6b;
 }
 
 @layer base {

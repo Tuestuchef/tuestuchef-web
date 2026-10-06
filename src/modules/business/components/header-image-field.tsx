@@ -4,7 +4,7 @@ import { ImageUpIcon, Loader2Icon, Trash2Icon } from "lucide-react"
 import { useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
-import BrandLogo from "@/common/components/brand-logo"
+import Logo from "@/common/components/logo/logo"
 import StatusAlert from "@/common/components/status-alert"
 import { Button } from "@/common/components/ui/button"
 
@@ -67,7 +67,7 @@ const HeaderImageField = ({ imageUrl, enabled }: HeaderImageFieldProps) => {
             // eslint-disable-next-line @next/next/no-img-element -- imagen subida por el usuario, de R2
             <img src={imageUrl} alt="Imagen del encabezado" className="max-h-full max-w-full object-contain" />
           ) : (
-            <BrandLogo variant="full" />
+            <Logo variant="gradient-full" className="h-20" />
           )}
         </div>
         <div className="flex flex-wrap gap-2">

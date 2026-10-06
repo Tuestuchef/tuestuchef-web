@@ -31,7 +31,7 @@ const AdminShellQuickCreate = ({ role }: { role: AppRole }) => {
         <SidebarMenuButton
           asChild
           tooltip={`Registrar ${primary.title.toLowerCase()}`}
-          className="h-10 min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground md:h-8"
+          className="h-10 min-w-8 bg-sidebar-primary text-sidebar-primary-foreground duration-200 ease-linear hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground active:bg-sidebar-primary/90 active:text-sidebar-primary-foreground md:h-8"
         >
           <Link href={primary.url} onClick={closeMobile}>
             <CirclePlusIcon />
@@ -44,7 +44,8 @@ const AdminShellQuickCreate = ({ role }: { role: AppRole }) => {
               <Button
                 size="icon"
                 variant="outline"
-                className="size-10 shrink-0 group-data-[collapsible=icon]:hidden md:size-8"
+                // Sobre el sidebar negro en ambos modos: colores del sidebar también al abrirse y en modo oscuro.
+                className="size-10 shrink-0 border-sidebar-border bg-sidebar text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-expanded:bg-sidebar-accent aria-expanded:text-sidebar-accent-foreground dark:border-sidebar-border dark:bg-sidebar dark:hover:bg-sidebar-accent group-data-[collapsible=icon]:hidden md:size-8"
                 aria-label="Registrar otra cosa"
               >
                 <ChevronDownIcon />

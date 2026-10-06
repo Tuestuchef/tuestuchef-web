@@ -1,3 +1,4 @@
+import SignedAmount from "@/common/components/signed-amount"
 import StatusBadge from "@/common/components/status-badge"
 import {
   Card,
@@ -58,13 +59,13 @@ const CashFlowTable = ({ rows }: { rows: CashFlowRow[] }) => {
                     {formatMoney(r.opening, r.currency)}
                   </td>
                   <td className="py-2 text-right">
-                    +{formatMoney(r.inflows, r.currency)}
+                    <SignedAmount value={r.inflows} currency={r.currency} tone="income" className="justify-end" iconClassName="size-3.5" />
                     <span className="block text-xs text-muted-foreground">
                       {formatUsdt(r.inflowsUsdt)}
                     </span>
                   </td>
                   <td className="py-2 text-right">
-                    −{formatMoney(r.outflows, r.currency)}
+                    <SignedAmount value={r.outflows} currency={r.currency} tone="expense" className="justify-end" iconClassName="size-3.5" />
                     <span className="block text-xs text-muted-foreground">
                       {formatUsdt(r.outflowsUsdt)}
                     </span>

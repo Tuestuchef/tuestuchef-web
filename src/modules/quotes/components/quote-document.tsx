@@ -1,4 +1,4 @@
-import BrandLogo from "@/common/components/brand-logo"
+import Logo from "@/common/components/logo/logo"
 import { brandConfig } from "@/common/lib/config/brand.config"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import type { BusinessProfile } from "@/modules/business/lib/types/business.types"
@@ -79,7 +79,7 @@ const QuoteDocument = ({ quote, business, headerImageUrl, draft }: QuoteDocument
             // eslint-disable-next-line @next/next/no-img-element -- imagen de R2
             <img src={headerImageUrl} alt={companyName} className="max-h-full max-w-full object-contain" />
           ) : (
-            <BrandLogo variant="full" />
+            <Logo variant="gradient-full" className="h-20" />
           )}
         </div>
         <div className="grid content-start gap-1 text-sm">
