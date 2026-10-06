@@ -77,7 +77,12 @@ const NavBadge = ({ badge, values }: { badge: NavBadgeKey; values: NavBadgeValue
   return (
     <>
       {/* Centrado: los botones son más altos en el celular que en la computadora. */}
-      <SidebarMenuBadge title={label} className="top-1/2! -translate-y-1/2 rounded-full bg-sidebar-accent px-1.5 text-sidebar-accent-foreground">
+      {/* Blanco sobre el sidebar negro (como Registrar venta); el rojo es solo del dinero. El "!" evita
+          que el hover o el enlace activo le cambien el color al texto. */}
+      <SidebarMenuBadge
+        title={label}
+        className="top-1/2! -translate-y-1/2 rounded-full bg-sidebar-primary px-1.5 font-semibold text-sidebar-primary-foreground!"
+      >
         {badge === "missingTodayRate" ? (
           <TriangleAlertIcon className="size-4" aria-hidden />
         ) : (
