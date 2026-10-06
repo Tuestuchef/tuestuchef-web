@@ -1,11 +1,13 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { CloudOffIcon, Loader2Icon, RefreshCwIcon } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/common/components/ui/button"
+import { QUERY_KEYS } from "@/common/lib/constants/query-keys.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 
 import { syncOfflineSaleAction } from "../lib/actions/offline-sale.action"
@@ -18,6 +20,12 @@ const OfflineSync = () => {
   const [queued, setQueued] = useState(0)
   const [syncing, setSyncing] = useState(false)
   const running = useRef(false)
+  const queryClient = useQueryClient()
+
+  // El menú lateral cuenta estas ventas en "Ventas pendientes".
+  useEffect(() => {
+    queryClient.setQueryData(QUERY_KEYS.OFFLINE_QUEUE_COUNT, queued)
+  }, [queued, queryClient])
 
   const refreshCount = useCallback(async () => {
     try {
@@ -58,8 +66,10 @@ const OfflineSync = () => {
       running.current = false
       setSyncing(false)
       void refreshCount()
+      // Una venta rechazada pasa a contarse en la base.
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NAV_BADGES })
     }
-  }, [refreshCount])
+  }, [refreshCount, queryClient])
 
   useEffect(() => {
     const update = () => {

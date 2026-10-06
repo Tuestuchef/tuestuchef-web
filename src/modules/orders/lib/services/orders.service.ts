@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.clie
 import { toCaracasDate } from "@/common/lib/utils/format-date.util"
 import { getSaleFormData } from "@/modules/sales/lib/services/sales.service"
 
-import type { OrderStatus, ProductionStage } from "../constants/orders.constants"
+import { OPEN_ORDER_STATUSES, type OrderStatus, type ProductionStage } from "../constants/orders.constants"
 import type { CancelOrderInput, CreateOrderInput, OrderSettingsInput } from "../schemas/orders.schema"
 import type { Assignee, OrderDetail, OrderFormData, OrderListItem, OrderSettings } from "../types/orders.types"
 import { listCustomizationTypes } from "./order-settings.service"
@@ -69,11 +69,19 @@ export async function createOrder(input: CreateOrderInput) {
   })
 }
 
+// Pedidos abiertos: por empezar, en producción o listos para entregar.
+export async function countOpenOrders(): Promise<number> {
+  const supabase = await createSupabaseServerClient()
+  const { count, error } = await supabase.from("orders_overview").select("sale_id", { count: "exact", head: true }).in("status", OPEN_ORDER_STATUSES)
+  if (error) throw error
+  return count ?? 0
+}
+
 export async function listOrders(filters: { status?: OrderStatus | "late" | "open" } = {}): Promise<OrderListItem[]> {
   const supabase = await createSupabaseServerClient()
   let query = supabase.from("orders_overview").select("*").order("promised_date").limit(300)
   if (filters.status === "late") query = query.eq("is_late", true)
-  else if (filters.status === "open" || !filters.status) query = query.in("status", ["waiting", "in_production", "ready"])
+  else if (filters.status === "open" || !filters.status) query = query.in("status", OPEN_ORDER_STATUSES)
   else query = query.eq("status", filters.status)
 
   const { data, error } = await query

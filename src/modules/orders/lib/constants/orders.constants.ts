@@ -5,6 +5,9 @@ export type OrderStockMode = Enums<"order_stock_mode">
 export type ProductionStage = Enums<"sale_item_status">
 export type OrderStatus = "waiting" | "in_production" | "ready" | "delivered" | "cancelled"
 
+// Pedidos abiertos: los que todavía hay que producir o entregar.
+export const OPEN_ORDER_STATUSES: OrderStatus[] = ["waiting", "in_production", "ready"]
+
 export const VOLUME_SCOPE_LABELS: Record<VolumeDiscountScope, { title: string; description: string }> = {
   products: {
     title: "Productos",

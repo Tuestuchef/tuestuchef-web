@@ -44,7 +44,7 @@ export const ORDERS_CHAPTER: ManualChapter = {
         {
           kind: "text",
           body:
-            "Un **pedido es una venta** que se fabrica: tiene su cliente, sus productos y su dinero igual que cualquier venta (aparece en Tesorería y en Resultados), y además una **fecha prometida**, un **abono** para empezar y unas **etapas** de producción.",
+            "Un **pedido es una venta** que se fabrica: tiene su cliente, sus productos y su dinero igual que cualquier venta (aparece en Tesorería y en Resultados), y además una **fecha prometida**, un **abono** para empezar y unas **etapas** de producción. El número junto a **Pedidos** en el menú dice cuántos están abiertos (por empezar, en producción o listos para entregar).",
         },
         {
           kind: "flow",
@@ -169,7 +169,7 @@ export const ORDERS_CHAPTER: ManualChapter = {
             { icon: KanbanIcon, title: "Tablero", effect: "Una columna por etapa; los atrasados resaltados. En el celular se desliza de lado." },
             { icon: UsersRoundIcon, title: "Quién tiene qué", effect: "Lo asignado a cada persona o taller, y lo que nadie tiene todavía." },
             { icon: FactoryIcon, title: "Talleres atrasados", effect: "Si pasó su fecha estimada, aparecen marcados." },
-            { icon: RulerIcon, title: "Material necesario", effect: "'Necesitas 32 m de tela negra y tienes 20': calculado solo con las recetas." },
+            { icon: RulerIcon, title: "Material necesario", effect: "'Necesitas 32 m de tela negra y tienes 20': calculado solo con las recetas. El número en el menú dice cuántos materiales faltan." },
           ],
         },
       ],

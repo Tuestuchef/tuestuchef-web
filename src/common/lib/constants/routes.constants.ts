@@ -69,6 +69,7 @@ export const ROUTES = {
   RECEIPT: (entryId: string) => `/api/receipts/${entryId}`,
   CUSTOMIZATION_LOGO: (customizationId: string) => `/api/logos/${customizationId}`,
   PERIOD_EXPORT: (month: string) => `/api/exports/${month}`,
+  NAV_BADGES_API: "/api/nav-badges",
 } as const
 
 // Rutas accesibles sin sesión.

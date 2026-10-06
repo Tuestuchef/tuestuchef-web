@@ -43,7 +43,33 @@ export type NavLink = {
   roles: readonly AppRole[]
   // Módulo planificado pero aún no construido: se muestra deshabilitado.
   soon?: boolean
+  // Contador o aviso al lado del enlace (ver NAV_BADGES).
+  badge?: NavBadgeKey
 }
+
+// Lo que se cuenta en el menú. La API /api/nav-badges devuelve cada valor según el rol.
+export type NavBadgeKey = "receivables" | "offlineSales" | "openOrders" | "materialShortages" | "payables" | "missingTodayRate"
+
+export type NavBadges = {
+  receivables: number
+  // Ventas rechazadas sin resolver (en la base); las guardadas en el teléfono se suman en el cliente.
+  offlineRejections: number
+  openOrders: number
+  materialShortages: number
+  payables: number
+  missingTodayRate: boolean
+}
+
+// Para lectores de pantalla y el título al pasar el mouse: "3 ventas con saldo por cobrar".
+export const NAV_BADGE_LABELS: Record<Exclude<NavBadgeKey, "missingTodayRate">, { one: string; other: string }> = {
+  receivables: { one: "venta con saldo por cobrar", other: "ventas con saldo por cobrar" },
+  offlineSales: { one: "venta por enviar o revisar", other: "ventas por enviar o revisar" },
+  openOrders: { one: "pedido abierto", other: "pedidos abiertos" },
+  materialShortages: { one: "material que falta", other: "materiales que faltan" },
+  payables: { one: "compra con saldo por pagar", other: "compras con saldo por pagar" },
+}
+
+export const MISSING_RATE_LABEL = "Falta la tasa de hoy"
 
 // Una entrada del menú: un enlace directo, o un submenú (children) para listas largas.
 export type NavItem = NavLink & {
@@ -70,8 +96,8 @@ export const NAV_SECTIONS: readonly NavSection[] = [
       { title: "Ventas", url: ROUTES.SALES, icon: ShoppingBagIcon, roles: ROLE_GROUPS.ALL },
       { title: "Presupuestos", url: ROUTES.QUOTES, icon: FileTextIcon, roles: ROLE_GROUPS.ALL },
       { title: "Clientes", url: ROUTES.CUSTOMERS, icon: ContactRoundIcon, roles: ROLE_GROUPS.ALL },
-      { title: "Por cobrar", url: ROUTES.RECEIVABLES, icon: HandCoinsIcon, roles: ROLE_GROUPS.MANAGEMENT },
-      { title: "Ventas pendientes", url: ROUTES.OFFLINE_SALES, icon: CloudOffIcon, roles: ROLE_GROUPS.ALL },
+      { title: "Por cobrar", url: ROUTES.RECEIVABLES, icon: HandCoinsIcon, roles: ROLE_GROUPS.MANAGEMENT, badge: "receivables" },
+      { title: "Ventas pendientes", url: ROUTES.OFFLINE_SALES, icon: CloudOffIcon, roles: ROLE_GROUPS.ALL, badge: "offlineSales" },
     ],
   },
   {
@@ -86,10 +112,10 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   {
     label: "Producción",
     items: [
-      { title: "Pedidos", url: ROUTES.ORDERS, icon: ClipboardListIcon, roles: ROLE_GROUPS.ALL },
+      { title: "Pedidos", url: ROUTES.ORDERS, icon: ClipboardListIcon, roles: ROLE_GROUPS.ALL, badge: "openOrders" },
       { title: "Tablero", url: ROUTES.PRODUCTION, icon: KanbanIcon, roles: ROLE_GROUPS.ALL },
       { title: "Quién tiene qué", url: ROUTES.PRODUCTION_ASSIGNMENTS, icon: UsersIcon, roles: ROLE_GROUPS.ALL },
-      { title: "Material necesario", url: ROUTES.PRODUCTION_MATERIALS, icon: RulerIcon, roles: ROLE_GROUPS.ALL },
+      { title: "Material necesario", url: ROUTES.PRODUCTION_MATERIALS, icon: RulerIcon, roles: ROLE_GROUPS.ALL, badge: "materialShortages" },
     ],
   },
   {
@@ -97,14 +123,14 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     items: [
       { title: "Compras", url: ROUTES.PURCHASES, icon: TruckIcon, roles: ROLE_GROUPS.ALL },
       { title: "Proveedores", url: ROUTES.SUPPLIERS, icon: FactoryIcon, roles: ROLE_GROUPS.ALL },
-      { title: "Por pagar", url: ROUTES.PAYABLES, icon: ReceiptTextIcon, roles: ROLE_GROUPS.MANAGEMENT },
+      { title: "Por pagar", url: ROUTES.PAYABLES, icon: ReceiptTextIcon, roles: ROLE_GROUPS.MANAGEMENT, badge: "payables" },
     ],
   },
   {
     label: "Tesorería",
     items: [
       { title: "Movimientos", url: ROUTES.MOVEMENTS, icon: ListIcon, roles: ROLE_GROUPS.ALL },
-      { title: "Tasas y cuentas", url: ROUTES.TREASURY, icon: LandmarkIcon, roles: ROLE_GROUPS.MANAGEMENT },
+      { title: "Tasas y cuentas", url: ROUTES.TREASURY, icon: LandmarkIcon, roles: ROLE_GROUPS.MANAGEMENT, badge: "missingTodayRate" },
     ],
   },
   {

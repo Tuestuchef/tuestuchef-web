@@ -133,7 +133,7 @@ export const SALES_CHAPTER: ManualChapter = {
           tone: "warning",
           title: "No cierres sesión con ventas por enviar",
           body:
-            "Las ventas guardadas viven en ese teléfono hasta que se envían. En Ventas pendientes, owner o admin reintentan (por ejemplo, cuando ya hay stock) o descartan con motivo; staff ve solo las suyas.",
+            "Las ventas guardadas viven en ese teléfono hasta que se envían. En Ventas pendientes, owner o admin reintentan (por ejemplo, cuando ya hay stock) o descartan con motivo; staff ve solo las suyas. El número junto a **Ventas pendientes** en el menú suma las guardadas en ese teléfono y las que no pasaron.",
         },
       ],
     },
@@ -448,7 +448,7 @@ export const CUSTOMERS_CHAPTER: ManualChapter = {
         {
           kind: "text",
           body:
-            "**Comercial → Por cobrar** junta todas las ventas con saldo, **por cliente**: cuánto debe en total y desde cuándo (su deuda más antigua). Las ventas rápidas sin cliente que quedaron debiendo aparecen aparte. No se registra nada aquí: se calcula solo desde las ventas.",
+            "**Comercial → Por cobrar** junta todas las ventas con saldo, **por cliente**: cuánto debe en total y desde cuándo (su deuda más antigua). Las ventas rápidas sin cliente que quedaron debiendo aparecen aparte. No se registra nada aquí: se calcula solo desde las ventas. El número junto a **Por cobrar** en el menú dice cuántas ventas tienen saldo.",
         },
         {
           kind: "example",

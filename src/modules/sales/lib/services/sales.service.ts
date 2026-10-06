@@ -393,6 +393,14 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
 }
 
 // Cuentas por cobrar agrupadas por cliente (la vista solo devuelve filas a owner y admin).
+// Ventas con saldo por cobrar (para el contador del menú).
+export async function countReceivables(): Promise<number> {
+  const supabase = await createSupabaseServerClient()
+  const { count, error } = await supabase.from("receivables").select("sale_id", { count: "exact", head: true })
+  if (error) throw error
+  return count ?? 0
+}
+
 export async function listReceivables(): Promise<ReceivableGroup[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from("receivables").select("*").order("occurred_at")

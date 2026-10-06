@@ -27,6 +27,16 @@ export const HELP_TOPICS = {
           "Si falta la tasa de hoy, registrarla desde el aviso.",
         ],
       },
+      {
+        heading: "Los números del menú",
+        items: [
+          "Por cobrar y Por pagar: ventas y compras con saldo (owner y admin).",
+          "Ventas pendientes: las guardadas en este teléfono sin enviar y las que no pasaron.",
+          "Pedidos: los abiertos. Material necesario: los materiales que faltan.",
+          "Un ícono de advertencia en Tasas y cuentas: falta la tasa de hoy (owner y admin).",
+          "Se actualizan al cambiar de pantalla y cada minuto. Con el menú encogido, un punto marca dónde hay algo.",
+        ],
+      },
     ],
   },
 

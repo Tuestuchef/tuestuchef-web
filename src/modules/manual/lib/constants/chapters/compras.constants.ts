@@ -137,7 +137,7 @@ export const PURCHASES_CHAPTER: ManualChapter = {
         {
           kind: "text",
           body:
-            "**Compras → Por pagar** (owner y admin) lista lo que se debe, con las vencidas primero y sus días de atraso. Para pagar, abre la compra → **Registrar pago**. El saldo vive en dólares: un pago en Bs se convierte con la tasa del día en que se paga.",
+            "**Compras → Por pagar** (owner y admin) lista lo que se debe, con las vencidas primero y sus días de atraso. Para pagar, abre la compra → **Registrar pago**. El saldo vive en dólares: un pago en Bs se convierte con la tasa del día en que se paga. El número junto a **Por pagar** en el menú dice cuántas compras tienen saldo.",
         },
       ],
     },

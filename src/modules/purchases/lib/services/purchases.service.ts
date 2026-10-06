@@ -165,6 +165,14 @@ export async function listPurchases(filters: PurchaseFilters | { supplierId: str
   return status ? rows.filter((r) => r.status === status) : rows
 }
 
+// Compras con saldo por pagar (para el contador del menú).
+export async function countPayables(): Promise<number> {
+  const supabase = await createSupabaseServerClient()
+  const { count, error } = await supabase.from("payables").select("purchase_id", { count: "exact", head: true })
+  if (error) throw error
+  return count ?? 0
+}
+
 export async function listPayables(): Promise<PayableItem[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase

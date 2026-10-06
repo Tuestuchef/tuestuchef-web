@@ -86,7 +86,7 @@ export const TREASURY_CHAPTER: ManualChapter = {
             { title: "Se cargan solas", body: "Cada mañana a las 6:00 se traen del BCV y del paralelo." },
             {
               title: "Si falta la de hoy",
-              body: "Inicio muestra un aviso. Cualquiera del equipo puede registrarla; owner y admin también la corrigen.",
+              body: "Inicio muestra un aviso, y owner y admin ven un ícono de advertencia junto a **Tasas y cuentas** en el menú. Cualquiera del equipo puede registrarla; owner y admin también la corrigen.",
             },
             {
               title: "Corregir una tasa",

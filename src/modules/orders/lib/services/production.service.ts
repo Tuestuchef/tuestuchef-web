@@ -89,6 +89,11 @@ export async function listMaterialRequirements(): Promise<MaterialRequirement[]>
   }))
 }
 
+// Materiales que no alcanzan para los pedidos abiertos.
+export async function countMaterialShortages(): Promise<number> {
+  return (await listMaterialRequirements()).filter((r) => r.shortage > 0).length
+}
+
 // Tarifa vigente de cada categoría y etapa (la más reciente que ya aplica).
 export async function listPieceRates(): Promise<PieceRate[]> {
   const supabase = await createSupabaseServerClient()

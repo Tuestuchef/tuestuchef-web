@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRightIcon } from "lucide-react"
+import { ChevronRightIcon, TriangleAlertIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -18,6 +18,7 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -25,9 +26,19 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "@/common/components/ui/sidebar"
-import { NAV_SECTIONS, type NavItem, type NavLink, type NavSection } from "@/common/lib/constants/navigation.constants"
+import {
+  MISSING_RATE_LABEL,
+  NAV_BADGE_LABELS,
+  NAV_SECTIONS,
+  type NavBadgeKey,
+  type NavItem,
+  type NavLink,
+  type NavSection,
+} from "@/common/lib/constants/navigation.constants"
 import type { AppRole } from "@/common/lib/constants/roles.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
+import { cn } from "@/common/lib/utils"
+import { type NavBadgeValues, useNavBadges } from "@/common/lib/hooks/use-nav-badges.hook"
 
 type AdminShellNavProps = {
   role: AppRole
@@ -56,7 +67,34 @@ const visibleSections = (role: AppRole): NavSection[] =>
     }),
   })).filter((section) => section.items.length > 0)
 
+// Contador (o aviso) al lado del enlace. Con la barra colapsada a íconos, un punto sobre el ícono.
+const NavBadge = ({ badge, values }: { badge: NavBadgeKey; values: NavBadgeValues }) => {
+  const value = values[badge]
+  if (!value) return null
+
+  const label =
+    badge === "missingTodayRate" ? MISSING_RATE_LABEL : `${value} ${NAV_BADGE_LABELS[badge][value === 1 ? "one" : "other"]}`
+  return (
+    <>
+      {/* Centrado: los botones son más altos en el celular que en la computadora. */}
+      <SidebarMenuBadge title={label} className="top-1/2! -translate-y-1/2 rounded-full bg-sidebar-accent px-1.5 text-sidebar-accent-foreground">
+        {badge === "missingTodayRate" ? (
+          <TriangleAlertIcon className="size-4" aria-hidden />
+        ) : (
+          <span aria-hidden>{Number(value) > 99 ? "99+" : value}</span>
+        )}
+        <span className="sr-only">{label}</span>
+      </SidebarMenuBadge>
+      <span
+        aria-hidden
+        className="pointer-events-none absolute top-1 right-1 hidden size-2 rounded-full bg-sidebar-primary ring-2 ring-sidebar group-data-[collapsible=icon]:block"
+      />
+    </>
+  )
+}
+
 const AdminShellNav = ({ role }: AdminShellNavProps) => {
+  const badges = useNavBadges({ watchNavigation: true })
   const pathname = usePathname()
   const { isMobile, setOpenMobile, state } = useSidebar()
   const collapsed = state === "collapsed" && !isMobile
@@ -74,12 +112,13 @@ const AdminShellNav = ({ role }: AdminShellNavProps) => {
     if (!item.children) {
       return (
         <SidebarMenuItem key={item.url}>
-          <SidebarMenuButton asChild isActive={current === item.url} tooltip={item.title} className="h-10 md:h-8">
+          <SidebarMenuButton asChild isActive={current === item.url} tooltip={item.title} className={cn("h-10 md:h-8", item.badge && "pr-9")}>
             <Link href={item.url} onClick={closeMobile}>
               <Icon />
               <span>{item.title}</span>
             </Link>
           </SidebarMenuButton>
+          {item.badge && <NavBadge badge={item.badge} values={badges} />}
         </SidebarMenuItem>
       )
     }

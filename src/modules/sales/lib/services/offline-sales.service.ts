@@ -50,6 +50,14 @@ export type OfflineRejection = {
   resolved: { at: string; saleId: string | null; note: string | null } | null
 }
 
+// Ventas sin conexión rechazadas y sin resolver (RLS: las propias, o todas para gestión).
+export async function countOpenOfflineRejections(): Promise<number> {
+  const supabase = await createSupabaseServerClient()
+  const { count, error } = await supabase.from("offline_sale_rejections").select("id", { count: "exact", head: true }).is("resolved_at", null)
+  if (error) throw error
+  return count ?? 0
+}
+
 export async function listOfflineRejections(): Promise<OfflineRejection[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
