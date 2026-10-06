@@ -1,16 +1,19 @@
 import { oklchToHex } from "@/common/lib/utils/color.util"
 
-// Colores de los documentos generados (PDF de presupuestos). Un PDF no lee las variables CSS,
+// Colores de los documentos generados (PDF de presupuestos) y de los correos. Ni un PDF ni un correo
+// leen las variables CSS,
 // así que aquí van los MISMOS valores del tema claro de globals.css (:root), copiados tal cual.
 // Una prueba falla si dejan de coincidir: si cambia el tema, se cambian allá y aquí.
-// El papel usa --card (blanco), no --background (el fondo gris claro de la pantalla).
+// El papel usa --card (blanco); --background (gris claro) es el fondo alrededor del correo.
 const LIGHT_TOKENS = {
+  background: "#f2f2f1",
   card: "#ffffff",
   foreground: "#0f0f0f",
   muted: "#e6e6e4",
   "muted-foreground": "#6b6b6b",
   border: "#dcdcda",
   primary: "#0f0f0f",
+  "primary-foreground": "#f2f2f1",
   brand: "#960d13",
 } as const
 

@@ -11,6 +11,7 @@ describe("correos", () => {
   it("el del presupuesto se convierte a HTML", async () => {
     const html = await render(
       createElement(QuoteEmail, {
+        siteUrl: "https://example.com",
         companyName: "Tuestuchef",
         customerName: "Restaurante La Sazón",
         code: "TLT00002",

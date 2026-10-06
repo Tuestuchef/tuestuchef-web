@@ -21,6 +21,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:test": "vitest run src/common/lib/db/tests",
+    "email:auth": "vitest run -u src/modules/auth/components/emails",
     "create-first-owner": "node --env-file=.env.local scripts/create-first-owner.mjs",
     "create-first-owner:demo": "node --env-file=.env.staging.local scripts/create-first-owner.mjs"
   },

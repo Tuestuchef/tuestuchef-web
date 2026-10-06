@@ -89,6 +89,7 @@ export async function sendQuoteEmail(input: { quote: QuoteDetail; to: string; no
     replyTo: quote.createdBy.email ?? business.email ?? undefined,
     subject: `Presupuesto ${quote.code} · ${companyName}`,
     react: createElement(QuoteEmail, {
+      siteUrl: publicEnv.NEXT_PUBLIC_SITE_URL,
       companyName,
       customerName: quote.customer.name,
       code: quote.code,

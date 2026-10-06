@@ -1,6 +1,10 @@
-import { Body, Container, Head, Heading, Hr, Html, Link, Preview, Text } from "@react-email/components"
+import { Column, Row, Text } from "@react-email/components"
+
+import EmailLayout, { EmailButton, EmailHeading, EmailHighlight, EmailText } from "@/common/components/email/email-layout"
+import { documentTheme as t } from "@/common/lib/config/document-theme.config"
 
 type QuoteEmailProps = {
+  siteUrl: string
   companyName: string
   customerName: string
   code: string
@@ -11,39 +15,44 @@ type QuoteEmailProps = {
   sender: { name: string; phone: string | null; email: string | null }
 }
 
-// Correo con el presupuesto en PDF adjunto. Sin colores fijos: el cliente de correo usa los suyos.
-const QuoteEmail = ({ companyName, customerName, code, total, validUntil, note, link, sender }: QuoteEmailProps) => (
-  <Html lang="es">
-    <Head />
-    <Preview>{`Presupuesto ${code} de ${companyName} por ${total}`}</Preview>
-    <Body style={{ fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif", margin: 0, padding: "24px 12px" }}>
-      <Container style={{ maxWidth: 560 }}>
-        <Text style={{ fontSize: 12, margin: 0 }}>{companyName}</Text>
-        <Heading as="h1" style={{ fontSize: 20, margin: "8px 0 12px" }}>
-          Presupuesto {code}
-        </Heading>
-        <Text style={{ fontSize: 15, lineHeight: "22px", margin: "0 0 12px" }}>Hola{customerName ? ` ${customerName}` : ""},</Text>
-        <Text style={{ fontSize: 15, lineHeight: "22px", margin: "0 0 12px" }}>
-          Te enviamos el presupuesto <strong>{code}</strong> por <strong>{total}</strong>, válido hasta el {validUntil}. Va adjunto en PDF.
-        </Text>
-        {note && <Text style={{ fontSize: 15, lineHeight: "22px", margin: "0 0 12px", whiteSpace: "pre-line" }}>{note}</Text>}
-        {link && (
-          <Text style={{ fontSize: 15, lineHeight: "22px", margin: "0 0 12px" }}>
-            También puedes verlo aquí: <Link href={link}>Ver presupuesto</Link>
-          </Text>
-        )}
-        <Text style={{ fontSize: 15, lineHeight: "22px", margin: "16px 0 0" }}>
-          {sender.name}
-          <br />
-          {[sender.phone, sender.email].filter(Boolean).join(" · ")}
-          {(sender.phone || sender.email) && <br />}
-          {companyName}
-        </Text>
-        <Hr style={{ margin: "24px 0 12px" }} />
-        <Text style={{ fontSize: 12, margin: 0 }}>Responde a este correo para hablar con quien preparó el presupuesto. Este presupuesto no es una factura.</Text>
-      </Container>
-    </Body>
-  </Html>
+const label = { color: t["muted-foreground"], fontSize: 12, lineHeight: "16px", margin: "0 0 2px" }
+const value = { color: t.foreground, fontSize: 16, fontWeight: 700, lineHeight: "22px", margin: 0 }
+
+// Correo con el presupuesto en PDF adjunto. Responde a quien lo preparó.
+const QuoteEmail = ({ siteUrl, companyName, customerName, code, total, validUntil, note, link, sender }: QuoteEmailProps) => (
+  <EmailLayout
+    preview={`Presupuesto ${code} de ${companyName} por ${total}`}
+    siteUrl={siteUrl}
+    footer="Responde a este correo para hablar con quien preparó el presupuesto. Un presupuesto no es una factura."
+  >
+    <EmailHeading>Presupuesto {code}</EmailHeading>
+    <EmailText>Hola{customerName ? ` ${customerName}` : ""},</EmailText>
+    <EmailText>Te enviamos nuestro presupuesto. Va adjunto en PDF.</EmailText>
+
+    <EmailHighlight>
+      <Row>
+        <Column>
+          <Text style={label}>Total</Text>
+          <Text style={value}>{total}</Text>
+        </Column>
+        <Column align="right">
+          <Text style={{ ...label, textAlign: "right" }}>Válido hasta</Text>
+          <Text style={{ ...value, textAlign: "right" }}>{validUntil}</Text>
+        </Column>
+      </Row>
+    </EmailHighlight>
+
+    {note && <EmailText style={{ whiteSpace: "pre-line" }}>{note}</EmailText>}
+    {link && <EmailButton href={link}>Ver presupuesto</EmailButton>}
+
+    <EmailText style={{ margin: "20px 0 0" }}>
+      <strong>{sender.name}</strong>
+      <br />
+      {[sender.phone, sender.email].filter(Boolean).join(" · ")}
+      {(sender.phone || sender.email) && <br />}
+      {companyName}
+    </EmailText>
+  </EmailLayout>
 )
 
 export default QuoteEmail
