@@ -4,7 +4,9 @@ import { Card, CardContent } from "@/common/components/ui/card"
 import type { HelpTopicKey } from "@/common/lib/constants/help.constants"
 
 import CatalogItemDialog from "../components/catalog-item-dialog"
+import SizeSurchargesDialog from "../components/size-surcharges-dialog"
 import { listCatalog } from "../lib/services/catalog.service"
+import { listSizeSurcharges, listSurchargeableProducts } from "../lib/services/size-surcharges.service"
 import type { CatalogKind } from "../lib/types/products.types"
 
 const COPY: Record<
@@ -20,7 +22,7 @@ const COPY: Record<
   },
   sizes: {
     title: "Tallas",
-    description: "En el orden en que se muestran. La talla es opcional en cada variante.",
+    description: "En el orden en que se muestran. La talla es opcional en cada variante. Recargo: lo que cuesta de más esa talla en ciertos productos (p. ej. 3XL).",
     noun: "talla",
     codeHint: "Ej.: XL",
     help: "sizes",
@@ -36,7 +38,12 @@ const COPY: Record<
 
 // Pantalla común para las tres listas editables.
 const CatalogScreen = async ({ kind }: { kind: CatalogKind }) => {
-  const items = await listCatalog(kind)
+  const isSizes = kind === "sizes"
+  const [items, surcharges, products] = await Promise.all([
+    listCatalog(kind),
+    isSizes ? listSizeSurcharges() : Promise.resolve({} as Record<string, Record<string, number>>),
+    isSizes ? listSurchargeableProducts() : Promise.resolve([]),
+  ])
   const copy = COPY[kind]
 
   return (
@@ -58,6 +65,8 @@ const CatalogScreen = async ({ kind }: { kind: CatalogKind }) => {
                   <span className="min-w-0 flex-1 truncate font-medium">{item.name}</span>
                   <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{item.code}</code>
                   {!item.is_active && <StatusBadge tone="warning">Inactivo</StatusBadge>}
+                  {/* Solo tallas: productos que cobran más en esta talla. */}
+                  {isSizes && <SizeSurchargesDialog size={item} products={products} current={surcharges[item.id] ?? {}} />}
                   <CatalogItemDialog kind={kind} noun={copy.noun} codeHint={copy.codeHint} item={item} />
                 </li>
               ))}

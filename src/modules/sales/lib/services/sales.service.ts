@@ -7,6 +7,7 @@ import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.se
 
 import type { PaymentStatus, SaleItemStatus } from "../constants/sales.constants"
 import type { AddPaymentInput, CreateSaleInput } from "../schemas/sales.schema"
+import { round } from "../utils/sale-math.util"
 import type {
   ReceivableGroup,
   SaleDetail,
@@ -35,11 +36,11 @@ const fullName = (c: { first_name: string; last_name: string | null } | null) =>
 // Todo lo que necesita la pantalla de venta, en una sola carga.
 export async function getSaleFormData(): Promise<SaleFormData> {
   const supabase = await createSupabaseServerClient()
-  const [variantsResult, balancesResult, pricesResult, methodsResult, settingsResult, rateStatus, componentsResult, tiersResult] = await Promise.all([
+  const [variantsResult, balancesResult, pricesResult, methodsResult, settingsResult, rateStatus, componentsResult, tiersResult, surchargesResult] = await Promise.all([
     supabase
       .from("product_variants")
       .select(
-        "id, sku, product_id, color:colors(name), size:sizes(name), product:products!inner(name, kind, is_active, fulfillment_type)"
+        "id, sku, product_id, size_id, color:colors(name), size:sizes(name), product:products!inner(name, kind, is_active, fulfillment_type)"
       )
       .eq("is_active", true)
       .eq("product.is_active", true)
@@ -60,6 +61,7 @@ export async function getSaleFormData(): Promise<SaleFormData> {
       .select("combo_product_id, component_product_id, quantity, product:products!combo_components_component_product_id_fkey(name)")
       .order("sort_order"),
     supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "products").order("min_quantity"),
+    supabase.from("size_surcharges").select("product_id, size_id, amount_usd"),
   ])
   if (variantsResult.error) throw variantsResult.error
   if (methodsResult.error) throw methodsResult.error
@@ -70,6 +72,14 @@ export async function getSaleFormData(): Promise<SaleFormData> {
     const byMethod = prices.get(price.product_id) ?? {}
     byMethod[price.payment_method_id] = Number(price.amount_usd)
     prices.set(price.product_id, byMethod)
+  }
+
+  // Recargo por talla (solo productos terminados): se suma al precio de cada método, igual que en la base.
+  const surcharges = new Map((surchargesResult.data ?? []).map((r) => [`${r.product_id}|${r.size_id}`, Number(r.amount_usd)]))
+  const pricesFor = (variant: { product_id: string; size_id: string | null; product: { kind: string } }) => {
+    const base = prices.get(variant.product_id) ?? {}
+    const extra = variant.product.kind === "finished_good" && variant.size_id ? (surcharges.get(`${variant.product_id}|${variant.size_id}`) ?? 0) : 0
+    return extra ? Object.fromEntries(Object.entries(base).map(([method, amount]) => [method, round(amount + extra)])) : base
   }
 
   const components = new Map<string, NonNullable<SellableVariant["components"]>>()
@@ -92,7 +102,7 @@ export async function getSaleFormData(): Promise<SaleFormData> {
         variantLabel: v.product.kind === "combo" ? "Combo" : variantLabel(v),
         fulfillmentType: v.product.fulfillment_type,
         stock: stock.get(v.id) ?? 0,
-        pricesUsd: prices.get(v.product_id) ?? {},
+        pricesUsd: pricesFor(v),
         ...(v.product.kind === "combo" && { components: components.get(v.product_id) }),
       })),
     methods: methodsResult.data.map((m) => ({

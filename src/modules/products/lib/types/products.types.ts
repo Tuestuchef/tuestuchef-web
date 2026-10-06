@@ -11,6 +11,9 @@ import type {
 } from "../constants/products.constants"
 
 // Listas editables con la misma forma: categorías de producto, tallas y colores.
+// Producto que puede llevar recargo por talla (terminado y activo).
+export type SizeSurchargeProduct = { id: string; name: string; categoryName: string }
+
 export type CatalogKind = "product_categories" | "sizes" | "colors"
 export type CatalogItem = Tables<"sizes">
 

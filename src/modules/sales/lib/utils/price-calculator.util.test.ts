@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { CalculatorProduct, SalePaymentMethod } from "../types/sales.types"
-import { calculatorTotals, calculatorWhatsappText } from "./price-calculator.util"
+import { calculatorTotals, calculatorWhatsappText, sizeSurchargeSummary } from "./price-calculator.util"
 
 const METHODS: SalePaymentMethod[] = [
   { id: "cash", name: "Efectivo", currency: "USD", rateKind: "none" },
@@ -20,6 +20,7 @@ const product = (over: Partial<CalculatorProduct>): CalculatorProduct => ({
   imageUrl: null,
   pricesUsd: {},
   piecesPerUnit: 1,
+  sizeSurcharges: [],
   ...over,
 })
 
@@ -96,5 +97,23 @@ describe("calculadora de precios", () => {
       "• USD: $ 43,00",
       "• Pago móvil: Bs 1.920,00",
     ])
+  })
+
+  it("resume el recargo por talla en una línea", () => {
+    expect(sizeSurchargeSummary([])).toBeNull()
+    expect(sizeSurchargeSummary([{ sizeName: "3XL", amountUsd: 3 }])).toBe("3XL: +$ 3,00")
+    expect(
+      sizeSurchargeSummary([
+        { sizeName: "3XL", amountUsd: 3 },
+        { sizeName: "6XL", amountUsd: 3 },
+      ])
+    ).toBe("3XL–6XL: +$ 3,00")
+    expect(
+      sizeSurchargeSummary([
+        { sizeName: "3XL", amountUsd: 3 },
+        { sizeName: "4XL", amountUsd: 4 },
+        { sizeName: "6XL", amountUsd: 6 },
+      ])
+    ).toBe("3XL–6XL: +$ 3,00 a +$ 6,00")
   })
 })

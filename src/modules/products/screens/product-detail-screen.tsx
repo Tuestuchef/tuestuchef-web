@@ -34,11 +34,13 @@ import { listCatalog } from "../lib/services/catalog.service"
 import { listComboComponentOptions, listComboComponents } from "../lib/services/combos.service"
 import { getProductDetail } from "../lib/services/products.service"
 import { listMaterialOptions, listProductMargins, listRecipe } from "../lib/services/recipes.service"
+import { formatMoney } from "@/common/lib/utils/format-money.util"
+import { listProductSurcharges } from "../lib/services/size-surcharges.service"
 import { listStockMovements } from "../lib/services/stock.service"
 
 const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string }) => {
   const canManage = isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)
-  const [detail, categories, colors, sizes, methods, movements, recipe, materials, margins] = await Promise.all([
+  const [detail, categories, colors, sizes, methods, movements, recipe, materials, margins, surcharges] = await Promise.all([
     getProductDetail(id),
     listCatalog("product_categories"),
     listCatalog("colors"),
@@ -49,6 +51,7 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
     canManage ? listMaterialOptions() : Promise.resolve([]),
     // Márgenes: solo owner y admin (la función devuelve 0 filas a staff).
     canManage ? listProductMargins(id) : Promise.resolve([]),
+    listProductSurcharges(id),
   ])
   if (!detail) notFound()
 
@@ -153,6 +156,13 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
           </CardHeader>
           <CardContent>
             <PriceGrid productId={product.id} methods={priceMethods} prices={prices} canManage={canManage} />
+            {surcharges.length > 0 && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">Recargo por talla:</span>{" "}
+                {surcharges.map((s) => `${s.sizeName} +${formatMoney(s.amountUsd, "USD")}`).join(" · ")}. Se suma en todos los métodos; se
+                cambia en Configuración → Tallas.
+              </p>
+            )}
           </CardContent>
         </Card>
       )}

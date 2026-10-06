@@ -318,6 +318,15 @@ export const HELP_TOPICS = {
           "Orden: menor aparece primero.",
         ],
       },
+      {
+        heading: "Recargo por talla",
+        items: [
+          "Recargo (en la fila de la talla): los productos que cuestan más en esa talla y cuánto más, en USD (p. ej. 3XL +$3 en las filipinas).",
+          "Marca los productos (o toda una categoría), escribe el monto o usa 'Mismo monto para los marcados', y guarda. Vacío quita el recargo.",
+          "Se suma al precio del producto en todos los métodos de pago (en Bs, con la tasa del día) al vender, en pedidos y en presupuestos. Lo ya vendido no cambia.",
+          "No aplica a combos ni a la personalización.",
+        ],
+      },
     ],
   },
 
@@ -1197,6 +1206,7 @@ export const HELP_TOPICS = {
           "Uno por método de pago, con su propia lista de precios y en su moneda.",
           "Los Bs son el precio de ese método × la tasa BCV de hoy, igual que al vender.",
           "El descuento al mayor se aplica solo, por piezas (un combo cuenta sus piezas).",
+          "La calculadora no elige talla: si un producto tiene recargo por talla, lo avisa debajo (p. ej. 'Tallas 3XL–6XL: +$ 3,00').",
           "Si un producto no tiene precio en un método, se avisa y no entra en ese total.",
         ],
       },

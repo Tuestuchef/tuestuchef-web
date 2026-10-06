@@ -86,7 +86,12 @@ export const INVENTORY_CHAPTER: ManualChapter = {
         {
           kind: "effects",
           items: [
-            { icon: TagIcon, title: "Precios", effect: "Uno en dólares por método de pago. Vacío = no se vende por ese método.", chapter: "ventas" },
+            {
+              icon: TagIcon,
+              title: "Precios",
+              effect: "Uno en dólares por método de pago, igual para todas las variantes. Vacío = no se vende por ese método. Las tallas con recargo (Configuración → Tallas) suman su extra.",
+              chapter: "ventas",
+            },
             { icon: ImageIcon, title: "Fotos", effect: "Varias por producto, una principal, y cada una puede ir con un color." },
             { icon: PackageMinusIcon, title: "Stock mínimo", effect: "Al llegar a ese número la variante se marca como stock bajo." },
             { icon: LayersIcon, title: "Inventario o por encargo", effect: "Por encargo: se fabrica al venderse y no lleva stock." },

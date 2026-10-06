@@ -587,6 +587,51 @@ export type Database = {
         }
         Relationships: []
       }
+      size_surcharges: {
+        Row: {
+          amount_usd: number
+          created_at: string
+          created_by: string
+          product_id: string
+          size_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amount_usd: number
+          created_at?: string
+          created_by?: string
+          product_id: string
+          size_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amount_usd?: number
+          created_at?: string
+          created_by?: string
+          product_id?: string
+          size_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "size_surcharges_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "size_surcharges_size_id_fkey"
+            columns: ["size_id"]
+            isOneToOne: false
+            referencedRelation: "sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sizes: {
         Row: {
           code: string
@@ -4513,6 +4558,10 @@ export type Database = {
       create_order: {
         Args: { p_customer_id: string; p_price_method_id: string; p_channel: Database["public"]["Enums"]["sale_channel"]; p_delivery_method: Database["public"]["Enums"]["delivery_method"]; p_items: Json; p_stock_mode: Database["public"]["Enums"]["order_stock_mode"]; p_promised_date?: string; p_payments?: Json; p_delivery_fee_usd?: number; p_discount_type?: Database["public"]["Enums"]["discount_type"]; p_discount_value?: number; p_discount_reason?: string; p_notes?: string; p_occurred_at?: string; p_vat_percent?: number }
         Returns: string
+      }
+      variant_price_usd: {
+        Args: { p_method_id: string; p_variant_id: string }
+        Returns: number
       }
       volume_discount_percent: {
         Args: { p_scope: Database["public"]["Enums"]["volume_discount_scope"]; p_quantity: number }

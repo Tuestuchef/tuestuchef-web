@@ -10,7 +10,7 @@ import type { CalculatorProduct, PriceCalculatorData } from "../types/sales.type
 // Lo que necesita la calculadora: los mismos precios, métodos, tasa y tramos al mayor que Nueva venta.
 export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
   const supabase = await createSupabaseServerClient()
-  const [productsResult, pricesResult, componentsResult, methodsResult, tiersResult, rateStatus] = await Promise.all([
+  const [productsResult, pricesResult, componentsResult, methodsResult, tiersResult, rateStatus, surchargesResult] = await Promise.all([
     supabase
       .from("products")
       .select(
@@ -31,6 +31,7 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
       .order("name"),
     supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "products").order("min_quantity"),
     getRateStatus(),
+    supabase.from("size_surcharges").select("product_id, amount_usd, size:sizes(name, sort_order)"),
   ])
   if (productsResult.error) throw productsResult.error
   if (methodsResult.error) throw methodsResult.error
@@ -44,6 +45,13 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
   const comboPieces = new Map<string, number>()
   for (const row of componentsResult.data ?? []) {
     comboPieces.set(row.combo_product_id, (comboPieces.get(row.combo_product_id) ?? 0) + Number(row.quantity))
+  }
+
+  const surcharges = new Map<string, { sizeName: string; amountUsd: number; sort: number }[]>()
+  for (const row of surchargesResult.data ?? []) {
+    const list = surcharges.get(row.product_id) ?? []
+    list.push({ sizeName: row.size?.name ?? "—", amountUsd: Number(row.amount_usd), sort: row.size?.sort_order ?? 0 })
+    surcharges.set(row.product_id, list)
   }
 
   const products: CalculatorProduct[] = await Promise.all(
@@ -63,6 +71,9 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
           imageUrl: primary ? await resolveImageUrl(primary.path) : null,
           pricesUsd: prices.get(p.id) ?? {},
           piecesPerUnit: p.kind === "combo" ? (comboPieces.get(p.id) ?? 1) : 1,
+          sizeSurcharges: (surcharges.get(p.id) ?? [])
+            .sort((a, b) => a.sort - b.sort)
+            .map(({ sizeName, amountUsd }) => ({ sizeName, amountUsd })),
         }
       })
   )

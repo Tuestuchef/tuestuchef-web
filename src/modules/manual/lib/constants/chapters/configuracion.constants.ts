@@ -194,10 +194,28 @@ export const SETTINGS_CHAPTER: ManualChapter = {
             "Son las listas del catálogo. Su **código** forma el SKU de cada variante (ver el capítulo de Inventario). Cambiar un código no modifica los SKU que ya existen.",
         },
         {
+          kind: "steps",
+          items: [
+            { title: "Abre la talla", body: "En **Configuración → Tallas**, toca **Recargo** en la fila de la talla (p. ej. 3XL)." },
+            {
+              title: "Marca los productos",
+              body: "Uno por uno o **Marcar todos** de una categoría. Escribe el monto extra en USD, o ponlo una vez en **Mismo monto para los marcados** → **Aplicar**.",
+            },
+            {
+              title: "Guarda",
+              body: "Desde ese momento, una venta, un pedido o un presupuesto de esa talla suma el recargo al precio en todos los métodos (en Bs, con la tasa del día). Lo ya vendido no cambia. No aplica a combos ni a la personalización.",
+            },
+          ],
+        },
+        {
           kind: "effects",
           items: [
             { icon: TagsIcon, title: "Categorías de producto", effect: "Filipinas (FIL), Delantales (DEL)… Primera parte del SKU.", chapter: "inventario" },
-            { icon: RulerIcon, title: "Tallas", effect: "S, M, L, XL… en el orden en que se muestran. Opcionales por variante." },
+            {
+              icon: RulerIcon,
+              title: "Tallas",
+              effect: "S, M, L, XL… en el orden en que se muestran. Opcionales por variante. Con Recargo, una talla puede costar más en ciertos productos (p. ej. 3XL +$3 en filipinas).",
+            },
             { icon: PaletteIcon, title: "Colores", effect: "Negro (NEG), Vinotinta (VIN)… También se usan en fotos y recetas." },
           ],
         },

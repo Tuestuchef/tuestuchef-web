@@ -12,7 +12,7 @@ import { formatMoney, formatRate } from "@/common/lib/utils/format-money.util"
 
 import { PRICE_CALCULATOR_MESSAGES, PRICE_CALCULATOR_STORAGE_KEY } from "../lib/constants/sales.constants"
 import type { CalculatorProduct, PriceCalculatorData } from "../lib/types/sales.types"
-import { type CalculatorLine, calculatorTotals, calculatorWhatsappText } from "../lib/utils/price-calculator.util"
+import { type CalculatorLine, calculatorTotals, calculatorWhatsappText, sizeSurchargeSummary } from "../lib/utils/price-calculator.util"
 
 const ALL = "all"
 
@@ -177,7 +177,13 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
               const product = byId.get(line.productId)!
               return (
                 <li key={line.productId} className="flex items-center gap-2 py-2">
-                  <span className="min-w-0 flex-1 text-sm">{product.name}</span>
+                  <span className="grid min-w-0 flex-1">
+                    <span className="text-sm">{product.name}</span>
+                    {/* La calculadora no elige talla: avisa el recargo de las tallas que lo tienen. */}
+                    {product.sizeSurcharges.length > 0 && (
+                      <span className="text-xs text-muted-foreground">Tallas {sizeSurchargeSummary(product.sizeSurcharges)}</span>
+                    )}
+                  </span>
                   <Button variant="outline" size="icon" className="size-9 md:size-7" onClick={() => change(line.productId, -1)} aria-label={`Quitar un ${product.name}`}>
                     <MinusIcon aria-hidden />
                   </Button>
