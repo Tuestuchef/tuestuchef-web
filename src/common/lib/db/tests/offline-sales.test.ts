@@ -38,7 +38,10 @@ beforeAll(async () => {
   owner = asUser(db, OWNER)
   staff = asUser(db, STAFF, { aal: "aal1" })
 
+  // Tasa de hoy y de ayer: la venta se hizo "hace 2 horas", que poco después de medianoche (Caracas)
+  // ya es ayer y necesita la tasa de ese día. Sin la de ayer, la prueba fallaba según la hora.
   await owner("insert into public.exchange_rates (bcv_usd, bcv_eur, binance_usdt) values (40, 44, 50)")
+  await owner("insert into public.exchange_rates (rate_date, bcv_usd, bcv_eur, binance_usdt) values (public.caracas_today() - 1, 40, 44, 50)")
   const account = await one(owner<{ id: string }>("insert into public.accounts (name, currency, kind) values ('Caja', 'USD', 'cash') returning id"))
   ids.cash = (
     await one(
