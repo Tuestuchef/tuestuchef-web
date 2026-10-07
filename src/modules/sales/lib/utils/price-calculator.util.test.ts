@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { CalculatorProduct, SalePaymentMethod } from "../types/sales.types"
-import { calculatorTotals, calculatorWhatsappText, sizeSurchargeSummary } from "./price-calculator.util"
+import { calculatorTotals, calculatorWhatsappText, colorSurchargeSummary, sizeSurchargeSummary } from "./price-calculator.util"
 
 const METHODS: SalePaymentMethod[] = [
   { id: "cash", name: "Efectivo", currency: "USD", rateKind: "none" },
@@ -21,6 +21,7 @@ const product = (over: Partial<CalculatorProduct>): CalculatorProduct => ({
   pricesUsd: {},
   piecesPerUnit: 1,
   sizeSurcharges: [],
+  colorSurcharges: [],
   ...over,
 })
 
@@ -101,19 +102,29 @@ describe("calculadora de precios", () => {
 
   it("resume el recargo por talla en una línea", () => {
     expect(sizeSurchargeSummary([])).toBeNull()
-    expect(sizeSurchargeSummary([{ sizeName: "3XL", amountUsd: 3 }])).toBe("3XL: +$ 3,00")
+    expect(sizeSurchargeSummary([{ name: "3XL", amountUsd: 3 }])).toBe("3XL: +$ 3,00")
     expect(
       sizeSurchargeSummary([
-        { sizeName: "3XL", amountUsd: 3 },
-        { sizeName: "6XL", amountUsd: 3 },
+        { name: "3XL", amountUsd: 3 },
+        { name: "6XL", amountUsd: 3 },
       ])
     ).toBe("3XL–6XL: +$ 3,00")
     expect(
       sizeSurchargeSummary([
-        { sizeName: "3XL", amountUsd: 3 },
-        { sizeName: "4XL", amountUsd: 4 },
-        { sizeName: "6XL", amountUsd: 6 },
+        { name: "3XL", amountUsd: 3 },
+        { name: "4XL", amountUsd: 4 },
+        { name: "6XL", amountUsd: 6 },
       ])
     ).toBe("3XL–6XL: +$ 3,00 a +$ 6,00")
+  })
+
+  it("resume el recargo por color", () => {
+    expect(colorSurchargeSummary([])).toBeNull()
+    expect(
+      colorSurchargeSummary([
+        { name: "Pata de gallo", amountUsd: 2 },
+        { name: "Camuflaje", amountUsd: 3 },
+      ])
+    ).toBe("Pata de gallo +$ 2,00 · Camuflaje +$ 3,00")
   })
 })

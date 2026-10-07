@@ -36,11 +36,11 @@ const fullName = (c: { first_name: string; last_name: string | null } | null) =>
 // Todo lo que necesita la pantalla de venta, en una sola carga.
 export async function getSaleFormData(): Promise<SaleFormData> {
   const supabase = await createSupabaseServerClient()
-  const [variantsResult, balancesResult, pricesResult, methodsResult, settingsResult, rateStatus, componentsResult, tiersResult, surchargesResult] = await Promise.all([
+  const [variantsResult, balancesResult, pricesResult, methodsResult, settingsResult, rateStatus, componentsResult, tiersResult, surchargesResult, colorSurchargesResult] = await Promise.all([
     supabase
       .from("product_variants")
       .select(
-        "id, sku, product_id, size_id, color:colors(name), size:sizes(name), product:products!inner(name, kind, is_active, fulfillment_type)"
+        "id, sku, product_id, size_id, color_id, color:colors(name), size:sizes(name), product:products!inner(name, kind, is_active, fulfillment_type)"
       )
       .eq("is_active", true)
       .eq("product.is_active", true)
@@ -62,6 +62,7 @@ export async function getSaleFormData(): Promise<SaleFormData> {
       .order("sort_order"),
     supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "products").order("min_quantity"),
     supabase.from("size_surcharges").select("product_id, size_id, amount_usd"),
+    supabase.from("color_surcharges").select("product_id, color_id, amount_usd"),
   ])
   if (variantsResult.error) throw variantsResult.error
   if (methodsResult.error) throw methodsResult.error
@@ -74,11 +75,16 @@ export async function getSaleFormData(): Promise<SaleFormData> {
     prices.set(price.product_id, byMethod)
   }
 
-  // Recargo por talla (solo productos terminados): se suma al precio de cada método, igual que en la base.
-  const surcharges = new Map((surchargesResult.data ?? []).map((r) => [`${r.product_id}|${r.size_id}`, Number(r.amount_usd)]))
-  const pricesFor = (variant: { product_id: string; size_id: string | null; product: { kind: string } }) => {
+  // Recargo por talla y por color (solo productos terminados): se suman al precio de cada método,
+  // igual que variant_price_usd en la base.
+  const sizeExtra = new Map((surchargesResult.data ?? []).map((r) => [`${r.product_id}|${r.size_id}`, Number(r.amount_usd)]))
+  const colorExtra = new Map((colorSurchargesResult.data ?? []).map((r) => [`${r.product_id}|${r.color_id}`, Number(r.amount_usd)]))
+  const pricesFor = (variant: { product_id: string; size_id: string | null; color_id: string | null; product: { kind: string } }) => {
     const base = prices.get(variant.product_id) ?? {}
-    const extra = variant.product.kind === "finished_good" && variant.size_id ? (surcharges.get(`${variant.product_id}|${variant.size_id}`) ?? 0) : 0
+    const extra =
+      variant.product.kind === "finished_good"
+        ? (sizeExtra.get(`${variant.product_id}|${variant.size_id}`) ?? 0) + (colorExtra.get(`${variant.product_id}|${variant.color_id}`) ?? 0)
+        : 0
     return extra ? Object.fromEntries(Object.entries(base).map(([method, amount]) => [method, round(amount + extra)])) : base
   }
 

@@ -12,7 +12,7 @@ import { formatMoney, formatRate } from "@/common/lib/utils/format-money.util"
 
 import { PRICE_CALCULATOR_MESSAGES, PRICE_CALCULATOR_STORAGE_KEY } from "../lib/constants/sales.constants"
 import type { CalculatorProduct, PriceCalculatorData } from "../lib/types/sales.types"
-import { type CalculatorLine, calculatorTotals, calculatorWhatsappText, sizeSurchargeSummary } from "../lib/utils/price-calculator.util"
+import { type CalculatorLine, calculatorTotals, calculatorWhatsappText, colorSurchargeSummary, sizeSurchargeSummary } from "../lib/utils/price-calculator.util"
 
 const ALL = "all"
 
@@ -179,9 +179,12 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
                 <li key={line.productId} className="flex items-center gap-2 py-2">
                   <span className="grid min-w-0 flex-1">
                     <span className="text-sm">{product.name}</span>
-                    {/* La calculadora no elige talla: avisa el recargo de las tallas que lo tienen. */}
+                    {/* La calculadora no elige talla ni color: avisa los recargos que tiene el producto. */}
                     {product.sizeSurcharges.length > 0 && (
                       <span className="text-xs text-muted-foreground">Tallas {sizeSurchargeSummary(product.sizeSurcharges)}</span>
+                    )}
+                    {product.colorSurcharges.length > 0 && (
+                      <span className="text-xs text-muted-foreground">{colorSurchargeSummary(product.colorSurcharges)}</span>
                     )}
                   </span>
                   <Button variant="outline" size="icon" className="size-9 md:size-7" onClick={() => change(line.productId, -1)} aria-label={`Quitar un ${product.name}`}>

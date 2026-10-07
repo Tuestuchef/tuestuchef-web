@@ -21,23 +21,23 @@ Los precios se cargan por método de pago, así que primero deben existir los m�
 
 **Configuración → Cuentas → Nuevo**
 
-| Nombre (ejemplo) | Tipo | Moneda |
-|---|---|---|
-| Banco (pago móvil) | Banco | VES |
-| Caja dólares | Efectivo | USD |
-| Zelle | Zelle | USD |
-| Binance | Billetera cripto | USDT |
+| Nombre (ejemplo)   | Tipo             | Moneda |
+| ------------------ | ---------------- | ------ |
+| Banco (pago móvil) | Banco            | VES    |
+| Caja dólares       | Efectivo         | USD    |
+| Zelle              | Zelle            | USD    |
+| Binance            | Billetera cripto | USDT   |
 
 - [ ] Las 4 cuentas existen (la moneda no se puede cambiar después).
 
 **Configuración → Métodos de pago → Nuevo método**
 
-| Nombre | Cuenta donde cae el dinero | Tasa para cobrar en Bs | Orden |
-|---|---|---|---|
-| Pago móvil | Banco (pago móvil) | Tasa BCV dólar | 1 |
-| Efectivo | Caja dólares | — | 2 |
-| Zelle | Zelle | — | 3 |
-| USDT | Binance | — | 4 |
+| Nombre     | Cuenta donde cae el dinero | Tasa para cobrar en Bs | Orden |
+| ---------- | -------------------------- | ---------------------- | ----- |
+| Pago móvil | Banco (pago móvil)         | Tasa BCV dólar         | 1     |
+| Efectivo   | Caja dólares               | —                      | 2     |
+| Zelle      | Zelle                      | —                      | 3     |
+| USDT       | Binance                    | —                      | 4     |
 
 - [ ] Los 4 métodos existen y están activos.
 - [ ] **Efectivo** va antes que **Zelle** en el orden: el mensaje de WhatsApp de la calculadora usa el primer método en dólares como "USD".
@@ -48,13 +48,13 @@ Los precios se cargan por método de pago, así que primero deben existir los m�
 
 **Configuración → Categorías de producto → Nuevo**
 
-| Nombre | Código | Orden |
-|---|---|---|
-| Filipinas | FIL | 1 |
-| Pantalones | PAN | 2 |
-| Estuches | EST | 3 |
-| Delantales | DEL | 4 |
-| Gorros | GOR | 5 |
+| Nombre     | Código | Orden |
+| ---------- | ------ | ----- |
+| Filipinas  | FIL    | 1     |
+| Pantalones | PAN    | 2     |
+| Estuches   | EST    | 3     |
+| Delantales | DEL    | 4     |
+| Gorros     | GOR    | 5     |
 
 - [ ] Las 5 categorías existen.
 
@@ -76,25 +76,25 @@ Los precios se cargan por método de pago, así que primero deben existir los m�
 
 **Configuración → Colores → Nuevo**
 
-| Nombre | Código | Se usa en |
-|---|---|---|
-| Negro | NEG | todo |
-| Blanco | BLA | filipinas, delantales, gorros |
-| Vinotinto | VIN | filipinas |
-| Verde militar | VMI | filipinas |
-| Azul marino | AZM | filipinas |
-| Gris plomo | GPL | filipinas, delantales, gorros |
-| Gris hércules | GHE | filipinas |
-| Kaki | KAK | filipinas, delantales, gorros |
-| Azul eléctrico | AZE | estuches, delantales, gorros |
-| Gris | GRI | pantalones, estuches (bordes) · distinto del gris plomo y del gris hércules |
-| Pata de gallo | PDG | pantalones |
-| Morado | MOR | estuches (bordes) |
-| Naranja | NAR | estuches (bordes) |
-| Verde neón | VNE | estuches (bordes) |
-| Dorado | DOR | estuches (bordes) |
-| Fucsia | FUC | estuches (bordes) |
-| Rosa | ROS | estuches (bordes) |
+| Nombre         | Código | Se usa en                                                                   |
+| -------------- | ------ | --------------------------------------------------------------------------- |
+| Negro          | NEG    | todo                                                                        |
+| Blanco         | BLA    | filipinas, delantales, gorros                                               |
+| Vinotinto      | VIN    | filipinas                                                                   |
+| Verde militar  | VMI    | filipinas                                                                   |
+| Azul marino    | AZM    | filipinas                                                                   |
+| Gris plomo     | GPL    | filipinas, delantales, gorros                                               |
+| Gris hércules  | GHE    | filipinas                                                                   |
+| Kaki           | KAK    | filipinas, delantales, gorros                                               |
+| Azul eléctrico | AZE    | estuches, delantales, gorros                                                |
+| Gris           | GRI    | pantalones, estuches (bordes) · distinto del gris plomo y del gris hércules |
+| Pata de gallo  | PDG    | pantalones                                                                  |
+| Morado         | MOR    | estuches (bordes)                                                           |
+| Naranja        | NAR    | estuches (bordes)                                                           |
+| Verde neón     | VNE    | estuches (bordes)                                                           |
+| Dorado         | DOR    | estuches (bordes)                                                           |
+| Fucsia         | FUC    | estuches (bordes)                                                           |
+| Rosa           | ROS    | estuches (bordes)                                                           |
 
 - [ ] Los 17 colores existen.
 
@@ -140,14 +140,12 @@ Tallas de filipinas: **S, M, L, XL, 2XL, 3XL, 4XL, 5XL y 6XL**. Hasta 2XL cuesta
 - [ ] **Filipina manga larga botón** · Cierre: Botones · Colores: Blanco, Negro, Vinotinto, Verde militar, Azul marino, Kaki · 54 variantes · SKU ej.: `FIL-ML-BO-BLA-S`
 - [ ] **Filipina manga larga cierre** · Cierre: Cierre · Colores: Negro, Blanco, Gris plomo, Vinotinto, Verde militar, Azul marino, Kaki · 63 variantes · SKU ej.: `FIL-ML-CI-NEG-S`
 
-\### Pantalones · sin código de modelo (el corte ya los distingue)
+### Pantalones · sin código de modelo (el corte ya los distingue)
 
-El precio es por producto, por eso **pata de gallo va como producto aparte** (cuesta $2 más). **Tallas:** las que de verdad usan (créalas en el paso 3 si faltan); en el SKU van al final: `PAN-RE-NEG-M`.
+Pata de gallo es un **color** más del pantalón, con un **recargo de +$2** (paso 6b). **Tallas:** las que de verdad usan (créalas en el paso 3 si faltan); en el SKU van al final: `PAN-RE-NEG-M`.
 
-- [ ] **Pantalón de cocina recto** · Corte: Recto · Colores: Negro, Gris · **$25** · SKU ej.: `PAN-RE-NEG-M`
-- [ ] **Pantalón de cocina recto pata de gallo** · Corte: Recto · Color: Pata de gallo · **$27** · SKU ej.: `PAN-RE-PDG-M`
-- [ ] **Pantalón jogger** · Corte: Jogger · Colores: Negro, Gris · **$27** · SKU ej.: `PAN-JG-NEG-M`
-- [ ] **Pantalón jogger pata de gallo** · Corte: Jogger · Color: Pata de gallo · **$29** · SKU ej.: `PAN-JG-PDG-M`
+- [ ] **Pantalón de cocina recto** · Corte: Recto · Colores: Negro, Gris, Pata de gallo · **$25** (pata de gallo: $27 con el recargo) · SKU ej.: `PAN-RE-NEG-M`, `PAN-RE-PDG-M`
+- [ ] **Pantalón jogger** · Corte: Jogger · Colores: Negro, Gris, Pata de gallo · **$27** (pata de gallo: $29 con el recargo) · SKU ej.: `PAN-JG-NEG-M`, `PAN-JG-PDG-M`
 
 ### Estuches para cuchillos · sin tallas
 
@@ -173,7 +171,7 @@ Colores de los tres: Negro, Gris plomo, Azul eléctrico, Kaki, Blanco · 5 varia
 
 ---
 
-## Paso 6b · Recargo de las tallas grandes
+## Paso 6b · Recargos: tallas grandes y pata de gallo
 
 Con las filipinas ya creadas:
 
@@ -183,7 +181,16 @@ Con las filipinas ya creadas:
 
 - [ ] Recargo cargado en 3XL, 4XL, 5XL y 6XL.
 
-> El recargo se suma al precio en todos los métodos (en Pago móvil, convertido a Bs con la tasa del día). En la página de cada filipina, debajo de **Precios**, se ve "Recargo por talla: 3XL +$… · 4XL +$…". La calculadora lo avisa debajo del producto.
+Y con los pantalones ya creados:
+
+4. **Configuración → Colores** → en la fila de **Pata de gallo**, toca **Recargo**.
+5. En **Pantalones**, toca **Marcar todos**, escribe **2** en **Mismo monto para los marcados** → **Aplicar** → **Guardar recargos**.
+
+- [ ] Recargo de +$2 en Pata de gallo para los dos pantalones.
+
+> Si un pantalón pata de gallo es además de una talla con recargo, se suman los dos.
+
+> El recargo se suma al precio en todos los métodos (en Pago móvil, convertido a Bs con la tasa del día). En la página de cada producto, debajo de **Precios**, se ve "Recargo por talla: 3XL +$…" y "Recargo por color: Pata de gallo +$ 2,00". La calculadora lo avisa debajo del producto.
 
 ---
 
@@ -213,7 +220,7 @@ Todos los productos son "Inmediato y bajo pedido", así que todos pueden recibir
 
 ## Pendiente
 
-1. **Tallas de los pantalones.** No están en la lista: créalas en el paso 3 si faltan, úsalas en **Colores × tallas** y agrega sus filas a la carga inicial (`PAN-RE-NEG-<talla>`, `PAN-RE-GRI-<talla>`, `PAN-RE-PDG-<talla>`, `PAN-JG-NEG-<talla>`, `PAN-JG-GRI-<talla>`, `PAN-JG-PDG-<talla>`).
+1. **Tallas de los pantalones.** No están en la lista: créalas en el paso 3 si faltan, úsalas en **Colores × tallas** y agrega sus filas a la carga inicial (`PAN-RE-NEG-<talla>`, `PAN-RE-GRI-<talla>`, `PAN-RE-PDG-<talla>`, `PAN-JG-NEG-<talla>`, `PAN-JG-GRI-<talla>`, `PAN-JG-PDG-<talla>`; son 2 productos con 3 colores cada uno).
 2. **Combos y personalización** (bordados, logos): no están en la lista. Se configuran después, en **Inventario → Combos** y **Configuración → Pedidos y personalización**.
 
 Confirmado: kaki existe en manga 3/4 y larga con broche; el delantal denim lleva los mismos cinco colores que el de servicio; el **Gris** de pantalones y estuches es distinto del gris plomo; todo se despacha **inmediato y bajo pedido**.

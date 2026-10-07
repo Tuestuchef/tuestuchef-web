@@ -515,6 +515,51 @@ export type Database = {
           },
         ]
       }
+      color_surcharges: {
+        Row: {
+          amount_usd: number
+          created_at: string
+          created_by: string
+          product_id: string
+          color_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amount_usd: number
+          created_at?: string
+          created_by?: string
+          product_id: string
+          color_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amount_usd?: number
+          created_at?: string
+          created_by?: string
+          product_id?: string
+          color_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "color_surcharges_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "color_surcharges_color_id_fkey"
+            columns: ["color_id"]
+            isOneToOne: false
+            referencedRelation: "colors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       colors: {
         Row: {
           code: string

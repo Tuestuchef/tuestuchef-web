@@ -180,12 +180,18 @@ export function calculatorWhatsappText(
 // "3XL–6XL: +$ 3,00" (mismo recargo) o "3XL–6XL: +$ 3,00 a +$ 5,00"; "3XL: +$ 3,00" si es una sola talla.
 export function sizeSurchargeSummary(surcharges: CalculatorProduct["sizeSurcharges"]): string | null {
   if (surcharges.length === 0) return null
-  const first = surcharges[0].sizeName
-  const last = surcharges[surcharges.length - 1].sizeName
+  const first = surcharges[0].name
+  const last = surcharges[surcharges.length - 1].name
   const amounts = surcharges.map((s) => s.amountUsd)
   const min = Math.min(...amounts)
   const max = Math.max(...amounts)
   const sizes = surcharges.length === 1 ? first : `${first}–${last}`
   const range = min === max ? `+${formatMoney(min, "USD")}` : `+${formatMoney(min, "USD")} a +${formatMoney(max, "USD")}`
   return `${sizes}: ${range}`
+}
+
+// "Pata de gallo +$ 2,00" (o varios, separados por " · "). Los colores no son un rango como las tallas.
+export function colorSurchargeSummary(surcharges: CalculatorProduct["colorSurcharges"]): string | null {
+  if (surcharges.length === 0) return null
+  return surcharges.map((s) => `${s.name} +${formatMoney(s.amountUsd, "USD")}`).join(" · ")
 }

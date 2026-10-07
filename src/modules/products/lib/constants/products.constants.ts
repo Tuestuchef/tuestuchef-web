@@ -50,7 +50,7 @@ export const PRODUCT_MESSAGES = {
   PRODUCT_SAVED: "Producto guardado.",
   VARIANT_SAVED: "Variante guardada.",
   PRICES_SAVED: "Precios guardados.",
-  SURCHARGES_SAVED: "Recargos de la talla guardados.",
+  SURCHARGES_SAVED: "Recargos guardados.",
   MOVEMENT_SAVED: "Movimiento de stock registrado.",
   CATALOG_SAVED: "Guardado.",
   IMAGE_SAVED: "Foto guardada.",

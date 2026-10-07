@@ -35,7 +35,7 @@ import { listComboComponentOptions, listComboComponents } from "../lib/services/
 import { getProductDetail } from "../lib/services/products.service"
 import { listMaterialOptions, listProductMargins, listRecipe } from "../lib/services/recipes.service"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
-import { listProductSurcharges } from "../lib/services/size-surcharges.service"
+import { listProductSurcharges } from "../lib/services/surcharges.service"
 import { listStockMovements } from "../lib/services/stock.service"
 
 const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string }) => {
@@ -156,12 +156,22 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
           </CardHeader>
           <CardContent>
             <PriceGrid productId={product.id} methods={priceMethods} prices={prices} canManage={canManage} />
-            {surcharges.length > 0 && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Recargo por talla:</span>{" "}
-                {surcharges.map((s) => `${s.sizeName} +${formatMoney(s.amountUsd, "USD")}`).join(" · ")}. Se suma en todos los métodos; se
-                cambia en Configuración → Tallas.
-              </p>
+            {(surcharges.sizes.length > 0 || surcharges.colors.length > 0) && (
+              <div className="mt-3 grid gap-1 text-sm text-muted-foreground">
+                {surcharges.sizes.length > 0 && (
+                  <p>
+                    <span className="font-medium text-foreground">Recargo por talla:</span>{" "}
+                    {surcharges.sizes.map((s) => `${s.name} +${formatMoney(s.amountUsd, "USD")}`).join(" · ")}
+                  </p>
+                )}
+                {surcharges.colors.length > 0 && (
+                  <p>
+                    <span className="font-medium text-foreground">Recargo por color:</span>{" "}
+                    {surcharges.colors.map((s) => `${s.name} +${formatMoney(s.amountUsd, "USD")}`).join(" · ")}
+                  </p>
+                )}
+                <p className="text-xs">Se suman al precio en todos los métodos (talla y color, si la variante tiene los dos). Se cambian en Configuración → Tallas y Colores.</p>
+              </div>
             )}
           </CardContent>
         </Card>

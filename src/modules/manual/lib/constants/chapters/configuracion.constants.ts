@@ -196,14 +196,17 @@ export const SETTINGS_CHAPTER: ManualChapter = {
         {
           kind: "steps",
           items: [
-            { title: "Abre la talla", body: "En **Configuración → Tallas**, toca **Recargo** en la fila de la talla (p. ej. 3XL)." },
+            {
+              title: "Abre la talla o el color",
+              body: "En **Configuración → Tallas** (p. ej. 3XL) o **Configuración → Colores** (p. ej. pata de gallo), toca **Recargo** en su fila.",
+            },
             {
               title: "Marca los productos",
               body: "Uno por uno o **Marcar todos** de una categoría. Escribe el monto extra en USD, o ponlo una vez en **Mismo monto para los marcados** → **Aplicar**.",
             },
             {
               title: "Guarda",
-              body: "Desde ese momento, una venta, un pedido o un presupuesto de esa talla suma el recargo al precio en todos los métodos (en Bs, con la tasa del día). Lo ya vendido no cambia. No aplica a combos ni a la personalización.",
+              body: "Desde ese momento, una venta, un pedido o un presupuesto de esa talla o color suma el recargo al precio en todos los métodos (en Bs, con la tasa del día). Si la variante tiene los dos (p. ej. pata de gallo 3XL), se suman. Lo ya vendido no cambia. No aplica a combos ni a la personalización.",
             },
           ],
         },
@@ -216,7 +219,11 @@ export const SETTINGS_CHAPTER: ManualChapter = {
               title: "Tallas",
               effect: "S, M, L, XL… en el orden en que se muestran. Opcionales por variante. Con Recargo, una talla puede costar más en ciertos productos (p. ej. 3XL +$3 en filipinas).",
             },
-            { icon: PaletteIcon, title: "Colores", effect: "Negro (NEG), Vinotinta (VIN)… También se usan en fotos y recetas." },
+            {
+              icon: PaletteIcon,
+              title: "Colores",
+              effect: "Negro (NEG), Vinotinta (VIN), estampados como pata de gallo… También se usan en fotos y recetas. Con Recargo, un color o estampado puede costar más en ciertos productos.",
+            },
           ],
         },
       ],

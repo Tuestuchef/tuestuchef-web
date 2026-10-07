@@ -2,23 +2,28 @@ import "server-only"
 
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 
-import type { SizeSurchargeProduct } from "../types/products.types"
+import type { ProductSurcharges, SurchargeKind, SurchargeProduct } from "../types/products.types"
 
-// Recargo por talla: por cada talla, los productos que cobran un extra y cuánto (USD).
-export async function listSizeSurcharges(): Promise<Record<string, Record<string, number>>> {
+// Recargos por talla (p. ej. 3XL) y por color (p. ej. pata de gallo): misma forma, distinta tabla.
+
+// Por cada talla o color, los productos que cobran un extra y cuánto (USD).
+export async function listSurcharges(kind: SurchargeKind): Promise<Record<string, Record<string, number>>> {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from("size_surcharges").select("size_id, product_id, amount_usd")
-  if (error) throw error
-  const bySize: Record<string, Record<string, number>> = {}
-  for (const row of data) {
-    bySize[row.size_id] ??= {}
-    bySize[row.size_id][row.product_id] = Number(row.amount_usd)
+  const rows =
+    kind === "size"
+      ? await supabase.from("size_surcharges").select("target_id:size_id, product_id, amount_usd")
+      : await supabase.from("color_surcharges").select("target_id:color_id, product_id, amount_usd")
+  if (rows.error) throw rows.error
+  const byTarget: Record<string, Record<string, number>> = {}
+  for (const row of rows.data) {
+    byTarget[row.target_id] ??= {}
+    byTarget[row.target_id][row.product_id] = Number(row.amount_usd)
   }
-  return bySize
+  return byTarget
 }
 
 // Productos que pueden llevar recargo: terminados y activos (no combos ni materia prima).
-export async function listSurchargeableProducts(): Promise<SizeSurchargeProduct[]> {
+export async function listSurchargeableProducts(): Promise<SurchargeProduct[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("products")
@@ -32,37 +37,47 @@ export async function listSurchargeableProducts(): Promise<SizeSurchargeProduct[
     .map(({ id, name, categoryName }) => ({ id, name, categoryName }))
 }
 
-// Recargos de un producto, en el orden de las tallas (para mostrarlos en su página).
-export async function listProductSurcharges(productId: string): Promise<{ sizeName: string; amountUsd: number }[]> {
+// Recargos de un producto, por talla y por color, en el orden de cada lista (para su página).
+// La página del producto no debe romperse por esto (p. ej. si la migración aún no está aplicada).
+export async function listProductSurcharges(productId: string): Promise<ProductSurcharges> {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase
-    .from("size_surcharges")
-    .select("amount_usd, size:sizes(name, sort_order)")
-    .eq("product_id", productId)
-  // La página del producto no debe romperse por esto (p. ej. si la migración aún no está aplicada).
-  if (error) return []
-  return data
-    .sort((a, b) => (a.size?.sort_order ?? 0) - (b.size?.sort_order ?? 0))
-    .map((row) => ({ sizeName: row.size?.name ?? "—", amountUsd: Number(row.amount_usd) }))
+  const [sizes, colors] = await Promise.all([
+    supabase.from("size_surcharges").select("amount_usd, target:sizes(name, sort_order)").eq("product_id", productId),
+    supabase.from("color_surcharges").select("amount_usd, target:colors(name, sort_order)").eq("product_id", productId),
+  ])
+  const toList = (rows: { amount_usd: number; target: { name: string; sort_order: number } | null }[] | null) =>
+    (rows ?? [])
+      .sort((a, b) => (a.target?.sort_order ?? 0) - (b.target?.sort_order ?? 0))
+      .map((row) => ({ name: row.target?.name ?? "—", amountUsd: Number(row.amount_usd) }))
+  return { sizes: sizes.error ? [] : toList(sizes.data), colors: colors.error ? [] : toList(colors.data) }
 }
 
-// Guarda los recargos de una talla. null = ese producto deja de llevar recargo.
-export async function saveSizeSurcharges(sizeId: string, surcharges: Record<string, number | null>) {
+// Guarda los recargos de una talla o un color. null = ese producto deja de llevar recargo.
+export async function saveSurcharges(kind: SurchargeKind, targetId: string, surcharges: Record<string, number | null>) {
   const supabase = await createSupabaseServerClient()
+  const key = kind === "size" ? "size_id" : "color_id"
   const toSave = Object.entries(surcharges).filter(([, amount]) => amount !== null)
   const toRemove = Object.entries(surcharges)
     .filter(([, amount]) => amount === null)
     .map(([productId]) => productId)
 
   if (toSave.length) {
-    const { error } = await supabase.from("size_surcharges").upsert(
-      toSave.map(([product_id, amount_usd]) => ({ size_id: sizeId, product_id, amount_usd: amount_usd! })),
-      { onConflict: "size_id,product_id" }
-    )
+    const rows = toSave.map(([product_id, amount_usd]) => ({ product_id, amount_usd: amount_usd!, [key]: targetId }))
+    const { error } =
+      kind === "size"
+        ? await supabase
+            .from("size_surcharges")
+            .upsert(rows as { product_id: string; amount_usd: number; size_id: string }[], { onConflict: "size_id,product_id" })
+        : await supabase
+            .from("color_surcharges")
+            .upsert(rows as { product_id: string; amount_usd: number; color_id: string }[], { onConflict: "color_id,product_id" })
     if (error) return { error }
   }
   if (toRemove.length) {
-    const { error } = await supabase.from("size_surcharges").delete().eq("size_id", sizeId).in("product_id", toRemove)
+    const { error } =
+      kind === "size"
+        ? await supabase.from("size_surcharges").delete().eq("size_id", targetId).in("product_id", toRemove)
+        : await supabase.from("color_surcharges").delete().eq("color_id", targetId).in("product_id", toRemove)
     if (error) return { error }
   }
   return { error: null }

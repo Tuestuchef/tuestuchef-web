@@ -12,27 +12,34 @@ import { Label } from "@/common/components/ui/label"
 import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
 import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
 
-import { saveSizeSurchargesAction } from "../lib/actions/save-size-surcharges.action"
-import type { SizeSurchargeProduct } from "../lib/types/products.types"
+import { saveSurchargesAction } from "../lib/actions/save-surcharges.action"
+import type { SurchargeKind, SurchargeProduct } from "../lib/types/products.types"
 
-type SizeSurchargesDialogProps = {
-  size: { id: string; name: string }
-  products: SizeSurchargeProduct[]
+type SurchargesDialogProps = {
+  // Talla (p. ej. 3XL) o color (p. ej. pata de gallo).
+  kind: SurchargeKind
+  target: { id: string; name: string }
+  products: SurchargeProduct[]
   // Recargo actual por producto (USD).
   current: Record<string, number>
 }
 
 const toText = (amount: number | undefined) => (amount === undefined ? "" : String(amount).replace(".", ","))
 
-// Recargo de una talla (p. ej. 3XL) en los productos que lo cobran: se suma a su precio en todos los métodos.
-const SizeSurchargesDialog = ({ size, products, current }: SizeSurchargesDialogProps) => {
+// "de la talla 3XL" / "del color Vinotinta".
+const OF: Record<SurchargeKind, string> = { size: "de la talla", color: "del color" }
+
+// Recargo de una talla (p. ej. 3XL) o un color (p. ej. pata de gallo) en los productos que lo cobran:
+// se suma a su precio en todos los métodos.
+const SurchargesDialog = ({ kind, target, products, current }: SurchargesDialogProps) => {
+  const of = OF[kind]
   const [open, setOpen] = useState(false)
   const [checked, setChecked] = useState<Record<string, boolean>>(() => Object.fromEntries(Object.keys(current).map((id) => [id, true])))
   const [amounts, setAmounts] = useState<Record<string, string>>(() =>
     Object.fromEntries(Object.entries(current).map(([id, amount]) => [id, toText(amount)]))
   )
   const [bulk, setBulk] = useState("")
-  const { state, onSubmit, pending } = useFormAction(saveSizeSurchargesAction)
+  const { state, onSubmit, pending } = useFormAction(saveSurchargesAction)
   useActionFeedback(state, () => setOpen(false))
 
   const count = Object.keys(current).length
@@ -48,16 +55,18 @@ const SizeSurchargesDialog = ({ size, products, current }: SizeSurchargesDialogP
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" aria-label={`Recargos de la talla ${size.name}`}>
+        <Button variant="ghost" size="sm" aria-label={`Recargos ${of} ${target.name}`}>
           <BadgeDollarSignIcon aria-hidden />
           {count > 0 ? `Recargo · ${count}` : "Recargo"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Recargo de la talla {size.name}</DialogTitle>
+          <DialogTitle>
+            Recargo {of} {target.name}
+          </DialogTitle>
           <DialogDescription>
-            Marca los productos que cuestan más en esta talla y cuánto más (USD). Se suma a su precio en todos los métodos de pago; lo ya
+            Marca los productos que cuestan más en {kind === "size" ? "esta talla" : "este color"} y cuánto más (USD). Se suma a su precio en todos los métodos de pago; lo ya
             vendido no cambia.
           </DialogDescription>
         </DialogHeader>
@@ -66,7 +75,8 @@ const SizeSurchargesDialog = ({ size, products, current }: SizeSurchargesDialogP
           <p className="text-sm text-muted-foreground">Aún no hay productos activos.</p>
         ) : (
           <form onSubmit={onSubmit} className="grid gap-4" noValidate>
-            <input type="hidden" name="size_id" value={size.id} />
+            <input type="hidden" name="kind" value={kind} />
+            <input type="hidden" name="target_id" value={target.id} />
             {/* Un campo por producto: vacío (o sin marcar) quita el recargo. */}
             {products.map((p) => (
               <input key={p.id} type="hidden" name={`surcharge_${p.id}`} value={checked[p.id] ? (amounts[p.id] ?? "") : ""} />
@@ -75,9 +85,9 @@ const SizeSurchargesDialog = ({ size, products, current }: SizeSurchargesDialogP
 
             <div className="flex flex-wrap items-end gap-2 rounded-lg border p-3">
               <div className="grid flex-1 gap-1.5">
-                <Label htmlFor={`bulk-${size.id}`}>Mismo monto para los marcados</Label>
+                <Label htmlFor={`bulk-${target.id}`}>Mismo monto para los marcados</Label>
                 <Input
-                  id={`bulk-${size.id}`}
+                  id={`bulk-${target.id}`}
                   value={bulk}
                   onChange={(e) => setBulk(e.target.value)}
                   inputMode="decimal"
@@ -104,19 +114,19 @@ const SizeSurchargesDialog = ({ size, products, current }: SizeSurchargesDialogP
                   {inCategory.map((p) => (
                     <div key={p.id} className="flex items-center gap-3 py-1">
                       <input
-                        id={`check-${size.id}-${p.id}`}
+                        id={`check-${target.id}-${p.id}`}
                         type="checkbox"
                         checked={Boolean(checked[p.id])}
                         onChange={(e) => setChecked((all) => ({ ...all, [p.id]: e.target.checked }))}
                         className="size-5 shrink-0 accent-primary"
                       />
-                      <Label htmlFor={`check-${size.id}-${p.id}`} className="min-w-0 flex-1 font-normal">
+                      <Label htmlFor={`check-${target.id}-${p.id}`} className="min-w-0 flex-1 font-normal">
                         {p.name}
                       </Label>
                       <div className="flex w-28 items-center gap-1">
                         <span className="text-sm text-muted-foreground">+$</span>
                         <Input
-                          aria-label={`Recargo de ${p.name} en ${size.name}`}
+                          aria-label={`Recargo de ${p.name} en ${target.name}`}
                           value={amounts[p.id] ?? ""}
                           onChange={(e) => {
                             setAmounts((all) => ({ ...all, [p.id]: e.target.value }))
@@ -141,4 +151,4 @@ const SizeSurchargesDialog = ({ size, products, current }: SizeSurchargesDialogP
   )
 }
 
-export default SizeSurchargesDialog
+export default SurchargesDialog

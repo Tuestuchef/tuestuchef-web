@@ -220,9 +220,10 @@ export type VariantField = keyof VariantInput
 export type CatalogField = keyof CatalogItemInput
 export type StockMovementField = keyof StockMovementInput
 
-// Recargo de una talla por producto (USD de referencia). Vacío = ese producto no lleva recargo.
-export const sizeSurchargesSchema = z.object({
-  size_id: z.uuid(),
+// Recargo de una talla o un color por producto (USD de referencia). Vacío = ese producto no lleva recargo.
+export const surchargesSchema = z.object({
+  kind: z.enum(["size", "color"]),
+  target_id: z.uuid(),
   surcharges: z.record(
     z.uuid(),
     z.string().transform((value, ctx) => {

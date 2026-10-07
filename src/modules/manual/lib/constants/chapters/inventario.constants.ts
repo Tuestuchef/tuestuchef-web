@@ -89,7 +89,7 @@ export const INVENTORY_CHAPTER: ManualChapter = {
             {
               icon: TagIcon,
               title: "Precios",
-              effect: "Uno en dólares por método de pago, igual para todas las variantes. Vacío = no se vende por ese método. Las tallas con recargo (Configuración → Tallas) suman su extra.",
+              effect: "Uno en dólares por método de pago, igual para todas las variantes. Vacío = no se vende por ese método. Las tallas y los colores con recargo (Configuración → Tallas y Colores) suman su extra.",
               chapter: "ventas",
             },
             { icon: ImageIcon, title: "Fotos", effect: "Varias por producto, una principal, y cada una puede ir con un color." },

@@ -11,8 +11,17 @@ import type {
 } from "../constants/products.constants"
 
 // Listas editables con la misma forma: categorías de producto, tallas y colores.
-// Producto que puede llevar recargo por talla (terminado y activo).
-export type SizeSurchargeProduct = { id: string; name: string; categoryName: string }
+// Recargo por talla (p. ej. 3XL) o por color (p. ej. pata de gallo): se suma al precio del producto.
+export type SurchargeKind = "size" | "color"
+
+// Producto que puede llevar recargo (terminado y activo).
+export type SurchargeProduct = { id: string; name: string; categoryName: string }
+
+// Recargos de un producto, para mostrarlos en su página.
+export type ProductSurcharges = {
+  sizes: { name: string; amountUsd: number }[]
+  colors: { name: string; amountUsd: number }[]
+}
 
 export type CatalogKind = "product_categories" | "sizes" | "colors"
 export type CatalogItem = Tables<"sizes">
