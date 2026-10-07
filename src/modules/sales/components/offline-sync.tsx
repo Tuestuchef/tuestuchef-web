@@ -8,6 +8,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/common/components/ui/button"
 import { QUERY_KEYS } from "@/common/lib/constants/query-keys.constants"
+import { SERVICE_WORKER_URL } from "@/common/lib/constants/service-worker.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 
 import { syncOfflineSaleAction } from "../lib/actions/offline-sale.action"
@@ -82,7 +83,7 @@ const OfflineSync = () => {
       .then((list) => setQueued(list.length))
       .catch(() => setQueued(0))
     if ("serviceWorker" in navigator) {
-      void navigator.serviceWorker.register("/sw.js").then((registration) => {
+      void navigator.serviceWorker.register(SERVICE_WORKER_URL).then((registration) => {
         // Deja Nueva venta lista para abrirla sin señal.
         if (navigator.onLine) registration.active?.postMessage({ type: "warm" })
       })

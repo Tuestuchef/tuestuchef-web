@@ -4,6 +4,7 @@ import { BellOffIcon, BellRingIcon, Loader2Icon } from "lucide-react"
 import { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 
+import { SERVICE_WORKER_URL } from "@/common/lib/constants/service-worker.constants"
 import StatusAlert from "@/common/components/status-alert"
 import { Button } from "@/common/components/ui/button"
 
@@ -33,7 +34,7 @@ const PushDeviceToggle = ({ vapidPublicKey }: { vapidPublicKey: string | null })
         setState("denied")
         return
       }
-      const registration = await navigator.serviceWorker.register("/sw.js")
+      const registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL)
       const subscription = await registration.pushManager.getSubscription()
       setState(subscription ? "on" : "off")
     }
@@ -47,7 +48,7 @@ const PushDeviceToggle = ({ vapidPublicKey }: { vapidPublicKey: string | null })
         setState(permission === "denied" ? "denied" : "off")
         return
       }
-      const registration = await navigator.serviceWorker.register("/sw.js")
+      const registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL)
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: keyBytes(vapidPublicKey!),

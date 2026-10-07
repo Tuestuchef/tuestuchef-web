@@ -4,6 +4,10 @@
 //   (IndexedDB) y la app las envía sola al volver la señal.
 // · Avisos push: los muestra y abre la pantalla correspondiente al tocarlos.
 
+// Con ?cache=off (desarrollo) no se guardan los archivos de /_next/static: ahí no cambian de nombre
+// al editar el código y se serviría JavaScript viejo. Ver service-worker.constants.ts.
+const CACHE_ASSETS = new URL(self.location.href).searchParams.get("cache") !== "off"
+
 const PAGES = "tuestuchef-pages-v1"
 const ASSETS = "tuestuchef-assets-v1"
 const SALE_PAGE = "/ventas/nueva"
@@ -17,13 +21,15 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => ![PAGES, ASSETS].includes(k)).map((k) => caches.delete(k))))
+      // Sin caché de archivos (desarrollo) también se borra la que hubiera quedado.
+      .then((keys) => Promise.all(keys.filter((k) => ![PAGES, ...(CACHE_ASSETS ? [ASSETS] : [])].includes(k)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   )
 })
 
 // Guarda Nueva venta y los archivos estáticos que pide su HTML.
 async function warmSalePage() {
+  if (!CACHE_ASSETS) return
   const response = await fetch(SALE_PAGE, { credentials: "include" })
   if (!response.ok || response.redirected) return
   const html = await response.clone().text()
@@ -45,8 +51,9 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
 
-  // Archivos estáticos de Next (con hash): primero la caché.
+  // Archivos estáticos de Next (con hash): primero la caché. En desarrollo, siempre la red.
   if (url.pathname.startsWith("/_next/static/")) {
+    if (!CACHE_ASSETS) return
     event.respondWith(
       caches.open(ASSETS).then((cache) =>
         cache.match(request).then(
