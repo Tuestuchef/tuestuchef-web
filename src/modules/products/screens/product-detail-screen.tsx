@@ -113,8 +113,8 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
           <CardHeader>
             <CardTitle>Componentes</CardTitle>
             <CardDescription>
-              Lo que trae cada combo. Al vender se elige la talla y el color de cada pieza, y el stock se descuenta de
-              cada una.
+              Lo que trae cada combo. Un componente puede aceptar varios productos: al vender se elige el modelo, la talla y
+              el color de cada pieza, y el stock se descuenta de cada una.
             </CardDescription>
           </CardHeader>
           <CardContent>

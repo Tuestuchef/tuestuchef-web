@@ -102,5 +102,7 @@ export async function listProductMargins(productId: string): Promise<ProductMarg
     marginUsdt: row.margin_usdt === null ? null : Number(row.margin_usdt),
     marginPercent: row.margin_percent === null ? null : Number(row.margin_percent),
     costSource: row.cost_source as ProductMarginRow["costSource"],
+    costMinUsdt: row.cost_min_usdt === null ? null : Number(row.cost_min_usdt),
+    costMaxUsdt: row.cost_max_usdt === null ? null : Number(row.cost_max_usdt),
   }))
 }

@@ -10,26 +10,22 @@ import { toUserError } from "@/common/lib/utils/to-user-error.util"
 
 import { PRODUCT_MESSAGES } from "../constants/products.constants"
 import { type ComboComponentField, comboComponentSchema } from "../schemas/products.schema"
-import { addComboComponent, deleteComboComponent } from "../services/combos.service"
+import { deleteComboComponent, saveComboComponent } from "../services/combos.service"
 
-// Componentes de un combo: owner y admin (RLS lo vuelve a exigir).
-export async function addComboComponentAction(
+// Componentes de un combo: owner y admin (RLS y la función lo vuelven a exigir).
+export async function saveComboComponentAction(
   _prev: ActionState<ComboComponentField>,
   formData: FormData
 ): Promise<ActionState<ComboComponentField>> {
   const auth = await authorizeAction(ROLE_GROUPS.MANAGEMENT)
   if (!auth.ok) return { status: "error", message: auth.error }
 
-  const parsed = comboComponentSchema.safeParse(Object.fromEntries(formData))
+  // Los productos llegan como varias casillas con el mismo nombre.
+  const parsed = comboComponentSchema.safeParse({ ...Object.fromEntries(formData), product_ids: formData.getAll("product_ids") })
   if (!parsed.success) return { status: "error", fieldErrors: z.flattenError(parsed.error).fieldErrors }
 
-  const { error } = await addComboComponent(parsed.data)
-  if (error) {
-    return {
-      status: "error",
-      message: error.code === "23505" ? "Ese producto ya está en el combo: cambia su cantidad quitándolo y agregándolo." : toUserError(error),
-    }
-  }
+  const { error } = await saveComboComponent(parsed.data)
+  if (error) return { status: "error", message: toUserError(error) }
 
   refresh()
   return { status: "success", message: PRODUCT_MESSAGES.COMBO_SAVED, submissionId: crypto.randomUUID() }

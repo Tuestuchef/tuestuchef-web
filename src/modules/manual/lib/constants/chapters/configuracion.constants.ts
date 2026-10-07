@@ -206,7 +206,7 @@ export const SETTINGS_CHAPTER: ManualChapter = {
             },
             {
               title: "Guarda",
-              body: "Desde ese momento, una venta, un pedido o un presupuesto de esa talla o color suma el recargo al precio en todos los métodos (en Bs, con la tasa del día). Si la variante tiene los dos (p. ej. pata de gallo 3XL), se suman. Lo ya vendido no cambia. No aplica a combos ni a la personalización.",
+              body: "Desde ese momento, una venta, un pedido o un presupuesto de esa talla o color suma el recargo al precio en todos los métodos (en Bs, con la tasa del día). Si la variante tiene los dos (p. ej. pata de gallo 3XL), se suman. Lo ya vendido no cambia. En un combo, la pieza de esa talla o color suma su recargo encima del precio del combo. No aplica a la personalización.",
             },
           ],
         },

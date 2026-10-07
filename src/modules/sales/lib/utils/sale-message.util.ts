@@ -11,6 +11,7 @@ export function buildSaleDetailText(sale: SaleDetail): string {
     ...sale.items.map((item) =>
       item.parentId
         ? `   ◦ ${quantityFormat.format(item.quantity)} × ${item.productName} (${item.variantLabel})` +
+          (item.lineTotalUsd > 0 ? ` +${usd(item.lineTotalUsd)}` : "") +
           (item.source === "made_to_order" ? " _por encargo_" : "")
         : item.source === "combo"
           ? `• ${quantityFormat.format(item.quantity)} × ${item.productName} — ${usd(item.lineTotalUsd)}`

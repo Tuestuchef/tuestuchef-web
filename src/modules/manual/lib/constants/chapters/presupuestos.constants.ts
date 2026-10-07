@@ -49,7 +49,7 @@ export const QUOTES_CHAPTER: ManualChapter = {
           items: [
             { title: "Cliente", body: "Elige uno guardado o escribe solo el nombre (el resto es opcional). A un cliente bloqueado no se le hacen presupuestos." },
             { title: "Monedas y listas", body: "USD, Bs o ambas. Cada moneda sale de la **lista de precios** de un método de pago." },
-            { title: "Productos", body: "Con su color y talla, combos y personalización (nombre bordado, logos). Los nombres y el logo se piden después, en el pedido." },
+            { title: "Productos", body: "Con su color y talla, combos y personalización (nombre bordado, logos). En un combo, la pieza con recargo (talla o color) sale aparte como \"Recargo\". Los nombres y el logo se piden después, en el pedido." },
             { title: "Descuentos", body: "Por línea o del presupuesto, siempre con motivo. Staff tiene el mismo límite que en ventas." },
             { title: "IVA, IGTF y tallas", body: "IVA opcional sobre el total; la nota de IGTF es solo texto; **agrupar por talla** junta las tallas de un mismo producto en una fila." },
             { title: "Guarda el borrador", body: "La fecha, la tasa y los precios se actualizan cada vez que lo guardas." },

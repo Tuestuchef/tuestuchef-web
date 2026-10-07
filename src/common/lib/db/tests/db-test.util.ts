@@ -54,14 +54,25 @@ alter default privileges in schema public grant all on sequences to anon, authen
 
 export type TestDb = PGlite
 
-export async function createTestDb({ seed = false } = {}): Promise<TestDb> {
+// until: corre solo las migraciones anteriores a ese prefijo, para probar cómo una migración
+// convierte datos que ya existían; después applyMigrations(db, { from }) corre el resto.
+export async function createTestDb({ seed = false, until }: { seed?: boolean; until?: string } = {}): Promise<TestDb> {
   const db = await PGlite.create({ extensions: { pgcrypto } })
   await db.exec(BOOTSTRAP_SQL)
+  await applyMigrations(db, { until })
 
+  if (seed) {
+    await db.exec(fs.readFileSync(path.join(SUPABASE_DIR, "seed.sql"), "utf8"))
+  }
+
+  return db
+}
+
+export async function applyMigrations(db: TestDb, { from, until }: { from?: string; until?: string } = {}) {
   const migrationsDir = path.join(SUPABASE_DIR, "migrations")
   const files = fs
     .readdirSync(migrationsDir)
-    .filter((file) => file.endsWith(".sql"))
+    .filter((file) => file.endsWith(".sql") && (!from || file >= from) && (!until || file < until))
     .sort()
 
   for (const file of files) {
@@ -71,12 +82,6 @@ export async function createTestDb({ seed = false } = {}): Promise<TestDb> {
       throw new Error(`La migración ${file} falló: ${(error as Error).message}`)
     }
   }
-
-  if (seed) {
-    await db.exec(fs.readFileSync(path.join(SUPABASE_DIR, "seed.sql"), "utf8"))
-  }
-
-  return db
 }
 
 // Crea un usuario de Auth (el trigger crea su perfil) y le asigna rol como sistema.

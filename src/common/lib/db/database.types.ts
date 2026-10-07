@@ -2254,13 +2254,85 @@ export type Database = {
           },
         ]
       }
-      combo_components: {
+      combo_component_options: {
         Row: {
           combo_product_id: string
-          component_product_id: string
+          component_id: string
           created_at: string
           created_by: string
           id: string
+          product_id: string
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          combo_product_id?: string
+          component_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          product_id: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          combo_product_id?: string
+          component_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          product_id?: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combo_component_options_combo_product_id_fkey"
+            columns: ["combo_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combo_component_options_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "combo_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combo_component_options_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combo_component_options_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combo_component_options_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      combo_components: {
+        Row: {
+          combo_product_id: string
+          created_at: string
+          created_by: string
+          id: string
+          label: string | null
           quantity: number
           sort_order: number
           updated_at: string
@@ -2268,10 +2340,10 @@ export type Database = {
         }
         Insert: {
           combo_product_id: string
-          component_product_id: string
           created_at?: string
           created_by?: string
           id?: string
+          label?: string | null
           quantity?: number
           sort_order?: number
           updated_at?: string
@@ -2279,10 +2351,10 @@ export type Database = {
         }
         Update: {
           combo_product_id?: string
-          component_product_id?: string
           created_at?: string
           created_by?: string
           id?: string
+          label?: string | null
           quantity?: number
           sort_order?: number
           updated_at?: string
@@ -2292,13 +2364,6 @@ export type Database = {
           {
             foreignKeyName: "combo_components_combo_product_id_fkey"
             columns: ["combo_product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "combo_components_component_product_id_fkey"
-            columns: ["component_product_id"]
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
@@ -4500,6 +4565,16 @@ export type Database = {
         Args: { p_quote_id: string }
         Returns: string
       }
+      save_combo_component: {
+        Args: {
+          p_combo_product_id: string
+          p_component_id: string | null
+          p_label: string | null
+          p_product_ids: string[]
+          p_quantity: number
+        }
+        Returns: string
+      }
       save_quote_draft: {
         Args: { p_quote_id: string | null; p_payload: Json }
         Returns: string
@@ -4683,6 +4758,8 @@ export type Database = {
       product_margins: {
         Args: never
         Returns: {
+          cost_max_usdt: number | null
+          cost_min_usdt: number | null
           cost_source: string | null
           labor_cost_usdt: number
           margin_percent: number | null

@@ -22,6 +22,7 @@ import CustomerPicker, { type PickedCustomer } from "@/modules/customers/compone
 import ComboPickerDialog, { type ComboSelection } from "@/modules/sales/components/combo-picker-dialog"
 import { CHANNEL_LABELS, DELIVERY_LABELS, MANUAL_CHANNELS, type DeliveryMethod, type SaleChannel } from "@/modules/sales/lib/constants/sales.constants"
 import type { SellableVariant } from "@/modules/sales/lib/types/sales.types"
+import { comboExtraUsd } from "@/modules/sales/lib/utils/combo.util"
 import { lineTotal, round, usdToMethodAmount, volumePercent } from "@/modules/sales/lib/utils/sale-math.util"
 
 import { createOrderAction } from "../lib/actions/orders.action"
@@ -87,7 +88,9 @@ const OrderForm = ({
   const priced = lines.map((line) => {
     const variant = variantById.get(line.variantId)!
     const price = variant.pricesUsd[priceMethodId]
-    return { ...line, variant, price, total: price === undefined ? 0 : lineTotal(price, line.quantity) }
+    // Un combo suma el recargo de sus piezas (talla o color) encima de su precio.
+    const extra = line.components ? comboExtraUsd(line.components, (id) => variantById.get(id)?.extraUsd) : 0
+    return { ...line, variant, price, total: price === undefined ? 0 : round(lineTotal(price, line.quantity) + extra) }
   })
   const productsSubtotal = round(priced.reduce((sum, l) => sum + l.total, 0))
   const pieces = lines.reduce((sum, l) => sum + (l.components ? l.components.reduce((s, c) => s + c.quantity, 0) : l.quantity), 0)
@@ -247,6 +250,19 @@ const OrderForm = ({
                       {line.price === undefined ? "Sin precio para este método" : `${usd(line.price)} c/u`}
                       {!line.components && line.variant.fulfillmentType !== "made_to_order" && ` · hay ${line.variant.stock} en inventario`}
                     </span>
+                    {line.components && (
+                      <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
+                        {line.components.map((c) => {
+                          const piece = variantById.get(c.variantId)
+                          return (
+                            <li key={c.variantId}>
+                              {c.quantity} × {piece?.productName} · {piece?.variantLabel}
+                              {piece && piece.extraUsd > 0 && ` · +${usd(round(piece.extraUsd * c.quantity))}`}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
                   </div>
                   <span className="text-sm font-medium tabular-nums">{usd(line.total)}</span>
                 </div>
@@ -496,6 +512,7 @@ const OrderForm = ({
         combo={comboToPick}
         variants={variants}
         available={(id) => variantById.get(id)?.stock ?? 0}
+        priceMethodId={priceMethodId}
         onCancel={() => setComboToPick(null)}
         onConfirm={(selection) => {
           const combo = comboToPick

@@ -182,6 +182,22 @@ const QuoteDocument = ({ quote, business, headerImageUrl, draft }: QuoteDocument
                   {showUsd && <td className="py-2 text-right tabular-nums">{usd(item.usdLineTotal)}</td>}
                   {showVes && <td className="py-2 text-right tabular-nums">{bs(item.vesLineTotal)}</td>}
                 </tr>,
+                // Piezas del combo con recargo (talla o color): se cobran aparte, encima del combo.
+                ...detail
+                  .filter((c) => c.usdLineTotal > 0 || c.vesLineTotal > 0)
+                  .map((c) => (
+                    <tr key={c.id} className="border-b border-dashed align-top text-muted-foreground">
+                      <td className="py-2 pl-4">
+                        Recargo · {c.productName}
+                        {variantText(c) ? ` (${variantText(c)})` : ""}
+                      </td>
+                      {showUsd && <td className="py-2 text-right tabular-nums">{usd(c.usdUnitPrice)}</td>}
+                      {showVes && <td className="py-2 text-right tabular-nums">{bs(c.vesUnitPrice)}</td>}
+                      <td className="py-2 text-right tabular-nums">{quantityFormat.format(c.quantity)}</td>
+                      {showUsd && <td className="py-2 text-right tabular-nums">{usd(c.usdLineTotal)}</td>}
+                      {showVes && <td className="py-2 text-right tabular-nums">{bs(c.vesLineTotal)}</td>}
+                    </tr>
+                  )),
                 ...item.customizations.map((c) => (
                   <tr key={c.id} className="border-b border-dashed align-top text-muted-foreground">
                     <td className="py-2 pl-4">

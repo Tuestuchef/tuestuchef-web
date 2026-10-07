@@ -168,7 +168,7 @@ export const SALES_CHAPTER: ManualChapter = {
             },
             {
               title: "Elige talla o color, si cobran extra",
-              body: "Si un producto cobra extra en alguna talla (p. ej. 3XL) o color (p. ej. pata de gallo), debajo de él aparecen esas opciones. Tócala si el cliente ya la pidió: el total la incluye. **Otra talla o color** agrega otra línea del mismo producto (p. ej. 2 en M y 1 en 4XL).",
+              body: "Si un producto cobra extra en alguna talla (p. ej. 3XL) o color (p. ej. pata de gallo), debajo de él aparecen esas opciones. Tócala si el cliente ya la pidió: el total la incluye. **Otra talla o color** agrega otra línea del mismo producto (p. ej. 2 en M y 1 en 4XL). En un combo, la opción suma lo de todas sus piezas (3XL: filipina +$3 y pantalón +$2 = +$5).",
             },
             {
               title: "Copia para WhatsApp",
@@ -299,7 +299,7 @@ export const SALES_CHAPTER: ManualChapter = {
             {
               title: "Combo",
               body:
-                "Al agregar un combo se elige la talla y el color de **cada pieza**; con varios combos se pueden mezclar tallas. El combo lleva el precio y el stock se descuenta de cada pieza.",
+                "Al agregar un combo se elige el modelo (si acepta varios), la talla y el color de **cada pieza**; con varios combos se pueden mezclar modelos y tallas. El combo lleva el precio, la pieza con recargo (talla o color) lo suma encima y el stock se descuenta de cada pieza.",
             },
             {
               title: "Descuento al mayor",

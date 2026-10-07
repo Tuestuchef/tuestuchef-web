@@ -62,6 +62,7 @@ import {
 } from "../lib/utils/sale-math.util"
 import { isNetworkError, queueSale } from "../lib/utils/offline-queue.util"
 import BackdateField from "./backdate-field"
+import { comboExtraUsd } from "../lib/utils/combo.util"
 import ComboPickerDialog, { type ComboSelection } from "./combo-picker-dialog"
 
 // Una línea del carrito. Un combo trae la talla y el color de cada pieza (components).
@@ -145,7 +146,9 @@ const SaleForm = ({
   const lines = cart.map((line) => {
     const variant = variantById.get(line.variantId)!
     const price = variant.pricesUsd[priceMethodId]
-    return { ...line, variant, price, total: price === undefined ? 0 : lineTotal(price, line.quantity) }
+    // Un combo suma el recargo de sus piezas (talla o color) encima de su precio.
+    const extra = line.components ? comboExtraUsd(line.components, (id) => variantById.get(id)?.extraUsd) : 0
+    return { ...line, variant, price, total: price === undefined ? 0 : round(lineTotal(price, line.quantity) + extra) }
   })
   const missingPrice = lines.filter((l) => l.price === undefined)
 
@@ -420,6 +423,7 @@ const SaleForm = ({
                             <li key={c.variantId}>
                               {quantityFormat.format(c.quantity)} × {piece?.productName} · {piece?.variantLabel}
                               {c.source === "made_to_order" && " · por encargo"}
+                              {piece && piece.extraUsd > 0 && ` · +${usd(round(piece.extraUsd * c.quantity))}`}
                             </li>
                           )
                         })}
@@ -482,7 +486,7 @@ const SaleForm = ({
         )}
       </section>
 
-      <ComboPickerDialog combo={comboToPick} variants={variants} available={availableFor} onCancel={() => setComboToPick(null)} onConfirm={addCombo} />
+      <ComboPickerDialog combo={comboToPick} variants={variants} available={availableFor} priceMethodId={priceMethodId} onCancel={() => setComboToPick(null)} onConfirm={addCombo} />
 
       {/* 2. Método de pago (lista de precios) */}
       <FormField label="Método de pago" htmlFor="sale-method" hint="Define el precio de cada producto.">

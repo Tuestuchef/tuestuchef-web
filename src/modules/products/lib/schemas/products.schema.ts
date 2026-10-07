@@ -174,10 +174,13 @@ export const recipeLineSchema = z.object({
   quantity: positiveAmountSchema("la cantidad", 4),
 })
 
+// Un componente del combo: cuántas piezas lleva y qué productos acepta (al vender se elige uno).
 export const comboComponentSchema = z.object({
   combo_product_id: z.uuid(),
-  component_product_id: z.uuid({ error: "Elige el producto." }),
+  component_id: optionalUuid,
+  label: optionalTextSchema(80),
   quantity: z.coerce.number({ error: "Indica la cantidad." }).int({ error: "Solo unidades enteras." }).min(1).max(100),
+  product_ids: z.array(z.uuid()).min(1, { error: "Elige al menos un producto." }).max(30, { error: "Máximo 30 productos." }),
 })
 
 export const initialStockSchema = z.object({

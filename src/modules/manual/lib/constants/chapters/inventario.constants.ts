@@ -106,14 +106,46 @@ export const INVENTORY_CHAPTER: ManualChapter = {
         {
           kind: "text",
           body:
-            "Un **combo** junta varios productos con un precio propio por método de pago (p. ej. Combo Escuela: bandana, filipina, pantalón y delantal). Se crea en **Inventario → Combos** y se le agregan sus componentes con su cantidad.",
+            "Un **combo** junta varias piezas con un precio propio por método de pago (p. ej. Combo Escuela: bandana, filipina, pantalón y delantal). Se crea en **Inventario → Combos** y se le agregan sus **componentes**: cuántas piezas lleva y de qué productos. Un componente puede aceptar **varios productos** para que el cliente escoja (p. ej. filipina manga corta de botón, cierre o broche).",
+        },
+        {
+          kind: "steps",
+          items: [
+            {
+              title: "Arma el combo",
+              body:
+                "En el detalle del combo, **Agregar componente**: un nombre opcional (\"Filipina manga corta\"), la cantidad y los productos que acepta (marca botón, cierre y broche). Repite con \"Pantalón\": recto y jogger. Un producto va en un solo componente.",
+            },
+            {
+              title: "Véndelo",
+              body:
+                "Al agregar el combo, en cada componente eliges el **modelo** (botón, cierre o broche), la **talla** y el **color**. Con varios combos se pueden mezclar modelos y tallas.",
+            },
+            {
+              title: "Recargos",
+              body:
+                "Si una pieza cobra recargo por talla o color (p. ej. 3XL o pata de gallo), se suma **encima** del precio del combo, en ventas, pedidos y presupuestos.",
+            },
+          ],
+        },
+        {
+          kind: "example",
+          title: "2 Combos chef de 50 USD: uno en talla M y otro en 3XL",
+          rows: [
+            { label: "Combos: 2 × 50", value: "100,00 USD" },
+            { label: "Filipina manga corta botón · M y pantalón recto · M", value: "incluidos" },
+            { label: "Filipina manga corta cierre · 3XL (recargo 3XL)", value: "+3,00 USD" },
+            { label: "Pantalón jogger · 3XL (recargo 3XL)", value: "+2,00 USD" },
+            { label: "Total", value: "105,00 USD", total: true },
+          ],
+          conclusion: "El stock sale de cada pieza elegida, y el recargo de cada una cuenta como ingreso de su producto.",
         },
         {
           kind: "flow",
           title: "Cómo se vende un combo",
           nodes: [
             { icon: PackageOpenIcon, title: "Se elige el combo", detail: "Con su precio para el método de pago." },
-            { icon: ShirtIcon, title: "Talla y color de cada pieza", detail: "Con varios combos se pueden mezclar tallas." },
+            { icon: ShirtIcon, title: "Modelo, talla y color de cada pieza", detail: "Con varios combos se pueden mezclar modelos y tallas." },
             { icon: PackageMinusIcon, title: "Sale el stock de cada pieza", detail: "Las piezas por encargo van a producción." },
             { icon: ChartColumnIcon, title: "El ingreso se reparte", detail: "Entre sus productos, según el precio de cada uno.", chapter: "resultados" },
           ],
@@ -123,7 +155,7 @@ export const INVENTORY_CHAPTER: ManualChapter = {
           tone: "info",
           title: "Un combo no tiene stock propio",
           body:
-            "Su disponibilidad es la de sus piezas. Su costo para el margen es la suma del costo promedio y la mano de obra de cada componente.",
+            "Su disponibilidad es la de sus piezas. Para el margen, su costo **típico** suma lo que más se vendió de cada componente en los últimos 90 días (sin ventas, el promedio de sus productos) más la mano de obra, y el **rango** muestra el margen con el modelo más caro y con el más barato.",
         },
       ],
     },

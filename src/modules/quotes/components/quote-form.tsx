@@ -187,13 +187,24 @@ const QuoteForm = ({
   // ---- Totales (vista previa; la base decide) ----
   const allCustomizations = lines.flatMap((l) => l.customizations)
   const custom = customizationTotal(allCustomizations, (id) => typeById.get(id)?.unitPriceUsd ?? 0, customizationTiers)
+  // Un combo lleva además una línea por cada pieza con recargo (talla o color), con su mismo descuento.
   const mathLines = (listId: string | undefined) =>
-    lines.map((line) => ({
-      quantity: line.quantity,
-      discountPercent: parseAmount(line.discountPercent) ?? 0,
-      price: listId ? variantById.get(line.variantId)?.pricesUsd[listId] : undefined,
-      pieces: line.components ? line.components.reduce((s, c) => s + c.quantity, 0) : line.quantity,
-    }))
+    lines.flatMap((line) => {
+      const discountPercent = parseAmount(line.discountPercent) ?? 0
+      const extras = (line.components ?? []).flatMap((c) => {
+        const extra = variantById.get(c.variantId)?.extraUsd ?? 0
+        return extra > 0 ? [{ quantity: c.quantity, discountPercent, price: listId ? extra : undefined, pieces: 0 }] : []
+      })
+      return [
+        {
+          quantity: line.quantity,
+          discountPercent,
+          price: listId ? variantById.get(line.variantId)?.pricesUsd[listId] : undefined,
+          pieces: line.components ? line.components.reduce((s, c) => s + c.quantity, 0) : line.quantity,
+        },
+        ...extras,
+      ]
+    })
   const discountType = discountMode === "none" ? null : discountMode
   const discountAmount = discountType ? (parseAmount(discountValue) ?? null) : null
   const totalsFor = (listId: string | undefined) =>
@@ -452,6 +463,19 @@ const QuoteForm = ({
                         .filter(Boolean)
                         .join(" · ")}
                     </span>
+                    {line.components && (
+                      <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
+                        {line.components.map((c) => {
+                          const piece = variantById.get(c.variantId)
+                          return (
+                            <li key={c.variantId}>
+                              {c.quantity} × {piece?.productName} · {piece?.variantLabel}
+                              {piece && piece.extraUsd > 0 && ` · +${usd(piece.extraUsd * c.quantity)}`}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {line.components ? (

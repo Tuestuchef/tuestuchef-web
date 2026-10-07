@@ -3,8 +3,20 @@ import { formatMoney, formatUsdt } from "@/common/lib/utils/format-money.util"
 
 import type { ProductMarginRow } from "../lib/types/products.types"
 
+const COST_SOURCE: Record<NonNullable<ProductMarginRow["costSource"]>, string> = {
+  average: "promedio",
+  recipe: "estimado (receta)",
+  components: "promedio de sus productos",
+  sales_mix: "típico (lo que más se vende)",
+}
+
+// Margen % con otro costo (para el rango de un combo).
+const marginPercentWith = (row: ProductMarginRow, cost: number) =>
+  row.priceUsdt === 0 ? null : Math.round(((row.priceUsdt - cost) / row.priceUsdt) * 100)
+
 // Margen real por variante y método: precio convertido a valor real (USDT) menos costo
-// de materiales (promedio ponderado o receta) y mano de obra por unidad.
+// de materiales (promedio ponderado o receta) y mano de obra por unidad. En un combo, el costo
+// típico y el rango del producto más barato al más caro de cada componente.
 const MarginTable = ({ rows }: { rows: ProductMarginRow[] }) => {
   if (rows.length === 0) {
     return <p className="text-sm text-muted-foreground">Carga precios para ver el margen.</p>
@@ -38,7 +50,7 @@ const MarginTable = ({ rows }: { rows: ProductMarginRow[] }) => {
                   <>
                     {formatUsdt(row.materialCostUsdt + row.laborCostUsdt)}
                     <span className="block text-xs text-muted-foreground">
-                      {row.costSource === "recipe" ? "estimado (receta)" : "promedio"}
+                      {row.costSource ? COST_SOURCE[row.costSource] : "promedio"}
                       {row.laborCostUsdt > 0 && " + mano de obra"}
                     </span>
                   </>
@@ -51,6 +63,11 @@ const MarginTable = ({ rows }: { rows: ProductMarginRow[] }) => {
                   <>
                     {formatUsdt(row.marginUsdt, { signed: true })}
                     <span className="block text-xs font-normal text-muted-foreground">{row.marginPercent}%</span>
+                    {row.costMinUsdt !== null && row.costMaxUsdt !== null && row.costMinUsdt !== row.costMaxUsdt && (
+                      <span className="block text-xs font-normal text-muted-foreground">
+                        rango {marginPercentWith(row, row.costMaxUsdt)}% a {marginPercentWith(row, row.costMinUsdt)}%
+                      </span>
+                    )}
                   </>
                 )}
               </td>

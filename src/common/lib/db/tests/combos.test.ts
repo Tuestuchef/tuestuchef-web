@@ -123,21 +123,19 @@ describe("combos: definición", () => {
   })
 
   it("solo owner y admin definen componentes, y deben ser productos terminados", async () => {
+    await expect(staff("insert into public.combo_components (combo_product_id) values ($1)", [ids.combo])).rejects.toThrow()
     await expect(
-      staff("insert into public.combo_components (combo_product_id, component_product_id) values ($1, $2)", [ids.combo, ids.filipina])
-    ).rejects.toThrow()
+      staff("select public.save_combo_component($1, null, null, 1, array[$2]::uuid[])", [ids.combo, ids.filipina])
+    ).rejects.toThrow(/Solo owner o admin/)
+    await expect(owner("insert into public.combo_components (combo_product_id) values ($1)", [ids.filipina])).rejects.toThrow(/Solo un combo/)
+    // Un combo no va dentro de otro.
     await expect(
-      owner("insert into public.combo_components (combo_product_id, component_product_id) values ($1, $2)", [ids.filipina, ids.pantalon])
-    ).rejects.toThrow(/Solo un combo/)
-    await expect(
-      owner("insert into public.combo_components (combo_product_id, component_product_id) values ($1, $1)", [ids.combo])
-    ).rejects.toThrow()
+      owner("select public.save_combo_component($1, null, null, 1, array[$1]::uuid[])", [ids.combo])
+    ).rejects.toThrow(/productos terminados/)
 
-    await owner(
-      `insert into public.combo_components (combo_product_id, component_product_id, quantity, sort_order) values
-         ($1, $2, 1, 1), ($1, $3, 1, 2), ($1, $4, 1, 3)`,
-      [ids.combo, ids.filipina, ids.pantalon, ids.delantal]
-    )
+    for (const product of [ids.filipina, ids.pantalon, ids.delantal]) {
+      await owner("select public.save_combo_component($1, null, null, 1, array[$2]::uuid[])", [ids.combo, product])
+    }
     await owner("insert into public.product_prices (product_id, payment_method_id, amount_usd) values ($1, $2, 50)", [ids.combo, ids.cash])
     const seen = await staff("select * from public.combo_components where combo_product_id = $1", [ids.combo])
     expect(seen.rows).toHaveLength(3)
@@ -329,16 +327,23 @@ describe("márgenes con combos", () => {
     )
     expect(rows.rows[0]).toMatchObject({ material_cost_usdt: null, cost_source: null })
 
-    await owner("delete from public.combo_components where combo_product_id = $1 and component_product_id = $2", [ids.combo, ids.delantal])
+    await owner(
+      `delete from public.combo_components where id =
+         (select component_id from public.combo_component_options where combo_product_id = $1 and product_id = $2)`,
+      [ids.combo, ids.delantal]
+    )
     const after = await one(
-      owner<{ material_cost_usdt: string; labor_cost_usdt: string; cost_source: string }>(
-        "select material_cost_usdt, labor_cost_usdt, cost_source from public.product_margins() where product_id = $1",
+      owner<{ material_cost_usdt: string; labor_cost_usdt: string; cost_source: string; cost_min_usdt: string; cost_max_usdt: string }>(
+        "select material_cost_usdt, labor_cost_usdt, cost_source, cost_min_usdt, cost_max_usdt from public.product_margins() where product_id = $1",
         [ids.combo]
       )
     )
-    // Filipina: promedio (10 + 12) / 2 = 11; pantalón 8. Mano de obra 3 + 2.
-    expect(Number(after.material_cost_usdt)).toBe(19)
+    // Típico, por lo vendido: filipina M 20 piezas a 10 y L 15 a 12 → 10,857143; pantalón 8. Mano de obra 3 + 2.
+    expect(Number(after.material_cost_usdt)).toBe(18.857143)
     expect(Number(after.labor_cost_usdt)).toBe(5)
-    expect(after.cost_source).toBe("components")
+    expect(after.cost_source).toBe("sales_mix")
+    // Rango (un solo producto por componente): filipina 11 + 3, pantalón 8 + 2.
+    expect(Number(after.cost_min_usdt)).toBe(24)
+    expect(Number(after.cost_max_usdt)).toBe(24)
   })
 })

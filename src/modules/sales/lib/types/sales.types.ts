@@ -27,15 +27,20 @@ export type SellableVariant = {
   fulfillmentType: "stock" | "made_to_order" | "both"
   stock: number
   pricesUsd: Record<string, number>
-  // Solo en combos: qué lleva cada combo (la talla y el color se eligen al vender).
+  // Recargo de su talla y color (USD, ya incluido en pricesUsd). Dentro de un combo se suma aparte,
+  // encima del precio del combo.
+  extraUsd: number
+  // Solo en combos: qué lleva cada combo (el producto, la talla y el color se eligen al vender).
   components?: ComboComponentOption[]
 }
 
+// Un componente del combo: cuántas piezas lleva cada combo y de qué productos se elige.
 export type ComboComponentOption = {
-  productId: string
-  productName: string
-  // Cuántas piezas de este producto lleva un combo.
+  id: string
+  // El nombre del componente, o sus productos ("Filipina botón / Filipina cierre").
+  name: string
   quantity: number
+  products: { productId: string; productName: string }[]
 }
 
 // Descuento al mayor por cantidad de piezas.

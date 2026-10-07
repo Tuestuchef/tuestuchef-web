@@ -181,7 +181,13 @@ const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }
                         </span>
                       )}
                     </div>
-                    {!line.parentId && <span className="text-sm tabular-nums">{usd(line.lineTotalUsd)}</span>}
+                    {/* Una pieza de combo solo muestra precio si lleva recargo (talla o color). */}
+                    {(!line.parentId || line.lineTotalUsd > 0) && (
+                      <span className="text-sm tabular-nums">
+                        {line.parentId && "+"}
+                        {usd(line.lineTotalUsd)}
+                      </span>
+                    )}
                   </div>
 
                   {line.customizations.map((c) => (

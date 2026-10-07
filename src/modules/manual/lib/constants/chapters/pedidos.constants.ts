@@ -67,7 +67,7 @@ export const ORDERS_CHAPTER: ManualChapter = {
           items: [
             { title: "Abre Registrar → Pedido", body: "Desde la flecha junto a Registrar venta, o en Producción → Pedidos." },
             { title: "Elige el cliente", body: "Es obligatorio. A un cliente [[cliente-bloqueado|bloqueado]] no se le puede vender." },
-            { title: "Agrega productos y combos", body: "Con su cantidad. En un combo eliges la talla y el color de cada pieza." },
+            { title: "Agrega productos y combos", body: "Con su cantidad. En un combo eliges el modelo, la talla y el color de cada pieza; si una cobra recargo, se suma al combo." },
             {
               title: "Personaliza",
               body: "**Personalizar** en cada línea: nombre bordado (uno para todas o uno por pieza), logo de bolsillo, estampado o de pecho.",

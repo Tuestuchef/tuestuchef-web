@@ -6,6 +6,7 @@ import { resolveImageUrl } from "@/modules/products/lib/services/product-images.
 import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.service"
 
 import type { CalculatorProduct, CalculatorSurcharge, PriceCalculatorData } from "../types/sales.types"
+import { comboSurcharges } from "../utils/combo.util"
 
 // Lo que necesita la calculadora: los mismos precios, métodos, tasa y tramos al mayor que Nueva venta.
 export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
@@ -22,7 +23,7 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
       .in("kind", ["finished_good", "combo"])
       .order("name"),
     supabase.from("product_prices").select("product_id, payment_method_id, amount_usd"),
-    supabase.from("combo_components").select("combo_product_id, quantity"),
+    supabase.from("combo_components").select("combo_product_id, quantity, options:combo_component_options(product_id)"),
     supabase
       .from("payment_methods")
       .select("id, name, rate_kind, account:accounts(currency)")
@@ -44,8 +45,13 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
     prices.set(price.product_id, byMethod)
   }
   const comboPieces = new Map<string, number>()
+  const comboComponents = new Map<string, { quantity: number; productIds: string[] }[]>()
   for (const row of componentsResult.data ?? []) {
     comboPieces.set(row.combo_product_id, (comboPieces.get(row.combo_product_id) ?? 0) + Number(row.quantity))
+    comboComponents.set(row.combo_product_id, [
+      ...(comboComponents.get(row.combo_product_id) ?? []),
+      { quantity: Number(row.quantity), productIds: row.options.map((o) => o.product_id) },
+    ])
   }
 
   // Recargos por producto, en el orden de la lista (talla o color).
@@ -57,8 +63,13 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
       list.push({ id: row.target_id, name: row.target?.name ?? "—", amountUsd: Number(row.amount_usd), sort: row.target?.sort_order ?? 0 })
       map.set(row.product_id, list)
     }
-    return (productId: string): CalculatorSurcharge[] =>
-      (map.get(productId) ?? []).sort((a, b) => a.sort - b.sort).map(({ id, name, amountUsd }) => ({ id, name, amountUsd }))
+    const sorted = (list: (CalculatorSurcharge & { sort: number })[]): CalculatorSurcharge[] =>
+      [...list].sort((a, b) => a.sort - b.sort).map(({ id, name, amountUsd }) => ({ id, name, amountUsd }))
+    // Un combo: lo que suman sus piezas en cada talla o color (el más alto de cada componente).
+    return (productId: string): CalculatorSurcharge[] => {
+      const components = comboComponents.get(productId)
+      return sorted(components ? comboSurcharges(components, (id) => map.get(id) ?? []) : (map.get(productId) ?? []))
+    }
   }
   const sizeSurchargesOf = byProduct(surchargesResult.data)
   const colorSurchargesOf = byProduct(colorSurchargesResult.data)

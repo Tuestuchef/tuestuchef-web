@@ -93,8 +93,9 @@ const SaleNoteScreen = async ({ id }: { id: string }) => {
                     </span>
                   )}
                 </td>
-                <td className="py-2 text-right">{item.parentId ? "" : usd(item.unitPriceUsd)}</td>
-                <td className="py-2 text-right">{item.parentId ? "" : usd(item.lineTotalUsd)}</td>
+                {/* Las piezas de un combo solo muestran precio si llevan recargo (talla o color). */}
+                <td className="py-2 text-right">{item.parentId && item.lineTotalUsd === 0 ? "" : `${item.parentId ? "+" : ""}${usd(item.unitPriceUsd)}`}</td>
+                <td className="py-2 text-right">{item.parentId && item.lineTotalUsd === 0 ? "" : usd(item.lineTotalUsd)}</td>
               </tr>
             ))}
           </tbody>

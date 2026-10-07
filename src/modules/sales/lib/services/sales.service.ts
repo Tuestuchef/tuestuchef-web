@@ -58,7 +58,9 @@ export async function getSaleFormData(): Promise<SaleFormData> {
     getRateStatus(),
     supabase
       .from("combo_components")
-      .select("combo_product_id, component_product_id, quantity, product:products!combo_components_component_product_id_fkey(name)")
+      .select(
+        "id, combo_product_id, label, quantity, options:combo_component_options(sort_order, product_id, product:products!combo_component_options_product_id_fkey(name))"
+      )
       .order("sort_order"),
     supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "products").order("min_quantity"),
     supabase.from("size_surcharges").select("product_id, size_id, amount_usd"),
@@ -79,19 +81,23 @@ export async function getSaleFormData(): Promise<SaleFormData> {
   // igual que variant_price_usd en la base.
   const sizeExtra = new Map((surchargesResult.data ?? []).map((r) => [`${r.product_id}|${r.size_id}`, Number(r.amount_usd)]))
   const colorExtra = new Map((colorSurchargesResult.data ?? []).map((r) => [`${r.product_id}|${r.color_id}`, Number(r.amount_usd)]))
+  const extraFor = (variant: { product_id: string; size_id: string | null; color_id: string | null; product: { kind: string } }) =>
+    variant.product.kind === "finished_good"
+      ? (sizeExtra.get(`${variant.product_id}|${variant.size_id}`) ?? 0) + (colorExtra.get(`${variant.product_id}|${variant.color_id}`) ?? 0)
+      : 0
   const pricesFor = (variant: { product_id: string; size_id: string | null; color_id: string | null; product: { kind: string } }) => {
     const base = prices.get(variant.product_id) ?? {}
-    const extra =
-      variant.product.kind === "finished_good"
-        ? (sizeExtra.get(`${variant.product_id}|${variant.size_id}`) ?? 0) + (colorExtra.get(`${variant.product_id}|${variant.color_id}`) ?? 0)
-        : 0
+    const extra = extraFor(variant)
     return extra ? Object.fromEntries(Object.entries(base).map(([method, amount]) => [method, round(amount + extra)])) : base
   }
 
   const components = new Map<string, NonNullable<SellableVariant["components"]>>()
   for (const row of componentsResult.data ?? []) {
+    const products = [...row.options]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((o) => ({ productId: o.product_id, productName: o.product?.name ?? "—" }))
     const list = components.get(row.combo_product_id) ?? []
-    list.push({ productId: row.component_product_id, productName: row.product?.name ?? "—", quantity: row.quantity })
+    list.push({ id: row.id, name: row.label ?? products.map((p) => p.productName).join(" / "), quantity: row.quantity, products })
     components.set(row.combo_product_id, list)
   }
 
@@ -109,6 +115,7 @@ export async function getSaleFormData(): Promise<SaleFormData> {
         fulfillmentType: v.product.fulfillment_type,
         stock: stock.get(v.id) ?? 0,
         pricesUsd: pricesFor(v),
+        extraUsd: extraFor(v),
         ...(v.product.kind === "combo" && { components: components.get(v.product_id) }),
       })),
     methods: methodsResult.data.map((m) => ({

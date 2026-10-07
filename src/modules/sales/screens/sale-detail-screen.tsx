@@ -124,7 +124,8 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
                     <span className="text-xs text-muted-foreground">
                       {item.parentId ? (
                         <>
-                          <code className="font-mono">{item.sku}</code> · incluido en el combo
+                          <code className="font-mono">{item.sku}</code> ·{" "}
+                          {item.lineTotalUsd > 0 ? `recargo +${usd(item.unitPriceUsd)} c/u` : "incluido en el combo"}
                         </>
                       ) : item.source === "combo" ? (
                         `Combo · ${usd(item.unitPriceUsd)} c/u`
@@ -135,7 +136,7 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
                       )}
                     </span>
                   </div>
-                  {!item.parentId && <span className="text-sm tabular-nums">{usd(item.lineTotalUsd)}</span>}
+                  {(!item.parentId || item.lineTotalUsd > 0) && <span className="text-sm tabular-nums">{usd(item.lineTotalUsd)}</span>}
                 </div>
                 {item.source !== "combo" && (
                 <div className="flex flex-wrap items-center gap-2">

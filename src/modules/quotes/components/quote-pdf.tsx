@@ -236,6 +236,22 @@ const QuotePdf = ({ quote, business, image, draft }: QuotePdfProps) => {
                   <Text style={s.colQty}>{quantityFormat.format(item.quantity)}</Text>
                   {priceCells(item.usdLineTotal, item.vesLineTotal, s.colTotal)}
                 </View>
+                {/* Piezas del combo con recargo (talla o color): se cobran aparte, encima del combo. */}
+                {detail
+                  .filter((c) => c.usdLineTotal > 0 || c.vesLineTotal > 0)
+                  .map((c) => (
+                    <View key={c.id} style={[s.row, s.muted]} wrap={false}>
+                      <View style={[s.colItem, { paddingLeft: 10 }]}>
+                        <Text>
+                          Recargo · {c.productName}
+                          {variantText(c) ? ` (${variantText(c)})` : ""}
+                        </Text>
+                      </View>
+                      {priceCells(c.usdUnitPrice, c.vesUnitPrice, s.colPrice)}
+                      <Text style={s.colQty}>{quantityFormat.format(c.quantity)}</Text>
+                      {priceCells(c.usdLineTotal, c.vesLineTotal, s.colTotal)}
+                    </View>
+                  ))}
                 {item.customizations.map((c) => (
                   <View key={c.id} style={[s.row, s.muted]} wrap={false}>
                     <View style={[s.colItem, { paddingLeft: 10 }]}>

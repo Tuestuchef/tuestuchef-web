@@ -65,13 +65,12 @@ export type ProductDetail = {
   images: ProductImage[]
 }
 
-// Componente de un combo y cuántos lleva cada combo.
+// Componente de un combo: cuántas piezas lleva cada combo y qué productos acepta (se elige uno al vender).
 export type ComboComponent = {
   id: string
-  productId: string
-  productName: string
+  label: string | null
   quantity: number
-  variantCount: number
+  products: { id: string; name: string; variantCount: number }[]
 }
 
 export type ComboComponentOption = { id: string; name: string }
@@ -142,5 +141,9 @@ export type ProductMarginRow = {
   laborCostUsdt: number
   marginUsdt: number | null
   marginPercent: number | null
-  costSource: "average" | "recipe" | null
+  // Combos: "components" (promedio simple) o "sales_mix" (por lo que más se vende en 90 días).
+  costSource: "average" | "recipe" | "components" | "sales_mix" | null
+  // Solo combos: costo total con el producto más barato y el más caro de cada componente.
+  costMinUsdt: number | null
+  costMaxUsdt: number | null
 }
