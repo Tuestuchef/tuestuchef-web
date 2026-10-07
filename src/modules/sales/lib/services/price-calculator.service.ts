@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.clie
 import { resolveImageUrl } from "@/modules/products/lib/services/product-images.service"
 import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.service"
 
-import type { CalculatorProduct, PriceCalculatorData } from "../types/sales.types"
+import type { CalculatorProduct, CalculatorSurcharge, PriceCalculatorData } from "../types/sales.types"
 
 // Lo que necesita la calculadora: los mismos precios, métodos, tasa y tramos al mayor que Nueva venta.
 export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
@@ -31,8 +31,8 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
       .order("name"),
     supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "products").order("min_quantity"),
     getRateStatus(),
-    supabase.from("size_surcharges").select("product_id, amount_usd, target:sizes(name, sort_order)"),
-    supabase.from("color_surcharges").select("product_id, amount_usd, target:colors(name, sort_order)"),
+    supabase.from("size_surcharges").select("product_id, amount_usd, target_id:size_id, target:sizes(name, sort_order)"),
+    supabase.from("color_surcharges").select("product_id, amount_usd, target_id:color_id, target:colors(name, sort_order)"),
   ])
   if (productsResult.error) throw productsResult.error
   if (methodsResult.error) throw methodsResult.error
@@ -49,16 +49,16 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
   }
 
   // Recargos por producto, en el orden de la lista (talla o color).
-  type SurchargeRow = { product_id: string; amount_usd: number; target: { name: string; sort_order: number } | null }
+  type SurchargeRow = { product_id: string; amount_usd: number; target_id: string; target: { name: string; sort_order: number } | null }
   const byProduct = (rows: SurchargeRow[] | null) => {
-    const map = new Map<string, { name: string; amountUsd: number; sort: number }[]>()
+    const map = new Map<string, (CalculatorSurcharge & { sort: number })[]>()
     for (const row of rows ?? []) {
       const list = map.get(row.product_id) ?? []
-      list.push({ name: row.target?.name ?? "—", amountUsd: Number(row.amount_usd), sort: row.target?.sort_order ?? 0 })
+      list.push({ id: row.target_id, name: row.target?.name ?? "—", amountUsd: Number(row.amount_usd), sort: row.target?.sort_order ?? 0 })
       map.set(row.product_id, list)
     }
-    return (productId: string) =>
-      (map.get(productId) ?? []).sort((a, b) => a.sort - b.sort).map(({ name, amountUsd }) => ({ name, amountUsd }))
+    return (productId: string): CalculatorSurcharge[] =>
+      (map.get(productId) ?? []).sort((a, b) => a.sort - b.sort).map(({ id, name, amountUsd }) => ({ id, name, amountUsd }))
   }
   const sizeSurchargesOf = byProduct(surchargesResult.data)
   const colorSurchargesOf = byProduct(colorSurchargesResult.data)

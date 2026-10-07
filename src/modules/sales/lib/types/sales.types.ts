@@ -169,11 +169,14 @@ export type CalculatorProduct = {
   pricesUsd: Record<string, number>
   // Piezas que cuenta para el descuento al mayor (un combo, las de sus componentes).
   piecesPerUnit: number
-  // Recargos por talla y por color (USD), en el orden de cada lista: la calculadora no elige talla
-  // ni color, solo los avisa.
-  sizeSurcharges: { name: string; amountUsd: number }[]
-  colorSurcharges: { name: string; amountUsd: number }[]
+  // Recargos por talla y por color (USD), en el orden de cada lista. En la calculadora se pueden
+  // elegir por línea; si no, el mensaje los avisa como opcionales.
+  sizeSurcharges: CalculatorSurcharge[]
+  colorSurcharges: CalculatorSurcharge[]
 }
+
+// Una talla o un color que cobra extra en un producto.
+export type CalculatorSurcharge = { id: string; name: string; amountUsd: number }
 
 export type PriceCalculatorData = {
   products: CalculatorProduct[]

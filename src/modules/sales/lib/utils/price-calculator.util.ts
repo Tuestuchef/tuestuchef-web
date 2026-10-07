@@ -2,23 +2,15 @@ import type { Currency } from "@/common/lib/constants/currency.constants"
 import { brandConfig } from "@/common/lib/config/brand.config"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 
-import type {
-  CalculatorProduct,
-  SalePaymentMethod,
-  VolumeTier,
-} from "../types/sales.types"
-import {
-  lineTotal,
-  round,
-  type SaleRates,
-  usdToMethodAmount,
-  volumePercent,
-} from "./sale-math.util"
+import type { CalculatorProduct, CalculatorSurcharge, SalePaymentMethod, VolumeTier } from "../types/sales.types"
+import { lineTotal, round, type SaleRates, usdToMethodAmount, volumePercent } from "./sale-math.util"
 
 // Calculadora de precios: las mismas cuentas que Nueva venta (precio por método, descuento al mayor
-// por piezas, Bs = USD × tasa del método), sin guardar nada.
+// por piezas, Bs = USD × tasa del método, recargo de talla y color), sin guardar nada.
 
-export type CalculatorLine = { productId: string; quantity: number }
+// Una línea de la lista. Talla y color son opcionales: solo se eligen si cobran extra (recargo).
+// El mismo producto puede ir en varias líneas (p. ej. 2 en M y 1 en 4XL).
+export type CalculatorLine = { id: string; productId: string; quantity: number; sizeId?: string | null; colorId?: string | null }
 
 export type CalculatorMethodTotal = {
   // Métodos que dan el mismo total en la misma moneda van juntos ("Efectivo / Zelle").
@@ -39,6 +31,20 @@ export type CalculatorTotals = {
   methods: CalculatorMethodTotal[]
 }
 
+const findSurcharge = (list: CalculatorSurcharge[], id: string | null | undefined) => (id ? list.find((s) => s.id === id) : undefined)
+
+// Recargo elegido en la línea (talla + color), en USD.
+export function lineExtraUsd(product: CalculatorProduct, line: CalculatorLine): number {
+  return (findSurcharge(product.sizeSurcharges, line.sizeId)?.amountUsd ?? 0) + (findSurcharge(product.colorSurcharges, line.colorId)?.amountUsd ?? 0)
+}
+
+// "Pantalón jogger · pata de gallo · talla 3XL": el producto con las opciones elegidas.
+export function lineLabel(product: CalculatorProduct, line: CalculatorLine): string {
+  const color = findSurcharge(product.colorSurcharges, line.colorId)
+  const size = findSurcharge(product.sizeSurcharges, line.sizeId)
+  return [product.name, color && color.name.toLowerCase(), size && `talla ${size.name}`].filter(Boolean).join(" · ")
+}
+
 export function calculatorTotals(input: {
   lines: CalculatorLine[]
   products: ReadonlyMap<string, CalculatorProduct>
@@ -48,44 +54,25 @@ export function calculatorTotals(input: {
 }): CalculatorTotals {
   const lines = input.lines.flatMap((line) => {
     const product = input.products.get(line.productId)
-    return product && line.quantity > 0
-      ? [{ product, quantity: line.quantity }]
-      : []
+    return product && line.quantity > 0 ? [{ product, quantity: line.quantity, extra: lineExtraUsd(product, line) }] : []
   })
-  const pieces = lines.reduce(
-    (sum, l) => sum + l.quantity * l.product.piecesPerUnit,
-    0,
-  )
+  const pieces = lines.reduce((sum, l) => sum + l.quantity * l.product.piecesPerUnit, 0)
   const pct = volumePercent(input.volumeTiers, pieces)
 
   const perMethod = input.methods.flatMap((method): CalculatorMethodTotal[] => {
-    const priced = lines.filter(
-      (l) => l.product.pricesUsd[method.id] !== undefined,
-    )
+    const priced = lines.filter((l) => l.product.pricesUsd[method.id] !== undefined)
     // Un método sin precio para nada de la lista no se muestra.
     if (lines.length === 0 || priced.length === 0) return []
-    const subtotal = round(
-      priced.reduce(
-        (sum, l) => sum + lineTotal(l.product.pricesUsd[method.id], l.quantity),
-        0,
-      ),
-    )
+    const subtotal = round(priced.reduce((sum, l) => sum + lineTotal(l.product.pricesUsd[method.id] + l.extra, l.quantity), 0))
     const totalUsd = round(subtotal - round((subtotal * pct) / 100))
-    const convertsInPlace =
-      method.rateKind === "none" && method.currency !== "USDT"
+    const convertsInPlace = method.rateKind === "none" && method.currency !== "USDT"
     return [
       {
         names: [method.name],
         currency: method.currency,
         totalUsd,
-        amount: input.rates
-          ? usdToMethodAmount(totalUsd, method, input.rates)
-          : convertsInPlace
-            ? totalUsd
-            : null,
-        missing: lines
-          .filter((l) => l.product.pricesUsd[method.id] === undefined)
-          .map((l) => l.product.name),
+        amount: input.rates ? usdToMethodAmount(totalUsd, method, input.rates) : convertsInPlace ? totalUsd : null,
+        missing: [...new Set(lines.filter((l) => l.product.pricesUsd[method.id] === undefined).map((l) => l.product.name))],
       },
     ]
   })
@@ -94,10 +81,7 @@ export function calculatorTotals(input: {
   const grouped: CalculatorMethodTotal[] = []
   for (const total of perMethod) {
     const same = grouped.find(
-      (g) =>
-        g.currency === total.currency &&
-        g.amount === total.amount &&
-        g.missing.join("|") === total.missing.join("|"),
+      (g) => g.currency === total.currency && g.amount === total.amount && g.missing.join("|") === total.missing.join("|")
     )
     if (same) same.names.push(...total.names)
     else grouped.push(total)
@@ -111,57 +95,73 @@ export function calculatorTotals(input: {
   }
 }
 
+// Recargos que el cliente podría pedir y que no se eligieron en la lista: van como "Opcional" en el
+// mensaje. Un producto con alguna línea sin color elegido avisa sus colores con recargo; lo mismo
+// con las tallas (resumidas en un rango: "en tallas 3XL–6XL").
+export type OptionalExtra = { productName: string; label: string; minUsd: number; maxUsd: number }
+
+export function optionalExtras(lines: CalculatorLine[], products: ReadonlyMap<string, CalculatorProduct>): OptionalExtra[] {
+  const productIds = [...new Set(lines.map((l) => l.productId))]
+  return productIds.flatMap((productId) => {
+    const product = products.get(productId)
+    if (!product) return []
+    const own = lines.filter((l) => l.productId === productId && l.quantity > 0)
+    const extras: OptionalExtra[] = []
+    if (product.colorSurcharges.length > 0 && own.some((l) => !findSurcharge(product.colorSurcharges, l.colorId))) {
+      for (const color of product.colorSurcharges) {
+        extras.push({ productName: product.name, label: `en ${color.name.toLowerCase()}`, minUsd: color.amountUsd, maxUsd: color.amountUsd })
+      }
+    }
+    if (product.sizeSurcharges.length > 0 && own.some((l) => !findSurcharge(product.sizeSurcharges, l.sizeId))) {
+      const sizes = product.sizeSurcharges
+      const amounts = sizes.map((s) => s.amountUsd)
+      const label = sizes.length === 1 ? `en talla ${sizes[0].name}` : `en tallas ${sizes[0].name}–${sizes[sizes.length - 1].name}`
+      extras.push({ productName: product.name, label, minUsd: Math.min(...amounts), maxUsd: Math.max(...amounts) })
+    }
+    return extras
+  })
+}
+
 // Lo que va en el mensaje al cliente: los Bs (con el nombre de su método, p. ej. "Pago móvil") y un
 // solo precio en dólares, el del primer método en USD (efectivo), como "USD". Zelle y USDT no van:
 // se cotizan aparte si el cliente los pide.
-export type WhatsappPriceRow = {
-  label: string
-  amount: number
-  currency: Currency
-  missing: string[]
-}
+export type WhatsappPriceRow = { label: string; amount: number; currency: Currency; missing: string[] }
 
-export function whatsappPriceRows(
-  totals: CalculatorTotals,
-): WhatsappPriceRow[] {
+export function whatsappPriceRows(totals: CalculatorTotals): WhatsappPriceRow[] {
   const firstUsd = totals.methods.find((m) => m.currency === "USD")
   return totals.methods.flatMap((m): WhatsappPriceRow[] => {
     if (m.amount === null) return []
-    if (m.currency === "VES")
-      return [
-        {
-          label: m.names.join(" / "),
-          amount: m.amount,
-          currency: m.currency,
-          missing: m.missing,
-        },
-      ]
-    if (m === firstUsd)
-      return [
-        {
-          label: "USD",
-          amount: m.amount,
-          currency: m.currency,
-          missing: m.missing,
-        },
-      ]
+    if (m.currency === "VES") return [{ label: m.names.join(" / "), amount: m.amount, currency: m.currency, missing: m.missing }]
+    if (m === firstUsd) return [{ label: "USD", amount: m.amount, currency: m.currency, missing: m.missing }]
     return []
   })
 }
 
-// Respuesta lista para pegar en WhatsApp.
+// "+$ 2,00 (Bs 1.744,78)" o "+$ 3,00 a +$ 5,00 (Bs … a Bs …)". Sin tasa en Bs, solo los dólares.
+function extraAmountText(minUsd: number, maxUsd: number, bsPerUsd: number | null): string {
+  const usd = minUsd === maxUsd ? `+${formatMoney(minUsd, "USD")}` : `+${formatMoney(minUsd, "USD")} a +${formatMoney(maxUsd, "USD")}`
+  if (!bsPerUsd) return usd
+  const min = formatMoney(round(minUsd * bsPerUsd), "VES")
+  const max = formatMoney(round(maxUsd * bsPerUsd), "VES")
+  return `${usd} (${minUsd === maxUsd ? min : `${min} a ${max}`})`
+}
+
+// Respuesta lista para pegar en WhatsApp. bsPerUsd: tasa del método en Bs, para el extra en Bs.
 export function calculatorWhatsappText(
   lines: CalculatorLine[],
   products: ReadonlyMap<string, CalculatorProduct>,
   totals: CalculatorTotals,
+  { bsPerUsd = null }: { bsPerUsd?: number | null } = {}
 ): string {
   const items = lines.flatMap((line) => {
     const product = products.get(line.productId)
-    return product ? [`• ${line.quantity} × ${product.name}`] : []
+    return product ? [`• ${line.quantity} × ${lineLabel(product, line)}`] : []
   })
   const methods = whatsappPriceRows(totals).map(
-    (m) =>
-      `• ${m.label}: ${formatMoney(m.amount, m.currency)}${m.missing.length ? ` (sin ${m.missing.join(", ")})` : ""}`,
+    (m) => `• ${m.label}: ${formatMoney(m.amount, m.currency)}${m.missing.length ? ` (sin ${m.missing.join(", ")})` : ""}`
+  )
+  const optional = optionalExtras(lines, products).map(
+    (e) => `• ${e.productName} ${e.label}: ${extraAmountText(e.minUsd, e.maxUsd, bsPerUsd)} c/u`
   )
   return [
     // Entre asteriscos: WhatsApp lo muestra en negrita.
@@ -171,27 +171,7 @@ export function calculatorWhatsappText(
     "",
     "Total:",
     ...methods,
-    ...(totals.volumePercent > 0
-      ? ["", `Incluye ${totals.volumePercent}% de descuento al mayor.`]
-      : []),
+    ...(totals.volumePercent > 0 ? ["", `Incluye ${totals.volumePercent}% de descuento al mayor.`] : []),
+    ...(optional.length ? ["", "Opcional:", ...optional] : []),
   ].join("\n")
-}
-
-// "3XL–6XL: +$ 3,00" (mismo recargo) o "3XL–6XL: +$ 3,00 a +$ 5,00"; "3XL: +$ 3,00" si es una sola talla.
-export function sizeSurchargeSummary(surcharges: CalculatorProduct["sizeSurcharges"]): string | null {
-  if (surcharges.length === 0) return null
-  const first = surcharges[0].name
-  const last = surcharges[surcharges.length - 1].name
-  const amounts = surcharges.map((s) => s.amountUsd)
-  const min = Math.min(...amounts)
-  const max = Math.max(...amounts)
-  const sizes = surcharges.length === 1 ? first : `${first}–${last}`
-  const range = min === max ? `+${formatMoney(min, "USD")}` : `+${formatMoney(min, "USD")} a +${formatMoney(max, "USD")}`
-  return `${sizes}: ${range}`
-}
-
-// "Pata de gallo +$ 2,00" (o varios, separados por " · "). Los colores no son un rango como las tallas.
-export function colorSurchargeSummary(surcharges: CalculatorProduct["colorSurcharges"]): string | null {
-  if (surcharges.length === 0) return null
-  return surcharges.map((s) => `${s.name} +${formatMoney(s.amountUsd, "USD")}`).join(" · ")
 }

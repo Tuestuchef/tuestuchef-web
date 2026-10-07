@@ -12,7 +12,8 @@ import { formatMoney, formatRate } from "@/common/lib/utils/format-money.util"
 
 import { PRICE_CALCULATOR_MESSAGES, PRICE_CALCULATOR_STORAGE_KEY } from "../lib/constants/sales.constants"
 import type { CalculatorProduct, PriceCalculatorData } from "../lib/types/sales.types"
-import { type CalculatorLine, calculatorTotals, calculatorWhatsappText, colorSurchargeSummary, sizeSurchargeSummary } from "../lib/utils/price-calculator.util"
+import { type CalculatorLine, calculatorTotals, calculatorWhatsappText, lineExtraUsd } from "../lib/utils/price-calculator.util"
+import { unitsPerUsd } from "../lib/utils/sale-math.util"
 
 const ALL = "all"
 
@@ -22,6 +23,24 @@ const normalize = (text: string) =>
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
+
+const newLineId = () => crypto.randomUUID()
+
+// Chip pequeño para elegir talla o color con recargo en una línea.
+const OptionChip = ({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) => (
+  <button
+    type="button"
+    role="radio"
+    aria-checked={selected}
+    onClick={onClick}
+    className={cn(
+      "inline-flex min-h-8 items-center rounded-full border px-2.5 text-xs transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+      selected ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-accent"
+    )}
+  >
+    {children}
+  </button>
+)
 
 const priceFrom = (product: CalculatorProduct) => {
   const prices = Object.values(product.pricesUsd)
@@ -38,9 +57,12 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
   // La lista sobrevive a cambiar de pantalla (solo en este navegador).
   useEffect(() => {
     try {
-      const saved = JSON.parse(sessionStorage.getItem(PRICE_CALCULATOR_STORAGE_KEY) ?? "[]") as CalculatorLine[]
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única de sessionStorage (como sale-form)
-      if (Array.isArray(saved) && saved.length) setLines(saved)
+      const saved = JSON.parse(sessionStorage.getItem(PRICE_CALCULATOR_STORAGE_KEY) ?? "[]") as Partial<CalculatorLine>[]
+      if (Array.isArray(saved) && saved.length) {
+        // Las listas guardadas antes de las opciones no tenían id de línea.
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única de sessionStorage (como sale-form)
+        setLines(saved.filter((l) => l.productId && l.quantity).map((l) => ({ ...l, id: l.id ?? newLineId() }) as CalculatorLine))
+      }
     } catch {
       // Sin almacenamiento: empieza vacía.
     }
@@ -55,14 +77,42 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
 
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
   const visibleLines = lines.filter((l) => byId.has(l.productId))
-  const quantityOf = (id: string) => lines.find((l) => l.productId === id)?.quantity ?? 0
+  const quantityOf = (id: string) => lines.filter((l) => l.productId === id).reduce((sum, l) => sum + l.quantity, 0)
 
-  const change = (productId: string, delta: number) =>
+  // Tocar un producto suma uno a su línea sin opciones (o la crea).
+  const addProduct = (productId: string) =>
     setLines((all) => {
-      const current = all.find((l) => l.productId === productId)
-      if (!current) return delta > 0 ? [...all, { productId, quantity: delta }] : all
-      const quantity = current.quantity + delta
-      return quantity > 0 ? all.map((l) => (l === current ? { ...l, quantity } : l)) : all.filter((l) => l !== current)
+      const base = all.find((l) => l.productId === productId && !l.sizeId && !l.colorId)
+      return base ? all.map((l) => (l === base ? { ...l, quantity: l.quantity + 1 } : l)) : [...all, { id: newLineId(), productId, quantity: 1 }]
+    })
+
+  // Otra línea del mismo producto, para pedirlo con otra talla o color (p. ej. 2 en M y 1 en 4XL).
+  const addLineOf = (productId: string) => setLines((all) => [...all, { id: newLineId(), productId, quantity: 1 }])
+
+  const changeLine = (lineId: string, delta: number) =>
+    setLines((all) =>
+      all.flatMap((l) => {
+        if (l.id !== lineId) return [l]
+        const quantity = l.quantity + delta
+        return quantity > 0 ? [{ ...l, quantity }] : []
+      })
+    )
+
+  // Elegir talla o color con recargo. Si ya hay una línea igual del mismo producto, se juntan.
+  const setOption = (lineId: string, patch: Pick<CalculatorLine, "sizeId"> | Pick<CalculatorLine, "colorId">) =>
+    setLines((all) => {
+      const current = all.find((l) => l.id === lineId)
+      if (!current) return all
+      const next = { ...current, ...patch }
+      const twin = all.find(
+        (l) =>
+          l.id !== lineId &&
+          l.productId === next.productId &&
+          (l.sizeId ?? null) === (next.sizeId ?? null) &&
+          (l.colorId ?? null) === (next.colorId ?? null)
+      )
+      if (twin) return all.filter((l) => l.id !== lineId).map((l) => (l === twin ? { ...l, quantity: l.quantity + next.quantity } : l))
+      return all.map((l) => (l.id === lineId ? next : l))
     })
 
   const terms = normalize(search).split(/\s+/).filter(Boolean)
@@ -74,10 +124,13 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
 
   const totals = calculatorTotals({ lines: visibleLines, products: byId, methods, volumeTiers, rates })
   const hasBs = totals.methods.some((m) => m.currency === "VES")
+  // Tasa del método en Bs, para mostrar en Bs los extras opcionales del mensaje.
+  const bsMethod = methods.find((m) => m.currency === "VES")
+  const bsPerUsd = bsMethod && rates ? unitsPerUsd(bsMethod, rates) : null
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(calculatorWhatsappText(visibleLines, byId, totals))
+      await navigator.clipboard.writeText(calculatorWhatsappText(visibleLines, byId, totals, { bsPerUsd }))
       toast.success(PRICE_CALCULATOR_MESSAGES.COPIED)
     } catch {
       toast.error(PRICE_CALCULATOR_MESSAGES.COPY_FAILED)
@@ -120,7 +173,7 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
                 <li key={product.id}>
                   <button
                     type="button"
-                    onClick={() => change(product.id, 1)}
+                    onClick={() => addProduct(product.id)}
                     aria-label={`Sumar ${product.name}${quantity ? ` (van ${quantity})` : ""}`}
                     className={cn(
                       "relative grid h-full w-full gap-2 rounded-xl border bg-card p-2 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -175,25 +228,54 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
           <ul className="divide-y">
             {visibleLines.map((line) => {
               const product = byId.get(line.productId)!
+              const extra = lineExtraUsd(product, line)
+              const hasOptions = product.sizeSurcharges.length > 0 || product.colorSurcharges.length > 0
               return (
-                <li key={line.productId} className="flex items-center gap-2 py-2">
-                  <span className="grid min-w-0 flex-1">
-                    <span className="text-sm">{product.name}</span>
-                    {/* La calculadora no elige talla ni color: avisa los recargos que tiene el producto. */}
-                    {product.sizeSurcharges.length > 0 && (
-                      <span className="text-xs text-muted-foreground">Tallas {sizeSurchargeSummary(product.sizeSurcharges)}</span>
-                    )}
-                    {product.colorSurcharges.length > 0 && (
-                      <span className="text-xs text-muted-foreground">{colorSurchargeSummary(product.colorSurcharges)}</span>
-                    )}
-                  </span>
-                  <Button variant="outline" size="icon" className="size-9 md:size-7" onClick={() => change(line.productId, -1)} aria-label={`Quitar un ${product.name}`}>
-                    <MinusIcon aria-hidden />
-                  </Button>
-                  <span className="w-6 text-center text-sm font-medium tabular-nums">{line.quantity}</span>
-                  <Button variant="outline" size="icon" className="size-9 md:size-7" onClick={() => change(line.productId, 1)} aria-label={`Sumar un ${product.name}`}>
-                    <PlusIcon aria-hidden />
-                  </Button>
+                <li key={line.id} className="grid gap-2 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="grid min-w-0 flex-1">
+                      <span className="text-sm">{product.name}</span>
+                      {extra > 0 && <span className="text-xs text-muted-foreground tabular-nums">Incluye +{formatMoney(extra, "USD")} c/u</span>}
+                    </span>
+                    <Button variant="outline" size="icon" className="size-9 md:size-7" onClick={() => changeLine(line.id, -1)} aria-label={`Quitar un ${product.name}`}>
+                      <MinusIcon aria-hidden />
+                    </Button>
+                    <span className="w-6 text-center text-sm font-medium tabular-nums">{line.quantity}</span>
+                    <Button variant="outline" size="icon" className="size-9 md:size-7" onClick={() => changeLine(line.id, 1)} aria-label={`Sumar un ${product.name}`}>
+                      <PlusIcon aria-hidden />
+                    </Button>
+                  </div>
+                  {/* Solo si el producto cobra extra en alguna talla o color: se elige aquí o queda como opcional en el mensaje. */}
+                  {product.colorSurcharges.length > 0 && (
+                    <div role="radiogroup" aria-label={`Color de ${product.name}`} className="flex flex-wrap gap-1.5">
+                      <OptionChip selected={!line.colorId} onClick={() => setOption(line.id, { colorId: null })}>
+                        Otro color
+                      </OptionChip>
+                      {product.colorSurcharges.map((c) => (
+                        <OptionChip key={c.id} selected={line.colorId === c.id} onClick={() => setOption(line.id, { colorId: c.id })}>
+                          {c.name} +{formatMoney(c.amountUsd, "USD")}
+                        </OptionChip>
+                      ))}
+                    </div>
+                  )}
+                  {product.sizeSurcharges.length > 0 && (
+                    <div role="radiogroup" aria-label={`Talla de ${product.name}`} className="flex flex-wrap gap-1.5">
+                      <OptionChip selected={!line.sizeId} onClick={() => setOption(line.id, { sizeId: null })}>
+                        Otra talla
+                      </OptionChip>
+                      {product.sizeSurcharges.map((sz) => (
+                        <OptionChip key={sz.id} selected={line.sizeId === sz.id} onClick={() => setOption(line.id, { sizeId: sz.id })}>
+                          {sz.name} +{formatMoney(sz.amountUsd, "USD")}
+                        </OptionChip>
+                      ))}
+                    </div>
+                  )}
+                  {hasOptions && (
+                    <Button variant="ghost" size="sm" className="w-fit" onClick={() => addLineOf(product.id)}>
+                      <PlusIcon aria-hidden />
+                      Otra talla o color
+                    </Button>
+                  )}
                 </li>
               )
             })}

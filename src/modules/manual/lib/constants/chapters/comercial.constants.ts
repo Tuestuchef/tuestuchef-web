@@ -167,8 +167,12 @@ export const SALES_CHAPTER: ManualChapter = {
               body: "Cada método usa su propia lista de precios: los Bs salen del precio de ese método × la tasa BCV de hoy, igual que al vender. Los métodos que dan lo mismo van juntos (\"Efectivo / Zelle\"). El descuento al mayor se aplica solo.",
             },
             {
+              title: "Elige talla o color, si cobran extra",
+              body: "Si un producto cobra extra en alguna talla (p. ej. 3XL) o color (p. ej. pata de gallo), debajo de él aparecen esas opciones. Tócala si el cliente ya la pidió: el total la incluye. **Otra talla o color** agrega otra línea del mismo producto (p. ej. 2 en M y 1 en 4XL).",
+            },
+            {
               title: "Copia para WhatsApp",
-              body: "**Copiar para WhatsApp** arma la respuesta, lista para pegar: el título \"Tuestuchef - Lista de Precios\", los productos y el total en Bs (pago móvil) y en **USD** (el precio en efectivo). Zelle y USDT no van en el mensaje: si el cliente los pide, están en pantalla.",
+              body: "**Copiar para WhatsApp** arma la respuesta, lista para pegar: el título \"Tuestuchef - Lista de Precios\", los productos (con la talla o el color elegido) y el total en Bs (pago móvil) y en **USD** (el precio en efectivo). Lo que cobra extra y no se eligió va al final como **Opcional**, en USD y en Bs (p. ej. \"Pantalón jogger en pata de gallo: +$ 2,00\"). Zelle y USDT no van en el mensaje: si el cliente los pide, están en pantalla.",
             },
           ],
         },
