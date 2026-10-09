@@ -82,7 +82,8 @@ export const HELP_TOPICS = {
       {
         heading: "Pasos",
         items: [
-          "Busca y agrega los productos. Ajusta la cantidad con + y −.",
+          "Busca el producto (también por color, talla o SKU) y tócalo: eliges género, color y talla con botones y la cantidad. 'Agregar y elegir otra' suma otra combinación sin cerrar.",
+          "En el carrito ajustas la cantidad con + y −.",
           "Elige el método de pago: define el precio de cada producto.",
           "Cliente opcional: búscalo o créalo sin salir. Sin cliente = venta rápida.",
           "Elige canal y entrega. Si es delivery, agrega el cobro del delivery.",
@@ -205,9 +206,11 @@ export const HELP_TOPICS = {
       {
         heading: "Variantes",
         items: [
-          "'Colores × tallas' crea todas las combinaciones de una vez, con su SKU.",
-          "El SKU se genera con los códigos (categoría, código del modelo, género, cierre o corte, color y talla). Puedes editarlo mientras la variante no tenga movimientos.",
-          "El código del modelo (en Editar) distingue modelos de la misma categoría, p. ej. MC → FIL-MC-BR-NEG-S. Ponlo antes de crear las variantes.",
+          "Géneros (en Editar): Dama, Caballero y/o Unisex. Cada variante es de un género, con su propio stock; sin géneros = no aplica (gorros, estuches).",
+          "'Colores × tallas' crea todas las combinaciones de una vez (géneros × colores × tallas), con su SKU.",
+          "El SKU se genera con los códigos (categoría, código del modelo, género, cierre o corte, color y talla), p. ej. FIL-MC-C-BR-NEG-S (C = caballero, D = dama). Puedes editarlo mientras la variante no tenga movimientos.",
+          "El código del modelo (en Editar) distingue modelos de la misma categoría, p. ej. MC → FIL-MC-C-BR-NEG-S. Ponlo antes de crear las variantes.",
+          "Un género con variantes no se quita: desactiva sus variantes. Al darle géneros a un producto que no tenía, sus variantes sin movimientos pasan al primero.",
           "Stock mínimo: al llegar a ese número se marca como stock bajo.",
         ],
       },
@@ -219,10 +222,18 @@ export const HELP_TOPICS = {
         ],
       },
       {
+        heading: "Precio por talla",
+        items: [
+          "Cuánto más cuesta cada talla, por género (una columna por género). Vacío = el precio normal.",
+          "Atajo: género, 'desde' una talla y '+$ por talla' → Llenar. Ej.: Caballero desde 3XL +$3 llena 3XL +3, 4XL +6, 5XL +9 y 6XL +12.",
+          "Debajo de cada monto se ve el precio final (con el precio del primer método). Se suma igual en todos los métodos.",
+        ],
+      },
+      {
         heading: "Receta",
         items: [
           "Qué materia prima lleva cada prenda: un material específico o \"del mismo color que la prenda\".",
-          "La cantidad puede variar por talla; sin talla, aplica a todas.",
+          "La cantidad puede variar por talla y por género (p. ej. más tela en caballero); sin talla ni género, aplica a todas. La más específica manda.",
           "Al producir se descuenta del inventario y el costo de la prenda sale del costo promedio de los materiales.",
         ],
       },
@@ -322,7 +333,8 @@ export const HELP_TOPICS = {
       {
         heading: "Recargo por talla",
         items: [
-          "Recargo (en la fila de la talla): los productos que cuestan más en esa talla y cuánto más, en USD (p. ej. 3XL +$3 en las filipinas).",
+          "Recargo (en la fila de la talla): los productos que cuestan más en esa talla y cuánto más, en USD (p. ej. 3XL +$3 en las filipinas). Aplica a todos los géneros.",
+          "Si cambia según el género (dama o caballero), cárgalo en 'Precio por talla' del producto: ese manda. Esos productos aparecen aquí como 'Por género'.",
           "Marca los productos (o toda una categoría), escribe el monto o usa 'Mismo monto para los marcados', y guarda. Vacío quita el recargo.",
           "Se suma al precio del producto en todos los métodos de pago (en Bs, con la tasa del día) al vender, en pedidos y en presupuestos. Lo ya vendido no cambia.",
           "Si la variante también tiene recargo por color (p. ej. pata de gallo), se suman los dos.",
@@ -863,7 +875,7 @@ export const HELP_TOPICS = {
         heading: "Pasos",
         items: [
           "Elige el cliente (obligatorio). Un cliente bloqueado no puede pedir.",
-          "Agrega productos o combos (en un combo eliges el modelo, la talla y el color de cada pieza; los recargos se suman). 'Personalizar' añade nombres bordados o logos a una línea.",
+          "Agrega productos (tocas el producto y eliges género, color y talla con botones) o combos (en un combo eliges el modelo, el género, la talla y el color de cada pieza; los recargos se suman). 'Personalizar' añade nombres bordados o logos a una línea.",
           "Inventario: 'reservar y producir lo que falta' aparta lo que hay; 'producir todo' no toca el stock (misma tela).",
           "Revisa la fecha prometida (por defecto 5 días) y registra el pago inicial.",
           "Agregar IVA (opcional): se suma al total después de descuentos, sin el delivery. La tasa es la de Configuración → Presupuestos.",
@@ -1091,7 +1103,7 @@ export const HELP_TOPICS = {
         items: [
           "Cliente: elige uno guardado o escribe solo el nombre. A un cliente bloqueado no se le hacen presupuestos.",
           "Monedas: USD, Bs o ambas. Cada moneda sale de la lista de precios de un método de pago; los Bs, a la tasa BCV del día.",
-          "Productos con color y talla, combos y personalización. En un combo, la pieza con recargo (talla o color) sale aparte como 'Recargo'. Los nombres y el logo se piden en el pedido.",
+          "Productos con género, color y talla (se eligen con botones al tocar el producto), combos y personalización. En un combo, la pieza con recargo (talla o color) sale aparte como 'Recargo'. Los nombres y el logo se piden en el pedido.",
           "Descuento por línea o del presupuesto, siempre con motivo; staff tiene el mismo límite que en ventas.",
           "IVA opcional sobre el total. La nota de IGTF es solo texto.",
           "Imagen del encabezado: por defecto la de Datos de la empresa; puedes subir otra solo para este presupuesto.",
@@ -1223,7 +1235,8 @@ export const HELP_TOPICS = {
           "Los Bs son el precio de ese método × la tasa BCV de hoy, igual que al vender.",
           "El descuento al mayor se aplica solo, por piezas (un combo cuenta sus piezas).",
           "Si un producto cobra extra en alguna talla o color, debajo aparecen esas opciones: tócala si el cliente ya la pidió y el total la incluye.",
-          "En un combo, la opción suma lo de todas sus piezas (p. ej. 3XL: filipina +$3 y pantalón +$2 = +$5); si cambia según el modelo, toma el más alto.",
+          "En un combo, la opción suma lo de todas sus piezas (p. ej. 3XL: filipina +$3 y pantalón +$2 = +$5); si cambia según el modelo o el género, toma el más alto.",
+          "Si el producto se hace en dama y caballero, toca el género: las tallas con recargo dependen de él. Sin género, el mensaje avisa los extras de cada uno (p. ej. 'en tallas 3XL–6XL (caballero)').",
           "'Otra talla o color' agrega otra línea del mismo producto (p. ej. 2 en M y 1 en 4XL).",
           "Lo que no se elige va en el mensaje como 'Opcional', con el extra en USD y en Bs (p. ej. 'Pantalón jogger en pata de gallo: +$ 2,00').",
           "Si un producto no tiene precio en un método, se avisa y no entra en ese total.",

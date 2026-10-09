@@ -14,7 +14,8 @@ const dmy = (iso: string) => {
 }
 const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3 })
 
-const variantText = (item: Pick<QuoteItem, "colorName" | "sizeName">) => [item.colorName, item.sizeName].filter(Boolean).join(" · ")
+const variantText = (item: Pick<QuoteItem, "genderName" | "colorName" | "sizeName">) =>
+  [item.genderName, item.colorName, item.sizeName].filter(Boolean).join(" · ")
 
 type QuoteDocumentProps = { quote: QuoteDetail; business: BusinessProfile; headerImageUrl: string | null; draft?: boolean }
 
@@ -150,7 +151,7 @@ const QuoteDocument = ({ quote, business, headerImageUrl, draft }: QuoteDocument
                   <tr key={row.key} className="border-b border-dashed align-top">
                     <td className="py-2">
                       {row.productName}
-                      {row.colorName ? ` · ${row.colorName}` : ""}
+                      {[row.genderName, row.colorName].filter(Boolean).map((part) => ` · ${part}`).join("")}
                       <div className="text-xs text-muted-foreground">Tallas: {row.sizes.map((s) => `${s.sizeName} ${quantityFormat.format(s.quantity)}`).join(" · ")}</div>
                       {row.discountPercent > 0 && <div className="text-xs text-muted-foreground">Descuento {row.discountPercent}%</div>}
                     </td>

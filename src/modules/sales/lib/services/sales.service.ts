@@ -17,9 +17,7 @@ import type {
   SellableVariant,
   SalesTotals,
 } from "../types/sales.types"
-
-const variantLabel = (v: { color: { name: string } | null; size: { name: string } | null }) =>
-  [v.color?.name, v.size?.name].filter(Boolean).join(" · ") || "Única"
+import { variantLabel } from "@/modules/products/lib/utils/variant-label.util"
 
 // Cada combo seguido de sus componentes (en el orden en que se registraron).
 const withComponentsAfterCombo = <T extends { id: string; parent_item_id: string | null }>(items: T[]): T[] =>
@@ -40,7 +38,7 @@ export async function getSaleFormData(): Promise<SaleFormData> {
     supabase
       .from("product_variants")
       .select(
-        "id, sku, product_id, size_id, color_id, color:colors(name), size:sizes(name), product:products!inner(name, kind, is_active, fulfillment_type)"
+        "id, sku, product_id, size_id, color_id, gender, color:colors(name, sort_order), size:sizes(name, sort_order), product:products!inner(name, kind, is_active, fulfillment_type)"
       )
       .eq("is_active", true)
       .eq("product.is_active", true)
@@ -63,7 +61,7 @@ export async function getSaleFormData(): Promise<SaleFormData> {
       )
       .order("sort_order"),
     supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "products").order("min_quantity"),
-    supabase.from("size_surcharges").select("product_id, size_id, amount_usd"),
+    supabase.from("size_surcharges").select("product_id, size_id, gender, amount_usd"),
     supabase.from("color_surcharges").select("product_id, color_id, amount_usd"),
   ])
   if (variantsResult.error) throw variantsResult.error
@@ -79,13 +77,17 @@ export async function getSaleFormData(): Promise<SaleFormData> {
 
   // Recargo por talla y por color (solo productos terminados): se suman al precio de cada método,
   // igual que variant_price_usd en la base.
-  const sizeExtra = new Map((surchargesResult.data ?? []).map((r) => [`${r.product_id}|${r.size_id}`, Number(r.amount_usd)]))
+  // El de la talla: el de su género o, si no hay, el de todos los géneros.
+  const sizeExtra = new Map((surchargesResult.data ?? []).map((r) => [`${r.product_id}|${r.size_id}|${r.gender ?? ""}`, Number(r.amount_usd)]))
   const colorExtra = new Map((colorSurchargesResult.data ?? []).map((r) => [`${r.product_id}|${r.color_id}`, Number(r.amount_usd)]))
-  const extraFor = (variant: { product_id: string; size_id: string | null; color_id: string | null; product: { kind: string } }) =>
+  type PricedVariant = { product_id: string; size_id: string | null; color_id: string | null; gender: string | null; product: { kind: string } }
+  const extraFor = (variant: PricedVariant) =>
     variant.product.kind === "finished_good"
-      ? (sizeExtra.get(`${variant.product_id}|${variant.size_id}`) ?? 0) + (colorExtra.get(`${variant.product_id}|${variant.color_id}`) ?? 0)
+      ? (sizeExtra.get(`${variant.product_id}|${variant.size_id}|${variant.gender ?? ""}`) ??
+          sizeExtra.get(`${variant.product_id}|${variant.size_id}|`) ??
+          0) + (colorExtra.get(`${variant.product_id}|${variant.color_id}`) ?? 0)
       : 0
-  const pricesFor = (variant: { product_id: string; size_id: string | null; color_id: string | null; product: { kind: string } }) => {
+  const pricesFor = (variant: PricedVariant) => {
     const base = prices.get(variant.product_id) ?? {}
     const extra = extraFor(variant)
     return extra ? Object.fromEntries(Object.entries(base).map(([method, amount]) => [method, round(amount + extra)])) : base
@@ -112,6 +114,9 @@ export async function getSaleFormData(): Promise<SaleFormData> {
         sku: v.sku,
         productName: v.product.name,
         variantLabel: v.product.kind === "combo" ? "Combo" : variantLabel(v),
+        gender: v.gender,
+        color: v.color ? { name: v.color.name, sort: v.color.sort_order } : null,
+        size: v.size ? { name: v.size.name, sort: v.size.sort_order } : null,
         fulfillmentType: v.product.fulfillment_type,
         stock: stock.get(v.id) ?? 0,
         pricesUsd: pricesFor(v),
@@ -324,7 +329,7 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
       .from("sale_items")
       .select(
         `id, parent_item_id, quantity, unit_price_usd, line_total_usd, source,
-         variant:product_variants(sku, color:colors(name), size:sizes(name), product:products(name))`
+         variant:product_variants(sku, gender, color:colors(name), size:sizes(name), product:products(name))`
       )
       .eq("sale_id", id)
       .order("created_at"),

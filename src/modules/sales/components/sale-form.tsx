@@ -5,7 +5,6 @@ import {
   ChevronDownIcon,
   Loader2Icon,
   MinusIcon,
-  PackagePlusIcon,
   PlusIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -18,17 +17,8 @@ import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
 import { Button } from "@/common/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/common/components/ui/command"
 import { Input } from "@/common/components/ui/input"
 import { Label } from "@/common/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/common/components/ui/popover"
 import { Switch } from "@/common/components/ui/switch"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { cn } from "@/common/lib/utils"
@@ -64,6 +54,7 @@ import { isNetworkError, queueSale } from "../lib/utils/offline-queue.util"
 import BackdateField from "./backdate-field"
 import { comboExtraUsd } from "../lib/utils/combo.util"
 import ComboPickerDialog, { type ComboSelection } from "./combo-picker-dialog"
+import ProductPicker from "./product-picker"
 
 // Una línea del carrito. Un combo trae la talla y el color de cada pieza (components).
 type CartLine = {
@@ -112,7 +103,6 @@ const SaleForm = ({
   const [error, setError] = useState<string | null>(null)
 
   const [cart, setCart] = useState<CartLine[]>([])
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [comboToPick, setComboToPick] = useState<SellableVariant | null>(null)
   const [priceMethodId, setPriceMethodId] = useState(methods[0]?.id ?? "")
   const [customer, setCustomer] = useState<PickedCustomer | null>(null)
@@ -222,23 +212,17 @@ const SaleForm = ({
   ].filter(Boolean) as string[]
 
   // ---- Carrito ----
-  const addVariant = (variant: SellableVariant) => {
-    setPickerOpen(false)
-    // Un combo pide la talla y el color de cada pieza antes de entrar al carrito.
-    if (variant.components) {
-      setComboToPick(variant)
-      return
-    }
+  // Una variante elegida (género, color y talla) con su cantidad; si ya está, suma.
+  const addVariant = (variant: SellableVariant, quantity: number) =>
     setCart((prev) => {
       const existing = prev.find((l) => l.key === variant.id)
-      if (existing) return prev.map((l) => (l === existing ? { ...l, quantity: l.quantity + 1 } : l))
+      if (existing) return prev.map((l) => (l === existing ? { ...l, quantity: l.quantity + quantity } : l))
       const source: SaleLineSource =
-        variant.fulfillmentType === "made_to_order" || (variant.fulfillmentType === "both" && variant.stock < 1)
+        variant.fulfillmentType === "made_to_order" || (variant.fulfillmentType === "both" && variant.stock < quantity)
           ? "made_to_order"
           : "stock"
-      return [...prev, { key: variant.id, variantId: variant.id, quantity: 1, source }]
+      return [...prev, { key: variant.id, variantId: variant.id, quantity, source }]
     })
-  }
   const addCombo = (selection: ComboSelection) => {
     if (!comboToPick) return
     const combo = comboToPick
@@ -349,51 +333,14 @@ const SaleForm = ({
       {/* 1. Productos */}
       <section className="grid gap-2">
         <Label>Productos</Label>
-        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-          <PopoverTrigger asChild>
-            <Button type="button" variant="outline" className="h-11 justify-start font-normal text-muted-foreground md:h-9">
-              <PackagePlusIcon aria-hidden />
-              Buscar por nombre, color, talla o SKU
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-(--radix-popover-trigger-width) min-w-72 p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Filipina negra M…" />
-              <CommandList>
-                <CommandEmpty>No hay coincidencias.</CommandEmpty>
-                <CommandGroup>
-                  {variants.map((variant) => {
-                    const price = variant.pricesUsd[priceMethodId]
-                    return (
-                      <CommandItem
-                        key={variant.id}
-                        value={`${variant.productName} ${variant.variantLabel} ${variant.sku}`}
-                        onSelect={() => addVariant(variant)}
-                      >
-                        <span className="grid min-w-0 flex-1">
-                          <span className="truncate">
-                            {variant.productName} <span className="text-muted-foreground">· {variant.variantLabel}</span>
-                          </span>
-                          <span className="font-mono text-xs text-muted-foreground">{variant.sku}</span>
-                        </span>
-                        <span className="grid justify-items-end text-xs tabular-nums">
-                          <span>{price === undefined ? "Sin precio" : usd(price)}</span>
-                          <span className="text-muted-foreground">
-                            {variant.components
-                              ? "Combo"
-                              : variant.fulfillmentType === "made_to_order"
-                                ? "Por encargo"
-                                : `Hay ${quantityFormat.format(variant.stock)}`}
-                          </span>
-                        </span>
-                      </CommandItem>
-                    )
-                  })}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <ProductPicker
+          variants={variants}
+          priceMethodId={priceMethodId}
+          available={availableFor}
+          placeholder="Filipina 3/4 dama negra…"
+          onAdd={addVariant}
+          onCombo={setComboToPick}
+        />
 
         {lines.length > 0 && (
           <ul className="divide-y rounded-lg border">

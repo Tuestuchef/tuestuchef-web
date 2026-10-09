@@ -82,6 +82,8 @@ export type QuoteItem = {
   variantId: string
   productName: string
   sku: string
+  // "Dama", "Caballero" o "Unisex" (vacío si el producto no tiene género).
+  genderName: string | null
   colorName: string | null
   sizeName: string | null
   sizeSort: number | null

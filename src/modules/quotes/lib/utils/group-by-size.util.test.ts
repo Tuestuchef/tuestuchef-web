@@ -10,6 +10,7 @@ const item = (over: Partial<QuoteItem>): QuoteItem => ({
   variantId: "v",
   productName: "Filipina",
   sku: "FIL",
+  genderName: null,
   colorName: "Blanco",
   sizeName: "M",
   sizeSort: 2,

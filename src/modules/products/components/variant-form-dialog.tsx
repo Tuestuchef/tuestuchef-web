@@ -28,10 +28,13 @@ import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
 import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
 
 import { saveVariantAction } from "../lib/actions/save-variant.action"
+import { GENDER_LABELS, type ProductGender } from "../lib/constants/products.constants"
 import type { CatalogItem, VariantWithStock } from "../lib/types/products.types"
 
 type VariantFormDialogProps = {
   productId: string
+  // Géneros que ofrece el producto (vacío = no aplica).
+  genders: ProductGender[]
   colors: CatalogItem[]
   sizes: CatalogItem[]
   variant?: VariantWithStock
@@ -74,7 +77,7 @@ const CatalogSelect = ({
 )
 
 // Una variante suelta. Con movimientos de stock, su identidad (color, talla y SKU) queda fija.
-const VariantFormDialog = ({ productId, colors, sizes, variant }: VariantFormDialogProps) => {
+const VariantFormDialog = ({ productId, genders, colors, sizes, variant }: VariantFormDialogProps) => {
   const [open, setOpen] = useState(false)
   const { state, onSubmit, pending } = useFormAction(saveVariantAction)
   useActionFeedback(state, () => setOpen(false))
@@ -106,13 +109,14 @@ const VariantFormDialog = ({ productId, colors, sizes, variant }: VariantFormDia
           {state.status === "error" && state.message && <StatusAlert tone="error" title={state.message} />}
           {locked && (
             <StatusAlert tone="info" title="Tiene movimientos de stock">
-              El color, la talla y el SKU ya no se pueden cambiar.
+              El género, el color, la talla y el SKU ya no se pueden cambiar.
             </StatusAlert>
           )}
 
           {locked && variant ? (
             <>
               {/* Enviamos los valores actuales: el servidor y la base los validan igual. */}
+              <input type="hidden" name="gender" value={variant.gender ?? ""} />
               <input type="hidden" name="color_id" value={variant.colorId ?? ""} />
               <input type="hidden" name="size_id" value={variant.sizeId ?? ""} />
               <input type="hidden" name="sku" value={variant.sku} />
@@ -120,12 +124,29 @@ const VariantFormDialog = ({ productId, colors, sizes, variant }: VariantFormDia
                 <LockIcon className="size-4 text-muted-foreground" aria-hidden />
                 <code className="font-mono">{variant.sku}</code>
                 <span className="text-muted-foreground">
-                  {[variant.colorName, variant.sizeName].filter(Boolean).join(" · ") || "Única"}
+                  {[variant.gender && GENDER_LABELS[variant.gender], variant.colorName, variant.sizeName].filter(Boolean).join(" · ") || "Única"}
                 </span>
               </p>
             </>
           ) : (
             <>
+              {genders.length > 1 && (
+                <FormField label="Género" htmlFor="variant-gender" error={errors.gender}>
+                  <Select name="gender" defaultValue={variant?.gender ?? genders[0]}>
+                    <SelectTrigger id="variant-gender" className="h-11 w-full md:h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {genders.map((g) => (
+                        <SelectItem key={g} value={g}>
+                          {GENDER_LABELS[g]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+              )}
+              {genders.length === 1 && <input type="hidden" name="gender" value={genders[0]} />}
               <div className="grid gap-4 sm:grid-cols-2">
                 <CatalogSelect id="variant-color" name="color_id" label="Color" items={colors} defaultValue={variant?.colorId ?? null} />
                 <CatalogSelect id="variant-size" name="size_id" label="Talla" items={sizes} defaultValue={variant?.sizeId ?? null} />

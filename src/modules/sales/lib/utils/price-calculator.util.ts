@@ -1,6 +1,7 @@
 import type { Currency } from "@/common/lib/constants/currency.constants"
 import { brandConfig } from "@/common/lib/config/brand.config"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
+import { GENDER_LABELS, type ProductGender } from "@/modules/products/lib/constants/products.constants"
 
 import type { CalculatorProduct, CalculatorSurcharge, SalePaymentMethod, VolumeTier } from "../types/sales.types"
 import { lineTotal, round, type SaleRates, usdToMethodAmount, volumePercent } from "./sale-math.util"
@@ -10,7 +11,15 @@ import { lineTotal, round, type SaleRates, usdToMethodAmount, volumePercent } fr
 
 // Una línea de la lista. Talla y color son opcionales: solo se eligen si cobran extra (recargo).
 // El mismo producto puede ir en varias líneas (p. ej. 2 en M y 1 en 4XL).
-export type CalculatorLine = { id: string; productId: string; quantity: number; sizeId?: string | null; colorId?: string | null }
+export type CalculatorLine = {
+  id: string
+  productId: string
+  quantity: number
+  // Género (si el producto ofrece varios): define qué recargos por talla aplican.
+  gender?: ProductGender | null
+  sizeId?: string | null
+  colorId?: string | null
+}
 
 export type CalculatorMethodTotal = {
   // Métodos que dan el mismo total en la misma moneda van juntos ("Efectivo / Zelle").
@@ -33,16 +42,29 @@ export type CalculatorTotals = {
 
 const findSurcharge = (list: CalculatorSurcharge[], id: string | null | undefined) => (id ? list.find((s) => s.id === id) : undefined)
 
-// Recargo elegido en la línea (talla + color), en USD.
-export function lineExtraUsd(product: CalculatorProduct, line: CalculatorLine): number {
-  return (findSurcharge(product.sizeSurcharges, line.sizeId)?.amountUsd ?? 0) + (findSurcharge(product.colorSurcharges, line.colorId)?.amountUsd ?? 0)
+// Recargos por talla que aplican a un género (sin géneros, los del producto). Con géneros y sin
+// género elegido no hay talla que elegir todavía.
+export function sizeSurchargesFor(product: CalculatorProduct, gender: ProductGender | null | undefined): CalculatorSurcharge[] {
+  if (product.genders.length === 0) return product.sizeSurcharges
+  // Con un solo género, ese.
+  const effective = gender ?? (product.genders.length === 1 ? product.genders[0] : null)
+  return effective ? (product.genderSizeSurcharges[effective] ?? []) : []
 }
 
-// "Pantalón jogger · pata de gallo · talla 3XL": el producto con las opciones elegidas.
+// Recargo elegido en la línea (talla + color), en USD.
+export function lineExtraUsd(product: CalculatorProduct, line: CalculatorLine): number {
+  return (
+    (findSurcharge(sizeSurchargesFor(product, line.gender), line.sizeId)?.amountUsd ?? 0) +
+    (findSurcharge(product.colorSurcharges, line.colorId)?.amountUsd ?? 0)
+  )
+}
+
+// "Filipina manga corta · caballero · pata de gallo · talla 3XL": el producto con las opciones elegidas.
 export function lineLabel(product: CalculatorProduct, line: CalculatorLine): string {
   const color = findSurcharge(product.colorSurcharges, line.colorId)
-  const size = findSurcharge(product.sizeSurcharges, line.sizeId)
-  return [product.name, color && color.name.toLowerCase(), size && `talla ${size.name}`].filter(Boolean).join(" · ")
+  const size = findSurcharge(sizeSurchargesFor(product, line.gender), line.sizeId)
+  const gender = line.gender && product.genders.length > 1 ? GENDER_LABELS[line.gender].toLowerCase() : null
+  return [product.name, gender, color && color.name.toLowerCase(), size && `talla ${size.name}`].filter(Boolean).join(" · ")
 }
 
 export function calculatorTotals(input: {
@@ -112,10 +134,15 @@ export function optionalExtras(lines: CalculatorLine[], products: ReadonlyMap<st
         extras.push({ productName: product.name, label: `en ${color.name.toLowerCase()}`, minUsd: color.amountUsd, maxUsd: color.amountUsd })
       }
     }
-    if (product.sizeSurcharges.length > 0 && own.some((l) => !findSurcharge(product.sizeSurcharges, l.sizeId))) {
-      const sizes = product.sizeSurcharges
+    // Tallas: por cada género abierto (el de la línea o, si no se eligió, todos los del producto).
+    const open = own.filter((l) => !findSurcharge(sizeSurchargesFor(product, l.gender), l.sizeId))
+    const genders = [...new Set(open.flatMap((l) => (product.genders.length === 0 ? [null] : l.gender ? [l.gender] : product.genders)))]
+    for (const gender of genders) {
+      const sizes = sizeSurchargesFor(product, gender)
+      if (sizes.length === 0) continue
       const amounts = sizes.map((s) => s.amountUsd)
-      const label = sizes.length === 1 ? `en talla ${sizes[0].name}` : `en tallas ${sizes[0].name}–${sizes[sizes.length - 1].name}`
+      const of = gender && product.genders.length > 1 ? ` (${GENDER_LABELS[gender].toLowerCase()})` : ""
+      const label = sizes.length === 1 ? `en talla ${sizes[0].name}${of}` : `en tallas ${sizes[0].name}–${sizes[sizes.length - 1].name}${of}`
       extras.push({ productName: product.name, label, minUsd: Math.min(...amounts), maxUsd: Math.max(...amounts) })
     }
     return extras

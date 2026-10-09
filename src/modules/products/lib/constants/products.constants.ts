@@ -15,6 +15,8 @@ export const FULFILLMENT_LABELS: Record<FulfillmentType, string> = {
 }
 
 export const GENDER_LABELS: Record<ProductGender, string> = { women: "Dama", men: "Caballero", unisex: "Unisex" }
+// Orden en que se muestran los géneros.
+export const GENDERS = ["women", "men", "unisex"] as const satisfies readonly ProductGender[]
 export const CLOSURE_LABELS: Record<ProductClosure, string> = { snap: "Broche", zipper: "Cierre", buttons: "Botones" }
 export const FIT_LABELS: Record<ProductFit, string> = { jogger: "Jogger", straight: "Recto" }
 export const UNIT_LABELS: Record<ProductUnit, string> = { unit: "Unidad", meter: "Metro", kg: "Kilo" }

@@ -3,6 +3,7 @@ import "server-only"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 import { toCaracasDate } from "@/common/lib/utils/format-date.util"
 import { getOrderFormData } from "@/modules/orders/lib/services/orders.service"
+import { GENDER_LABELS } from "@/modules/products/lib/constants/products.constants"
 
 import { QUOTE_LIST_LIMIT } from "../constants/quotes.constants"
 import type { ConvertQuoteInput, QuoteFilters, SaveQuoteInput } from "../schemas/quote.schema"
@@ -147,6 +148,7 @@ export async function getQuoteDetail(id: string): Promise<QuoteDetail | null> {
     variantId: i.variant_id,
     productName: i.product_name,
     sku: i.sku,
+    genderName: i.gender ? GENDER_LABELS[i.gender] : null,
     colorName: i.color_name,
     sizeName: i.size_name,
     sizeSort: i.size_sort,

@@ -22,6 +22,8 @@ type SurchargesDialogProps = {
   products: SurchargeProduct[]
   // Recargo actual por producto (USD).
   current: Record<string, number>
+  // Solo tallas: productos con recargo distinto por género (se editan en su página).
+  perGender?: string[]
 }
 
 const toText = (amount: number | undefined) => (amount === undefined ? "" : String(amount).replace(".", ","))
@@ -31,7 +33,7 @@ const OF: Record<SurchargeKind, string> = { size: "de la talla", color: "del col
 
 // Recargo de una talla (p. ej. 3XL) o un color (p. ej. pata de gallo) en los productos que lo cobran:
 // se suma a su precio en todos los métodos.
-const SurchargesDialog = ({ kind, target, products, current }: SurchargesDialogProps) => {
+const SurchargesDialog = ({ kind, target, products, current, perGender = [] }: SurchargesDialogProps) => {
   const of = OF[kind]
   const [open, setOpen] = useState(false)
   const [checked, setChecked] = useState<Record<string, boolean>>(() => Object.fromEntries(Object.keys(current).map((id) => [id, true])))
@@ -68,6 +70,7 @@ const SurchargesDialog = ({ kind, target, products, current }: SurchargesDialogP
           <DialogDescription>
             Marca los productos que cuestan más en {kind === "size" ? "esta talla" : "este color"} y cuánto más (USD). Se suma a su precio en todos los métodos de pago; lo ya
             vendido no cambia.
+            {kind === "size" && " Aplica a todos los géneros: si cambia según el género (dama o caballero), cárgalo en Precio por talla del producto."}
           </DialogDescription>
         </DialogHeader>
 
@@ -78,9 +81,11 @@ const SurchargesDialog = ({ kind, target, products, current }: SurchargesDialogP
             <input type="hidden" name="kind" value={kind} />
             <input type="hidden" name="target_id" value={target.id} />
             {/* Un campo por producto: vacío (o sin marcar) quita el recargo. */}
-            {products.map((p) => (
-              <input key={p.id} type="hidden" name={`surcharge_${p.id}`} value={checked[p.id] ? (amounts[p.id] ?? "") : ""} />
-            ))}
+            {products
+              .filter((p) => !perGender.includes(p.id))
+              .map((p) => (
+                <input key={p.id} type="hidden" name={`surcharge_${p.id}`} value={checked[p.id] ? (amounts[p.id] ?? "") : ""} />
+              ))}
             {state.status === "error" && state.message && <StatusAlert tone="error" title={state.message} />}
 
             <div className="flex flex-wrap items-end gap-2 rounded-lg border p-3">
@@ -111,7 +116,13 @@ const SurchargesDialog = ({ kind, target, products, current }: SurchargesDialogP
                       {allChecked ? "Quitar todos" : "Marcar todos"}
                     </Button>
                   </legend>
-                  {inCategory.map((p) => (
+                  {inCategory.map((p) =>
+                    perGender.includes(p.id) ? (
+                      <div key={p.id} className="flex items-center gap-3 py-1 text-sm">
+                        <span className="min-w-0 flex-1">{p.name}</span>
+                        <span className="text-xs text-muted-foreground">Por género: en la página del producto</span>
+                      </div>
+                    ) : (
                     <div key={p.id} className="flex items-center gap-3 py-1">
                       <input
                         id={`check-${target.id}-${p.id}`}
@@ -138,7 +149,8 @@ const SurchargesDialog = ({ kind, target, products, current }: SurchargesDialogP
                         />
                       </div>
                     </div>
-                  ))}
+                    )
+                  )}
                 </fieldset>
               )
             })}

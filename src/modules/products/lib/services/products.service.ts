@@ -2,10 +2,11 @@ import "server-only"
 
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 
-import type { ProductKind } from "../constants/products.constants"
+import { GENDERS, type ProductKind } from "../constants/products.constants"
 import type { ProductInput } from "../schemas/products.schema"
 import type { ProductDetail, ProductListItem, VariantWithStock } from "../types/products.types"
 import { listProductImages, resolveImageUrl } from "./product-images.service"
+import { assignGenderToUnsetVariants, genderInUse } from "./variants.service"
 
 export async function listProducts(
   filters: { search?: string; categoryId?: string; kind?: ProductKind } = {}
@@ -80,9 +81,11 @@ export async function getProductDetail(id: string): Promise<ProductDetail | null
   if (error) throw error
 
   const withMovements = new Set((moved ?? []).map((m) => m.variant_id))
-  // Orden: color (orden, nombre) y luego talla.
+  // Orden: género (Dama, Caballero, Unisex), color (orden, nombre) y luego talla.
+  const genderOrder = (g: string | null) => (g ? GENDERS.indexOf(g as (typeof GENDERS)[number]) : -1)
   const sorted = [...variants].sort(
     (a, b) =>
+      genderOrder(a.gender) - genderOrder(b.gender) ||
       (a.color?.sort_order ?? -1) - (b.color?.sort_order ?? -1) ||
       (a.color?.name ?? "").localeCompare(b.color?.name ?? "") ||
       (a.size?.sort_order ?? -1) - (b.size?.sort_order ?? -1),
@@ -92,6 +95,7 @@ export async function getProductDetail(id: string): Promise<ProductDetail | null
     return {
       id: variant.id,
       sku: variant.sku,
+      gender: variant.gender,
       colorId: variant.color_id,
       colorName: variant.color?.name ?? null,
       sizeId: variant.size_id,
@@ -125,14 +129,21 @@ export async function saveProduct(input: ProductInput) {
     description: input.description ?? null,
     fulfillment_type: input.fulfillment_type,
     unit: input.unit,
-    gender: input.gender,
+    genders: input.genders,
     closure: input.closure,
     fit: input.fit,
     model_code: input.model_code,
     labor_cost_usdt: input.labor_cost_usdt,
     is_active: input.is_active,
   }
-  if (input.id) return supabase.from("products").update(values).eq("id", input.id).select("id").single()
+  if (input.id) {
+    // Un género con variantes no se quita (se desactivan sus variantes).
+    const inUse = await genderInUse(input.id, input.genders)
+    if (inUse) return { data: null, error: { code: "P0001", message: inUse } }
+    const result = await supabase.from("products").update(values).eq("id", input.id).select("id").single()
+    if (!result.error) await assignGenderToUnsetVariants(input.id)
+    return result
+  }
   // El tipo (terminado o materia prima) solo se fija al crear.
   return supabase.from("products").insert({ ...values, kind: input.kind }).select("id").single()
 }

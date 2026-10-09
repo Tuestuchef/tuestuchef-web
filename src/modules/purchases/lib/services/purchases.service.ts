@@ -17,9 +17,7 @@ import type {
   PurchaseFormData,
   PurchaseListItem,
 } from "../types/purchases.types"
-
-const variantLabel = (v: { color: { name: string } | null; size: { name: string } | null }) =>
-  [v.color?.name, v.size?.name].filter(Boolean).join(" · ") || "Única"
+import { variantLabel } from "@/modules/products/lib/utils/variant-label.util"
 
 // Fecha del formulario → instante (vacío u hoy = ahora).
 const occurredAt = (date?: string) => (date && date !== toCaracasDate() ? caracasNoonIso(date) : undefined)
@@ -31,7 +29,7 @@ export async function getPurchaseFormData(): Promise<PurchaseFormData> {
     supabase
       .from("product_variants")
       .select(
-        "id, sku, unit_cost_usdt, color:colors(name), size:sizes(name), product:products!inner(name, kind, unit, is_active, fulfillment_type)"
+        "id, sku, unit_cost_usdt, gender, color:colors(name), size:sizes(name), product:products!inner(name, kind, unit, is_active, fulfillment_type)"
       )
       .eq("is_active", true)
       .eq("product.is_active", true)
@@ -210,7 +208,7 @@ export async function getPurchaseDetail(id: string): Promise<PurchaseDetail | nu
       .select(
         `id, line_type, description, quantity, unit_cost_usd, line_total_usd,
          category:movement_categories(name),
-         variant:product_variants(sku, color:colors(name), size:sizes(name), product:products(name))`
+         variant:product_variants(sku, gender, color:colors(name), size:sizes(name), product:products(name))`
       )
       .eq("purchase_id", id)
       .order("created_at"),

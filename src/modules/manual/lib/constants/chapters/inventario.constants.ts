@@ -66,7 +66,7 @@ export const INVENTORY_CHAPTER: ManualChapter = {
         {
           kind: "text",
           body:
-            "Un **producto** es un modelo (p. ej. “Filipina dama broche”). Sus **variantes** son cada combinación de color y talla que de verdad existe (Negra M, Blanca L…). El stock, el costo y el código (**SKU**) son de cada variante.",
+            "Un **producto** es un modelo (p. ej. “Filipina manga corta broche”). Sus **variantes** son cada combinación de **género**, color y talla que de verdad existe (Dama · Negro · M, Caballero · Blanco · 3XL…). El stock, el costo y el código (**SKU**) son de cada variante. Así no hace falta un producto por sexo: el producto dice qué géneros ofrece (Dama, Caballero, Unisex) y, si no aplica (gorros, estuches), no lleva ninguno.",
         },
         {
           kind: "example",
@@ -74,14 +74,14 @@ export const INVENTORY_CHAPTER: ManualChapter = {
           rows: [
             { label: "Categoría (Filipinas)", value: "FIL" },
             { label: "Modelo (manga corta), opcional", value: "MC" },
-            { label: "Género (dama)", value: "D" },
+            { label: "Género (dama; caballero C, unisex U)", value: "D" },
             { label: "Cierre o corte (broche)", value: "BR" },
             { label: "Color (Negro)", value: "NEG" },
             { label: "Talla (M)", value: "M" },
             { label: "SKU de la variante", value: "FIL-MC-D-BR-NEG-M", total: true },
           ],
           conclusion:
-            "Los códigos salen de Configuración (categorías, colores y tallas) y del **código del modelo** de cada producto, que distingue modelos de la misma categoría (manga corta MC, 3/4 M34, larga ML; estuche MAXI, STARK…). Lo que el producto no tiene se omite. “Colores × tallas” crea todas las combinaciones de una vez. Los códigos se usan al crear las variantes: ponlos antes.",
+            "Los códigos salen de Configuración (categorías, colores y tallas) y del **código del modelo** de cada producto, que distingue modelos de la misma categoría (manga corta MC, 3/4 M34, larga ML; estuche MAXI, STARK…). Lo que el producto no tiene se omite. “Colores × tallas” crea todas las combinaciones (géneros × colores × tallas) de una vez. Los códigos se usan al crear las variantes: ponlos antes.",
         },
         {
           kind: "effects",
@@ -89,7 +89,7 @@ export const INVENTORY_CHAPTER: ManualChapter = {
             {
               icon: TagIcon,
               title: "Precios",
-              effect: "Uno en dólares por método de pago, igual para todas las variantes. Vacío = no se vende por ese método. Las tallas y los colores con recargo (Configuración → Tallas y Colores) suman su extra.",
+              effect: "Uno en dólares por método de pago, igual para todas las variantes. Vacío = no se vende por ese método. Las tallas grandes suman su extra según el género (tabla Precio por talla del producto; p. ej. caballero desde 3XL +$3 por talla, dama solo 6XL) y los colores con recargo (Configuración → Colores) el suyo.",
               chapter: "ventas",
             },
             { icon: ImageIcon, title: "Fotos", effect: "Varias por producto, una principal, y cada una puede ir con un color." },
@@ -246,7 +246,7 @@ export const INVENTORY_CHAPTER: ManualChapter = {
         {
           kind: "text",
           body:
-            "La **receta** dice qué materia prima lleva cada prenda. Una línea puede ser un material exacto (“botones de presión”) o **“del mismo color que la prenda”** (la filipina negra usa tela negra). La cantidad puede cambiar por talla.",
+            "La **receta** dice qué materia prima lleva cada prenda. Una línea puede ser un material exacto (“botones de presión”) o **“del mismo color que la prenda”** (la filipina negra usa tela negra). La cantidad puede cambiar por talla y por género (p. ej. 1,6 m de tela en caballero y 1,4 m en dama): la línea más específica manda.",
         },
         {
           kind: "steps",

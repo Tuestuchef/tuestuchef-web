@@ -13,7 +13,7 @@ import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
 import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
 
 import { addRecipeLineAction, deleteRecipeLineAction } from "../lib/actions/recipe.action"
-import { UNIT_LABELS } from "../lib/constants/products.constants"
+import { GENDER_LABELS, type ProductGender, UNIT_LABELS } from "../lib/constants/products.constants"
 import type { CatalogItem, MaterialOption, RecipeLine } from "../lib/types/products.types"
 
 type RecipeEditorProps = {
@@ -21,14 +21,16 @@ type RecipeEditorProps = {
   lines: RecipeLine[]
   materials: MaterialOption[]
   sizes: CatalogItem[]
+  // Géneros del producto: con más de uno, una línea puede ser solo para uno.
+  genders: ProductGender[]
   canManage: boolean
 }
 
 const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 4 })
 
-// Receta: qué materia prima lleva cada prenda. Con talla = cantidad para esa talla;
-// sin talla = cantidad por defecto.
-const RecipeEditor = ({ productId, lines, materials, sizes, canManage }: RecipeEditorProps) => {
+// Receta: qué materia prima lleva cada prenda. Con talla o género = cantidad para esa talla o ese
+// género (la más específica manda); sin nada = cantidad por defecto.
+const RecipeEditor = ({ productId, lines, materials, sizes, genders, canManage }: RecipeEditorProps) => {
   const [material, setMaterial] = useState("")
   const [pending, startTransition] = useTransition()
   const { state, onSubmit, pending: saving } = useFormAction(addRecipeLineAction)
@@ -54,7 +56,11 @@ const RecipeEditor = ({ productId, lines, materials, sizes, canManage }: RecipeE
             <li key={line.id} className="flex items-center gap-3 py-2">
               <div className="grid min-w-0 flex-1 gap-0.5">
                 <span className="text-sm font-medium">{line.materialLabel}</span>
-                <span className="text-xs text-muted-foreground">{line.sizeName ? `Talla ${line.sizeName}` : "Todas las tallas"}</span>
+                <span className="text-xs text-muted-foreground">
+                  {[line.gender && GENDER_LABELS[line.gender], line.sizeName ? `Talla ${line.sizeName}` : "Todas las tallas"]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
               </div>
               <span className="text-sm tabular-nums">
                 {quantityFormat.format(line.quantity)} {UNIT_LABELS[line.unit].toLowerCase()}
@@ -95,7 +101,19 @@ const RecipeEditor = ({ productId, lines, materials, sizes, canManage }: RecipeE
                 ))}
               </select>
             </FormField>
-            <div className="grid grid-cols-2 gap-3">
+            <div className={genders.length > 1 ? "grid grid-cols-2 gap-3 sm:grid-cols-3" : "grid grid-cols-2 gap-3"}>
+              {genders.length > 1 && (
+                <FormField label="Género" htmlFor="recipe-gender" optional hint="Vacío = todos.">
+                  <select id="recipe-gender" name="gender" className="h-11 rounded-md border bg-background px-2 text-sm md:h-9">
+                    <option value="">Todos</option>
+                    {genders.map((g) => (
+                      <option key={g} value={g}>
+                        {GENDER_LABELS[g]}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              )}
               <FormField label="Talla" htmlFor="recipe-size" optional hint="Vacío = todas las tallas.">
                 <select id="recipe-size" name="size_id" className="h-11 rounded-md border bg-background px-2 text-sm md:h-9">
                   <option value="">Todas</option>

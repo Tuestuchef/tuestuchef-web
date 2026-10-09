@@ -20,7 +20,8 @@ const dmy = (iso: string) => {
   return `${d}-${m}-${y}`
 }
 const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3 })
-const variantText = (item: Pick<QuoteItem, "colorName" | "sizeName">) => [item.colorName, item.sizeName].filter(Boolean).join(" · ")
+const variantText = (item: Pick<QuoteItem, "genderName" | "colorName" | "sizeName">) =>
+  [item.genderName, item.colorName, item.sizeName].filter(Boolean).join(" · ")
 
 const s = StyleSheet.create({
   page: { paddingTop: 36, paddingBottom: 56, paddingHorizontal: 40, fontFamily: "Helvetica", fontSize: 9, color: t.foreground, backgroundColor: t.card },
@@ -204,7 +205,7 @@ const QuotePdf = ({ quote, business, image, draft }: QuotePdfProps) => {
                   <View style={s.colItem}>
                     <Text>
                       {row.productName}
-                      {row.colorName ? ` · ${row.colorName}` : ""}
+                      {[row.genderName, row.colorName].filter(Boolean).map((part) => ` · ${part}`).join("")}
                     </Text>
                     <Text style={s.sub}>Tallas: {row.sizes.map((size) => `${size.sizeName} ${quantityFormat.format(size.quantity)}`).join(" · ")}</Text>
                     {row.discountPercent > 0 && <Text style={s.sub}>Descuento {row.discountPercent}%</Text>}

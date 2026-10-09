@@ -8,9 +8,7 @@ import { OPEN_ORDER_STATUSES, type OrderStatus, type ProductionStage } from "../
 import type { CancelOrderInput, CreateOrderInput, OrderSettingsInput } from "../schemas/orders.schema"
 import type { Assignee, OrderDetail, OrderFormData, OrderListItem, OrderSettings } from "../types/orders.types"
 import { listCustomizationTypes } from "./order-settings.service"
-
-const variantLabel = (v: { color: { name: string } | null; size: { name: string } | null } | null) =>
-  v ? [v.color?.name, v.size?.name].filter(Boolean).join(" · ") || "Única" : ""
+import { variantLabel } from "@/modules/products/lib/utils/variant-label.util"
 
 const fullName = (c: { first_name: string; last_name: string | null } | null) =>
   c ? [c.first_name, c.last_name].filter(Boolean).join(" ") : null
@@ -129,7 +127,7 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
       .from("sale_items")
       .select(
         `id, parent_item_id, quantity, reserved_quantity, source, unit_price_usd, line_total_usd,
-         variant:product_variants(sku, color:colors(name), size:sizes(name), product:products(name)),
+         variant:product_variants(sku, gender, color:colors(name), size:sizes(name), product:products(name)),
          customizations:sale_item_customizations(id, quantity, text, position, size_cm, note, logo_path, line_total_usd,
            type:customization_types(name), names:sale_item_customization_names(ordinal, name)),
          assignments:production_assignments(stage, expected_date, completed_at, team_member:team_members(id, full_name), supplier:suppliers(id, name))`

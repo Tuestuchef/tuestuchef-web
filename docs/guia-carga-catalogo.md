@@ -66,7 +66,7 @@ Los precios se cargan por método de pago, así que primero deben existir los m�
 
 **Configuración → Tallas.** Ya vienen XS, S, M, L, XL y XXL.
 
-- [ ] Edita **XXL**: Nombre `2XL`, Código `2XL` (así sale en la lista y en el SKU: `FIL-MC-BR-NEG-2XL`).
+- [ ] Edita **XXL**: Nombre `2XL`, Código `2XL` (así sale en la lista y en el SKU: `FIL-MC-C-BR-NEG-2XL`).
 - [ ] Crea **3XL, 4XL, 5XL y 6XL** (Nuevo, con el mismo texto como código; Orden 7, 8, 9 y 10).
 - [ ] Si los pantalones usan tallas que no están (XS, numéricas…), créalas aquí con su código antes del paso 6. Desactiva las que nadie use (p. ej. XS si no hay).
 
@@ -108,9 +108,9 @@ Los precios se cargan por método de pago, así que primero deben existir los m�
 Para cada fila de las tablas del paso 6:
 
 1. **Inventario → Catálogo → Nuevo producto**
-   - **Nombre**, **Categoría**, **Cierre** / **Corte** y **Código del modelo** como dice la tabla. **Despacho:** "Inmediato y bajo pedido" (todos). **Género:** "— No aplica". **Mano de obra:** vacío (o el costo por pieza, si lo sabes; solo afecta el margen).
+   - **Nombre**, **Categoría**, **Cierre** / **Corte** y **Código del modelo** como dice la tabla. **Despacho:** "Inmediato y bajo pedido" (todos). **Géneros:** en las **filipinas** marca **Dama** y **Caballero**; en lo demás no marques ninguno. **Mano de obra:** vacío (o el costo por pieza, si lo sabes; solo afecta el margen).
    - **Crear y seguir** → te lleva a la página del producto.
-2. **Variantes → Colores × tallas**: marca los colores de la tabla y las tallas (si lleva) → **Crear hasta N variantes**. Revisa que los SKU salgan como el ejemplo de la tabla.
+2. **Variantes → Colores × tallas**: deja marcados los géneros (en filipinas, Dama y Caballero), marca los colores de la tabla y las tallas (si lleva) → **Crear hasta N variantes**. Revisa que los SKU salgan como el ejemplo de la tabla.
 3. **Precios**: el mismo precio en **Pago móvil, Efectivo, Zelle y USDT** → **Guardar precios**.
 4. **Fotos** (opcional): **Agregar fotos** (JPG, PNG o WEBP, hasta 8 MB). Asigna cada foto a su color y marca una como principal.
 
@@ -120,25 +120,29 @@ Para cada fila de las tablas del paso 6:
 
 ## Paso 6 · Productos
 
-Tallas de filipinas: **S, M, L, XL, 2XL, 3XL, 4XL, 5XL y 6XL**. Hasta 2XL cuestan el precio de la tabla; de 3XL a 6XL suman un recargo (paso 6b).
+Tallas de filipinas: **S, M, L, XL, 2XL, 3XL, 4XL, 5XL y 6XL**. Hasta 2XL cuestan el precio de la tabla; las tallas grandes suman un recargo distinto para dama y caballero (paso 6b).
+
+Cada filipina es **un solo producto** con variantes de **Dama** y de **Caballero**: el SKU lleva la letra del género después del modelo (`C` caballero, `D` dama). Los ejemplos de abajo son de caballero; los de dama cambian la `C` por `D` (`FIL-MC-D-BR-NEG-S`). La cantidad de variantes ya cuenta los dos géneros.
+
+> **Si ya habías creado filipinas sin género** (antes de esta actualización): al actualizar, las que todavía no tenían stock ni ventas pasan solas a Dama y Caballero (las que tenías quedan de Caballero y se crean las de Dama). No hace falta volver a crearlas.
 
 ### Filipinas manga corta · $45 · Código del modelo `MC`
 
-- [ ] **Filipina manga corta broche** · Cierre: Broche · Colores: Negro, Vinotinto, Verde militar, Azul marino, Gris plomo, Kaki · 54 variantes · SKU ej.: `FIL-MC-BR-NEG-S`
-- [ ] **Filipina manga corta botón** · Cierre: Botones · Colores: Blanco, Negro, Gris hércules, Azul marino, Verde militar, Vinotinto, Kaki · 63 variantes · SKU ej.: `FIL-MC-BO-BLA-S`
-- [ ] **Filipina manga corta cierre** · Cierre: Cierre · Colores: Blanco, Negro, Gris hércules, Azul marino, Verde militar, Vinotinto, Kaki · 63 variantes · SKU ej.: `FIL-MC-CI-BLA-S`
+- [ ] **Filipina manga corta broche** · Cierre: Broche · Colores: Negro, Vinotinto, Verde militar, Azul marino, Gris plomo, Kaki · 108 variantes · SKU ej.: `FIL-MC-C-BR-NEG-S`
+- [ ] **Filipina manga corta botón** · Cierre: Botones · Colores: Blanco, Negro, Gris hércules, Azul marino, Verde militar, Vinotinto, Kaki · 126 variantes · SKU ej.: `FIL-MC-C-BO-BLA-S`
+- [ ] **Filipina manga corta cierre** · Cierre: Cierre · Colores: Blanco, Negro, Gris hércules, Azul marino, Verde militar, Vinotinto, Kaki · 126 variantes · SKU ej.: `FIL-MC-C-CI-BLA-S`
 
 ### Filipinas manga 3/4 · $49 · Código del modelo `M34`
 
-- [ ] **Filipina manga 3/4 broche** · Cierre: Broche · Colores: Negro, Vinotinto, Verde militar, Azul marino, Kaki · 45 variantes · SKU ej.: `FIL-M34-BR-NEG-S`
-- [ ] **Filipina manga 3/4 botón** · Cierre: Botones · Colores: Blanco, Negro, Vinotinto, Verde militar, Azul marino, Kaki · 54 variantes · SKU ej.: `FIL-M34-BO-BLA-S`
-- [ ] **Filipina manga 3/4 cierre** · Cierre: Cierre · Colores: Negro, Blanco, Gris plomo, Vinotinto, Verde militar, Azul marino, Kaki · 63 variantes · SKU ej.: `FIL-M34-CI-NEG-S`
+- [ ] **Filipina manga 3/4 broche** · Cierre: Broche · Colores: Negro, Vinotinto, Verde militar, Azul marino, Kaki · 90 variantes · SKU ej.: `FIL-M34-C-BR-NEG-S`
+- [ ] **Filipina manga 3/4 botón** · Cierre: Botones · Colores: Blanco, Negro, Vinotinto, Verde militar, Azul marino, Kaki · 108 variantes · SKU ej.: `FIL-M34-C-BO-BLA-S`
+- [ ] **Filipina manga 3/4 cierre** · Cierre: Cierre · Colores: Negro, Blanco, Gris plomo, Vinotinto, Verde militar, Azul marino, Kaki · 126 variantes · SKU ej.: `FIL-M34-C-CI-NEG-S`
 
 ### Filipinas manga larga · $49 · Código del modelo `ML`
 
-- [ ] **Filipina manga larga broche** · Cierre: Broche · Colores: Negro, Vinotinto, Verde militar, Azul marino, Kaki · 45 variantes · SKU ej.: `FIL-ML-BR-NEG-S`
-- [ ] **Filipina manga larga botón** · Cierre: Botones · Colores: Blanco, Negro, Vinotinto, Verde militar, Azul marino, Kaki · 54 variantes · SKU ej.: `FIL-ML-BO-BLA-S`
-- [ ] **Filipina manga larga cierre** · Cierre: Cierre · Colores: Negro, Blanco, Gris plomo, Vinotinto, Verde militar, Azul marino, Kaki · 63 variantes · SKU ej.: `FIL-ML-CI-NEG-S`
+- [ ] **Filipina manga larga broche** · Cierre: Broche · Colores: Negro, Vinotinto, Verde militar, Azul marino, Kaki · 90 variantes · SKU ej.: `FIL-ML-C-BR-NEG-S`
+- [ ] **Filipina manga larga botón** · Cierre: Botones · Colores: Blanco, Negro, Vinotinto, Verde militar, Azul marino, Kaki · 108 variantes · SKU ej.: `FIL-ML-C-BO-BLA-S`
+- [ ] **Filipina manga larga cierre** · Cierre: Cierre · Colores: Negro, Blanco, Gris plomo, Vinotinto, Verde militar, Azul marino, Kaki · 126 variantes · SKU ej.: `FIL-ML-C-CI-NEG-S`
 
 ### Pantalones · sin código de modelo (el corte ya los distingue)
 
@@ -173,13 +177,17 @@ Colores de los tres: Negro, Gris plomo, Azul eléctrico, Kaki, Blanco · 5 varia
 
 ## Paso 6b · Recargos: tallas grandes y pata de gallo
 
-Con las filipinas ya creadas:
+Las tallas grandes cuestan distinto según el género: **caballero** suma **$3 por cada talla** desde la 3XL (3XL +$3, 4XL +$6, 5XL +$9, 6XL +$12) y **dama** cuesta lo mismo hasta la 5XL y solo la **6XL** suma un recargo. Se cargan en la página de cada filipina:
 
-1. **Configuración → Tallas** → en la fila de **3XL**, toca **Recargo**.
-2. En **Filipinas**, toca **Marcar todos**; escribe el monto extra en **Mismo monto para los marcados** → **Aplicar** → **Guardar recargos**.
-3. Repite con **4XL, 5XL y 6XL** (cada una con su monto, si cambia).
+1. Abre la filipina → sección **Precio por talla** (una tabla de tallas × Dama / Caballero).
+2. En la fila de arriba (el atajo): **Caballero** · desde **3XL** · **+$ 3** por talla → **Llenar**. Se llenan 3XL a 6XL con 3, 6, 9 y 12.
+3. Atajo otra vez: **Dama** · desde **6XL** · **+$ (el recargo de la 6XL)** → **Llenar**.
+4. **Guardar precio por talla.** Debajo de cada monto se ve el precio final (ej.: "= $ 48,00").
+5. Repite en cada filipina.
 
-- [ ] Recargo cargado en 3XL, 4XL, 5XL y 6XL.
+- [ ] Precio por talla cargado en las 9 filipinas.
+
+> **Configuración → Tallas → Recargo** sigue sirviendo para cargar un recargo **igual para todos los géneros** en muchos productos a la vez. Lo que cargues por género en la página del producto manda sobre ese.
 
 Y con los pantalones ya creados:
 
@@ -190,7 +198,7 @@ Y con los pantalones ya creados:
 
 > Si un pantalón pata de gallo es además de una talla con recargo, se suman los dos.
 
-> El recargo se suma al precio en todos los métodos (en Pago móvil, convertido a Bs con la tasa del día). En la página de cada producto, debajo de **Precios**, se ve "Recargo por talla: 3XL +$…" y "Recargo por color: Pata de gallo +$ 2,00". La calculadora lo avisa debajo del producto.
+> El recargo se suma al precio en todos los métodos (en Pago móvil, convertido a Bs con la tasa del día). En la página de cada producto, la tabla **Precio por talla** muestra los de talla y, debajo de **Precios**, "Recargo por color: Pata de gallo +$ 2,00". La calculadora lo avisa debajo del producto.
 
 ---
 
@@ -198,7 +206,7 @@ Y con los pantalones ya creados:
 
 Todos los productos son "Inmediato y bajo pedido", así que todos pueden recibirla. Se hace **una sola vez por variante**; después, los cambios van con ajustes.
 
-1. Abre `docs/plantilla-carga-inicial.csv` (en Excel o Google Sheets). Ya trae **todos los SKU** de esta guía (filipinas de S a 6XL), sin pantalones porque faltan sus tallas.
+1. Abre `docs/plantilla-carga-inicial.csv` (en Excel o Google Sheets). Ya trae **todos los SKU** de esta guía (filipinas de S a 6XL, primero las de caballero y después las de dama), sin pantalones porque faltan sus tallas.
 2. Llena **cantidad** con lo que hay hoy y, si lo sabes, **costo_usdt** (costo por pieza en USDT; define el costo inicial y el margen).
 3. **Borra las filas sin stock**: una fila con cantidad vacía o en 0 detiene toda la carga.
 4. Agrega las filas de los pantalones con sus tallas (ej.: `PAN-RE-NEG-M;10;12,50`).

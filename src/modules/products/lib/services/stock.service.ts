@@ -10,9 +10,7 @@ import type {
   StockVariantOption,
 } from "../types/products.types"
 import type { StockCsvRow } from "../utils/parse-stock-csv.util"
-
-const variantLabel = (v: { color: { name: string } | null; size: { name: string } | null }) =>
-  [v.color?.name, v.size?.name].filter(Boolean).join(" · ") || "Única"
+import { variantLabel } from "../utils/variant-label.util"
 
 export async function createStockMovement(input: StockMovementInput) {
   const supabase = await createSupabaseServerClient()
@@ -47,7 +45,7 @@ export async function listStockVariantOptions(): Promise<StockVariantOption[]> {
     supabase
       .from("product_variants")
       .select(
-        "id, sku, product_id, color:colors(name), size:sizes(name), product:products!inner(name, kind, is_active, fulfillment_type)"
+        "id, sku, product_id, gender, color:colors(name), size:sizes(name), product:products!inner(name, kind, is_active, fulfillment_type)"
       )
       .eq("is_active", true)
       .eq("product.is_active", true)
@@ -106,7 +104,7 @@ export async function previewInitialStock(rows: StockCsvRow[]): Promise<InitialS
   const [{ data: variants }, { data: moved }] = await Promise.all([
     supabase
       .from("product_variants")
-      .select("id, sku, is_active, color:colors(name), size:sizes(name), product:products(name, is_active, fulfillment_type)")
+      .select("id, sku, is_active, gender, color:colors(name), size:sizes(name), product:products(name, is_active, fulfillment_type)")
       .in("sku", skus),
     supabase.from("stock_movements").select("variant_id, product_variants!inner(sku)").in("product_variants.sku", skus),
   ])

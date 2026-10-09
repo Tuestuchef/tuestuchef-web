@@ -19,12 +19,13 @@ import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
 import { cn } from "@/common/lib/utils"
 
 import { createVariantCombinationsAction } from "../lib/actions/save-variant.action"
+import { GENDER_LABELS, type ProductGender } from "../lib/constants/products.constants"
 import type { CatalogItem } from "../lib/types/products.types"
 
 type MultiChipsProps = {
   label: string
   name: string
-  items: CatalogItem[]
+  items: { id: string; name: string }[]
   selected: Set<string>
   onToggle: (id: string) => void
 }
@@ -68,27 +69,32 @@ const MultiChips = ({ label, name, items, selected, onToggle }: MultiChipsProps)
   </fieldset>
 )
 
-// Colores × tallas de una vez. Las combinaciones que ya existen se saltan.
+// Géneros × colores × tallas de una vez. Las combinaciones que ya existen se saltan.
 const VariantCombinationsDialog = ({
   productId,
+  genders,
   colors,
   sizes,
 }: {
   productId: string
+  // Géneros que ofrece el producto (vacío = no aplica).
+  genders: ProductGender[]
   colors: CatalogItem[]
   sizes: CatalogItem[]
 }) => {
   const [open, setOpen] = useState(false)
+  const [genderIds, setGenderIds] = useState<Set<string>>(() => new Set(genders))
   const [colorIds, setColorIds] = useState<Set<string>>(new Set())
   const [sizeIds, setSizeIds] = useState<Set<string>>(new Set())
   const { state, onSubmit, pending } = useFormAction(createVariantCombinationsAction)
   useActionFeedback(state, () => {
     setOpen(false)
+    setGenderIds(new Set(genders))
     setColorIds(new Set())
     setSizeIds(new Set())
   })
 
-  const toggle = (setter: typeof setColorIds) => (id: string) =>
+  const toggle = (setter: typeof setColorIds | typeof setGenderIds) => (id: string) =>
     setter((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -96,11 +102,19 @@ const VariantCombinationsDialog = ({
       return next
     })
 
-  const total = Math.max(colorIds.size, 1) * Math.max(sizeIds.size, 1)
+  const total = Math.max(genderIds.size, 1) * Math.max(colorIds.size, 1) * Math.max(sizeIds.size, 1)
   const nothing = colorIds.size === 0 && sizeIds.size === 0
+  const noGender = genders.length > 0 && genderIds.size === 0
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        // Los géneros del producto pueden haber cambiado desde la última vez.
+        if (next) setGenderIds(new Set(genders))
+      }}
+    >
       <DialogTrigger asChild>
         <Button className="h-11 md:h-9">
           <Grid3x3Icon aria-hidden />
@@ -111,12 +125,21 @@ const VariantCombinationsDialog = ({
         <DialogHeader>
           <DialogTitle>Crear variantes</DialogTitle>
           <DialogDescription>
-            Marca los colores y las tallas. Se crea una variante por combinación, con su SKU.
+            Marca {genders.length > 0 && "los géneros, "}los colores y las tallas. Se crea una variante por combinación, con su SKU.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="grid gap-5" noValidate>
           <input type="hidden" name="product_id" value={productId} />
           {state.status === "error" && state.message && <StatusAlert tone="error" title={state.message} />}
+          {genders.length > 0 && (
+            <MultiChips
+              label="Géneros"
+              name="genders"
+              items={genders.map((g) => ({ id: g, name: GENDER_LABELS[g] }))}
+              selected={genderIds}
+              onToggle={toggle(setGenderIds)}
+            />
+          )}
           <MultiChips
             label="Colores"
             name="color_ids"
@@ -131,8 +154,8 @@ const VariantCombinationsDialog = ({
             selected={sizeIds}
             onToggle={toggle(setSizeIds)}
           />
-          <SubmitButton pending={pending} disabled={nothing}>
-            {nothing ? "Marca al menos un color o una talla" : `Crear hasta ${total} variantes`}
+          <SubmitButton pending={pending} disabled={nothing || noGender}>
+            {noGender ? "Marca al menos un género" : nothing ? "Marca al menos un color o una talla" : `Crear hasta ${total} variantes`}
           </SubmitButton>
         </form>
       </DialogContent>

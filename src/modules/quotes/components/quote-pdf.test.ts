@@ -14,6 +14,7 @@ const item = (over: Partial<QuoteItem>): QuoteItem => ({
   variantId: "v",
   productName: "Filipina manga corta",
   sku: "FIL-B-M",
+  genderName: null,
   colorName: "Blanco",
   sizeName: "M",
   sizeSort: 2,

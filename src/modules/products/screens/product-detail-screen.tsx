@@ -22,6 +22,7 @@ import RecipeEditor from "../components/recipe-editor"
 import StockMovementList from "../components/stock-movement-list"
 import VariantCombinationsDialog from "../components/variant-combinations-dialog"
 import VariantFormDialog from "../components/variant-form-dialog"
+import SizeSurchargeGrid from "../components/size-surcharge-grid"
 import VariantTable from "../components/variant-table"
 import {
   CLOSURE_LABELS,
@@ -35,12 +36,12 @@ import { listComboComponentOptions, listComboComponents } from "../lib/services/
 import { getProductDetail } from "../lib/services/products.service"
 import { listMaterialOptions, listProductMargins, listRecipe } from "../lib/services/recipes.service"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
-import { listProductSurcharges } from "../lib/services/surcharges.service"
+import { listProductSizeSurcharges, listProductSurcharges } from "../lib/services/surcharges.service"
 import { listStockMovements } from "../lib/services/stock.service"
 
 const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string }) => {
   const canManage = isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)
-  const [detail, categories, colors, sizes, methods, movements, recipe, materials, margins, surcharges] = await Promise.all([
+  const [detail, categories, colors, sizes, methods, movements, recipe, materials, margins, surcharges, sizeSurcharges] = await Promise.all([
     getProductDetail(id),
     listCatalog("product_categories"),
     listCatalog("colors"),
@@ -52,6 +53,7 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
     // Márgenes: solo owner y admin (la función devuelve 0 filas a staff).
     canManage ? listProductMargins(id) : Promise.resolve([]),
     listProductSurcharges(id),
+    listProductSizeSurcharges(id),
   ])
   if (!detail) notFound()
 
@@ -70,12 +72,19 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
       : { url: ROUTES.PRODUCTS, label: "Productos" }
   const attributes = [
     product.model_code && `Modelo ${product.model_code}`,
-    product.gender && GENDER_LABELS[product.gender],
+    product.genders.length > 0 && product.genders.map((g) => GENDER_LABELS[g]).join(" · "),
     product.closure && CLOSURE_LABELS[product.closure],
     product.fit && FIT_LABELS[product.fit],
   ].filter(Boolean)
   // Métodos activos, y los inactivos que aún tengan precio (para poder quitarlo).
   const priceMethods = methods.filter((m) => m.is_active || m.id in prices).map((m) => ({ id: m.id, name: m.name }))
+  // Tallas de sus variantes, en el orden de la lista, y el precio base del primer método (para "Precio por talla").
+  const productSizes = sizes
+    .filter((s) => variants.some((v) => v.sizeId === s.id))
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((s) => ({ id: s.id, name: s.name }))
+  const baseMethod = priceMethods.find((m) => m.id in prices)
+  const basePrice = baseMethod ? { methodName: baseMethod.name, amountUsd: prices[baseMethod.id] } : null
 
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-4">
@@ -125,11 +134,12 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
         <Card>
           <CardHeader>
             <CardTitle>Variantes</CardTitle>
-            <CardDescription>Color × talla, con su SKU y existencia.</CardDescription>
+            <CardDescription>Género × color × talla, con su SKU y existencia.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <VariantTable
               productId={product.id}
+              genders={product.genders}
               variants={variants}
               colors={colors}
               sizes={sizes}
@@ -138,8 +148,8 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
             />
             {canManage && (
               <div className="flex flex-wrap gap-2">
-                <VariantCombinationsDialog productId={product.id} colors={colors} sizes={sizes} />
-                <VariantFormDialog productId={product.id} colors={colors} sizes={sizes} />
+                <VariantCombinationsDialog productId={product.id} genders={product.genders} colors={colors} sizes={sizes} />
+                <VariantFormDialog productId={product.id} genders={product.genders} colors={colors} sizes={sizes} />
               </div>
             )}
           </CardContent>
@@ -156,23 +166,38 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
           </CardHeader>
           <CardContent>
             <PriceGrid productId={product.id} methods={priceMethods} prices={prices} canManage={canManage} />
-            {(surcharges.sizes.length > 0 || surcharges.colors.length > 0) && (
+            {surcharges.colors.length > 0 && (
               <div className="mt-3 grid gap-1 text-sm text-muted-foreground">
-                {surcharges.sizes.length > 0 && (
-                  <p>
-                    <span className="font-medium text-foreground">Recargo por talla:</span>{" "}
-                    {surcharges.sizes.map((s) => `${s.name} +${formatMoney(s.amountUsd, "USD")}`).join(" · ")}
-                  </p>
-                )}
                 {surcharges.colors.length > 0 && (
                   <p>
                     <span className="font-medium text-foreground">Recargo por color:</span>{" "}
                     {surcharges.colors.map((s) => `${s.name} +${formatMoney(s.amountUsd, "USD")}`).join(" · ")}
                   </p>
                 )}
-                <p className="text-xs">Se suman al precio en todos los métodos (talla y color, si la variante tiene los dos). Se cambian en Configuración → Tallas y Colores.</p>
+                <p className="text-xs">Se suma al precio en todos los métodos, junto con el de la talla si la variante tiene los dos. Se cambia en Configuración → Colores.</p>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {!isRaw && !isCombo && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Precio por talla</CardTitle>
+            <CardDescription>
+              Cuánto más cuesta cada talla{product.genders.length > 1 ? ", por género" : ""}. Vacío = el precio normal.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SizeSurchargeGrid
+              productId={product.id}
+              genders={product.genders}
+              sizes={productSizes}
+              rows={sizeSurcharges}
+              base={basePrice}
+              canManage={canManage}
+            />
           </CardContent>
         </Card>
       )}
@@ -186,7 +211,14 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RecipeEditor productId={product.id} lines={recipe} materials={materials} sizes={sizes} canManage={canManage} />
+            <RecipeEditor
+              productId={product.id}
+              lines={recipe}
+              materials={materials}
+              sizes={sizes}
+              genders={product.genders}
+              canManage={canManage}
+            />
           </CardContent>
         </Card>
       )}

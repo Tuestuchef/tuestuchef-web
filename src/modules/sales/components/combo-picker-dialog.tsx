@@ -16,6 +16,7 @@ import {
 } from "@/common/components/ui/dialog"
 import { cn } from "@/common/lib/utils"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
+import { GENDER_LABELS, GENDERS, type ProductGender } from "@/modules/products/lib/constants/products.constants"
 
 import type { SaleLineSource } from "../lib/constants/sales.constants"
 import type { SellableVariant } from "../lib/types/sales.types"
@@ -72,8 +73,9 @@ const sourceFor = (variant: SellableVariant, wanted: number, available: number):
 const ComboPickerDialog = ({ combo, variants, available, priceMethodId, onCancel, onConfirm }: ComboPickerDialogProps) => {
   const [quantity, setQuantity] = useState(1)
   const [picked, setPicked] = useState<Record<string, number>>({})
-  // Producto que se está mostrando en cada componente (si acepta varios).
+  // Producto y género que se están mostrando en cada componente (si hay varios).
   const [shown, setShown] = useState<Record<string, string>>({})
+  const [shownGender, setShownGender] = useState<Record<string, ProductGender>>({})
 
   const variantsByProduct = useMemo(() => {
     const map = new Map<string, SellableVariant[]>()
@@ -101,6 +103,8 @@ const ComboPickerDialog = ({ combo, variants, available, priceMethodId, onCancel
     const products = component.products.filter((p) => variantsByProduct.has(p.productId))
     const names = shortNames(products.map((p) => p.productName))
     const shownId = shown[component.id] ?? products[0]?.productId
+    const genders = GENDERS.filter((g) => rows.some((r) => r.variant.productId === shownId && r.variant.gender === g))
+    const genderId = genders.includes(shownGender[component.id]) ? shownGender[component.id] : genders[0]
     return {
       component,
       required,
@@ -113,6 +117,8 @@ const ComboPickerDialog = ({ combo, variants, available, priceMethodId, onCancel
         picked: rows.filter((r) => r.variant.productId === p.productId).reduce((sum, r) => sum + r.amount, 0),
       })),
       shownId,
+      genders,
+      genderId,
       complete: chosen === required,
       short: rows.some((r) => r.short),
     }
@@ -129,6 +135,7 @@ const ComboPickerDialog = ({ combo, variants, available, priceMethodId, onCancel
     setQuantity(1)
     setPicked({})
     setShown({})
+    setShownGender({})
   }
 
   const confirm = () => {
@@ -161,7 +168,7 @@ const ComboPickerDialog = ({ combo, variants, available, priceMethodId, onCancel
         </div>
 
         <div className="grid gap-4">
-          {groups.map(({ component, required, rows, single, chosen, products, shownId, complete, short }) => (
+          {groups.map(({ component, required, rows, single, chosen, products, shownId, genders, genderId, complete, short }) => (
             <section key={component.id} className="grid gap-2">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-sm font-medium">{component.name}</h3>
@@ -185,9 +192,21 @@ const ComboPickerDialog = ({ combo, variants, available, priceMethodId, onCancel
                   onChange={(value) => setShown((prev) => ({ ...prev, [component.id]: value }))}
                 />
               )}
+              {genders.length > 1 && (
+                <ChoiceChips
+                  label={`Género de ${component.name}`}
+                  options={genders.map((g) => {
+                    const count = rows.filter((r) => r.variant.productId === shownId && r.variant.gender === g).reduce((sum, r) => sum + r.amount, 0)
+                    return { value: g, label: GENDER_LABELS[g], hint: count > 0 ? `· ${count}` : undefined }
+                  })}
+                  value={genderId ?? null}
+                  onChange={(value) => setShownGender((prev) => ({ ...prev, [component.id]: value as ProductGender }))}
+                />
+              )}
               <ul className="divide-y rounded-lg border">
                 {rows
                   .filter((r) => products.length <= 1 || r.variant.productId === shownId)
+                  .filter((r) => genders.length <= 1 || r.variant.gender === genderId)
                   .map(({ variant, amount, stock, source, short: isShort }) => (
                     <li key={variant.id} className={cn("flex items-center gap-3 p-2.5", amount > 0 && "bg-muted/50")}>
                       <div className="grid min-w-0 flex-1 gap-0.5">

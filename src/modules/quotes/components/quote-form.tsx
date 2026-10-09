@@ -1,6 +1,6 @@
 "use client"
 
-import { Loader2Icon, MinusIcon, PackagePlusIcon, PaletteIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
+import { Loader2Icon, MinusIcon, PaletteIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useId, useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -10,10 +10,8 @@ import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
 import { Button } from "@/common/components/ui/button"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/common/components/ui/command"
 import { Input } from "@/common/components/ui/input"
 import { Label } from "@/common/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/common/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/common/components/ui/select"
 import { Switch } from "@/common/components/ui/switch"
 import { Textarea } from "@/common/components/ui/textarea"
@@ -25,6 +23,7 @@ import { CUSTOMER_KIND_LABELS } from "@/modules/customers/lib/constants/customer
 import { formatPhone, formatTaxId } from "@/modules/customers/lib/utils/normalize-contact.util"
 import CustomizationDialog, { type LineCustomization } from "@/modules/orders/components/customization-dialog"
 import ComboPickerDialog, { type ComboSelection } from "@/modules/sales/components/combo-picker-dialog"
+import ProductPicker from "@/modules/sales/components/product-picker"
 import type { SellableVariant } from "@/modules/sales/lib/types/sales.types"
 
 import { saveQuoteDraftAction } from "../lib/actions/quotes.action"
@@ -155,7 +154,6 @@ const QuoteForm = ({
     contactPerson: (!quote?.customerId && quote?.customer.contactPerson) || "",
   })
   const [lines, setLines] = useState<QuoteLine[]>(quote ? linesFromQuote(quote) : [])
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [comboToPick, setComboToPick] = useState<SellableVariant | null>(null)
   const [customizing, setCustomizing] = useState<string | null>(null)
   const [currencies, setCurrencies] = useState<QuoteCurrencies>(quote?.currencies ?? settings.defaultCurrencies)
@@ -257,18 +255,13 @@ const QuoteForm = ({
     staffLimit !== null && lines.some((l) => (parseAmount(l.discountPercent) ?? 0) > staffLimit) && `El descuento máximo sin owner o admin es ${staffLimit}%.`,
   ].filter(Boolean) as string[]
 
-  const addVariant = (variant: SellableVariant) => {
-    setPickerOpen(false)
-    if (variant.components) {
-      setComboToPick(variant)
-      return
-    }
+  // Una variante elegida (género, color y talla) con su cantidad; si ya está, suma.
+  const addVariant = (variant: SellableVariant, quantity: number) =>
     setLines((prev) => {
       const existing = prev.find((l) => l.variantId === variant.id && !l.components)
-      if (existing) return prev.map((l) => (l === existing ? { ...l, quantity: l.quantity + 1 } : l))
-      return [...prev, { key: crypto.randomUUID(), variantId: variant.id, quantity: 1, discountPercent: "", customizations: [] }]
+      if (existing) return prev.map((l) => (l === existing ? { ...l, quantity: l.quantity + quantity } : l))
+      return [...prev, { key: crypto.randomUUID(), variantId: variant.id, quantity, discountPercent: "", customizations: [] }]
     })
-  }
   const updateLine = (key: string, patch: Partial<QuoteLine>) => setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)))
   const setQuantity = (key: string, quantity: number) =>
     setLines((prev) => (quantity <= 0 ? prev.filter((l) => l.key !== key) : prev.map((l) => (l.key === key ? { ...l, quantity } : l))))
@@ -413,35 +406,8 @@ const QuoteForm = ({
       {/* Productos */}
       <section className="grid gap-2">
         <Label>Productos</Label>
-        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-          <PopoverTrigger asChild>
-            <Button type="button" variant="outline" className="h-11 justify-start font-normal text-muted-foreground md:h-9">
-              <PackagePlusIcon aria-hidden />
-              Buscar por nombre, color, talla o SKU
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-(--radix-popover-trigger-width) min-w-72 p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Filipina blanca M…" />
-              <CommandList>
-                <CommandEmpty>No hay coincidencias.</CommandEmpty>
-                <CommandGroup>
-                  {variants.map((variant) => (
-                    <CommandItem key={variant.id} value={`${variant.productName} ${variant.variantLabel} ${variant.sku}`} onSelect={() => addVariant(variant)}>
-                      <span className="grid min-w-0 flex-1">
-                        <span className="truncate">
-                          {variant.productName} <span className="text-muted-foreground">· {variant.variantLabel}</span>
-                        </span>
-                        <span className="font-mono text-xs text-muted-foreground">{variant.sku}</span>
-                      </span>
-                      {variant.components && <span className="text-xs text-muted-foreground">Combo</span>}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        {/* En un presupuesto no se aparta inventario: sin stock. Precio de la lista en USD (o en Bs). */}
+        <ProductPicker variants={variants} priceMethodId={usdList?.id ?? vesList?.id} onAdd={addVariant} onCombo={setComboToPick} />
 
         {lines.length > 0 && (
           <ul className="divide-y rounded-lg border">

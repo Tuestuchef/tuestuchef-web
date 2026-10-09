@@ -22,6 +22,8 @@ const product = (over: Partial<CalculatorProduct>): CalculatorProduct => ({
   piecesPerUnit: 1,
   sizeSurcharges: [],
   colorSurcharges: [],
+  genders: [],
+  genderSizeSurcharges: {},
   ...over,
 })
 
@@ -130,6 +132,35 @@ describe("calculadora de precios", () => {
       "Opcional:",
       "• Pantalón jogger en pata de gallo: +$ 2,00 (Bs 80,00) c/u",
       "• Pantalón jogger en tallas 3XL–6XL: +$ 3,00 a +$ 5,00 (Bs 120,00 a Bs 200,00) c/u",
+    ])
+  })
+
+  it("con géneros, la talla cobra según el género y lo no elegido se avisa por género", () => {
+    const filipina = product({
+      id: "fmc",
+      name: "Filipina manga corta",
+      pricesUsd: { cash: 45, pm: 45 },
+      genders: ["women", "men"],
+      genderSizeSurcharges: {
+        men: [
+          { id: "3xl", name: "3XL", amountUsd: 3 },
+          { id: "6xl", name: "6XL", amountUsd: 12 },
+        ],
+        women: [{ id: "6xl", name: "6XL", amountUsd: 4 }],
+      },
+    })
+    const products = new Map([...PRODUCTS, [filipina.id, filipina]])
+    const men3 = line("fmc", 1, { gender: "men", sizeId: "3xl" })
+    expect(calculatorTotals({ lines: [men3], products, methods: METHODS, volumeTiers: [], rates: RATES }).methods[0].totalUsd).toBe(48)
+    expect(lineLabel(filipina, men3)).toBe("Filipina manga corta · caballero · talla 3XL")
+    // Sin género elegido: los extras de cada género.
+    expect(optionalExtras([line("fmc", 1)], products)).toEqual([
+      { productName: "Filipina manga corta", label: "en talla 6XL (dama)", minUsd: 4, maxUsd: 4 },
+      { productName: "Filipina manga corta", label: "en tallas 3XL–6XL (caballero)", minUsd: 3, maxUsd: 12 },
+    ])
+    // Dama elegida, sin talla: solo lo de dama.
+    expect(optionalExtras([line("fmc", 1, { gender: "women" })], products)).toEqual([
+      { productName: "Filipina manga corta", label: "en talla 6XL (dama)", minUsd: 4, maxUsd: 4 },
     ])
   })
 

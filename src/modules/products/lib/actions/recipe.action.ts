@@ -27,7 +27,7 @@ export async function addRecipeLineAction(
   if (error) {
     return {
       status: "error",
-      message: error.code === "23505" ? "Ese material ya está en la receta para esa talla." : toUserError(error),
+      message: error.code === "23505" ? "Ese material ya está en la receta para esa talla y ese género." : toUserError(error),
     }
   }
 

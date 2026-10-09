@@ -50,7 +50,8 @@ export const productSchema = z.object({
   kind: z.enum(E.product_kind).default("finished_good"),
   fulfillment_type: z.enum(E.fulfillment_type, { error: "Elige cómo se despacha." }),
   unit: z.enum(E.product_unit).default("unit"),
-  gender: optionalEnum(E.product_gender),
+  // Géneros que ofrece (Dama, Caballero, Unisex); vacío = no aplica (gorros, estuches…).
+  genders: z.array(z.enum(E.product_gender)).max(3).default([]),
   closure: optionalEnum(E.product_closure),
   fit: optionalEnum(E.product_fit),
   // Código del modelo para el SKU (ej.: MC = manga corta, MAXI). Opcional; vacío = sin código.
@@ -104,6 +105,7 @@ const optionalSkuSchema = z
 export const variantSchema = z.object({
   id: optionalUuid,
   product_id: z.uuid(),
+  gender: optionalEnum(E.product_gender),
   color_id: optionalUuid,
   size_id: optionalUuid,
   // Vacío = se genera a partir de los códigos.
@@ -115,6 +117,7 @@ export const variantSchema = z.object({
 // Crear varias variantes a la vez: colores × tallas.
 export const bulkVariantsSchema = z.object({
   product_id: z.uuid(),
+  genders: z.array(z.enum(E.product_gender)).default([]),
   color_ids: z.array(z.uuid()).default([]),
   size_ids: z.array(z.uuid()).default([]),
 })
@@ -171,6 +174,8 @@ export const recipeLineSchema = z.object({
   product_id: z.uuid(),
   material: z.string().regex(/^(variant|product):[0-9a-f-]{36}$/, { error: "Elige el material." }),
   size_id: optionalUuid,
+  // Vacío = todos los géneros; con género = cantidad para ese género (p. ej. más tela en caballero).
+  gender: optionalEnum(E.product_gender),
   quantity: positiveAmountSchema("la cantidad", 4),
 })
 
@@ -217,6 +222,7 @@ export type RecipeLineField = keyof RecipeLineInput
 export type ComboComponentInput = z.infer<typeof comboComponentSchema>
 export type ComboComponentField = keyof ComboComponentInput
 export type VariantInput = z.infer<typeof variantSchema>
+export type ProductSizeSurchargesInput = z.infer<typeof productSizeSurchargesSchema>
 export type StockMovementInput = z.infer<typeof stockMovementSchema>
 export type ProductField = keyof ProductInput
 export type VariantField = keyof VariantInput
@@ -224,6 +230,20 @@ export type CatalogField = keyof CatalogItemInput
 export type StockMovementField = keyof StockMovementInput
 
 // Recargo de una talla o un color por producto (USD de referencia). Vacío = ese producto no lleva recargo.
+// Tabla "Precio por talla" de un producto: el recargo de cada talla por género (null = todos).
+export const productSizeSurchargesSchema = z.object({
+  product_id: z.uuid(),
+  rows: z
+    .array(
+      z.object({
+        size_id: z.uuid(),
+        gender: z.enum(E.product_gender).nullable(),
+        amount_usd: z.number().positive({ error: "Los recargos deben ser mayores que 0." }).max(100_000),
+      })
+    )
+    .max(200),
+})
+
 export const surchargesSchema = z.object({
   kind: z.enum(["size", "color"]),
   target_id: z.uuid(),

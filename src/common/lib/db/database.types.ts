@@ -637,6 +637,8 @@ export type Database = {
           amount_usd: number
           created_at: string
           created_by: string
+          gender: Database["public"]["Enums"]["product_gender"] | null
+          id: string
           product_id: string
           size_id: string
           updated_at: string
@@ -646,6 +648,8 @@ export type Database = {
           amount_usd: number
           created_at?: string
           created_by?: string
+          gender?: Database["public"]["Enums"]["product_gender"] | null
+          id?: string
           product_id: string
           size_id: string
           updated_at?: string
@@ -655,6 +659,8 @@ export type Database = {
           amount_usd?: number
           created_at?: string
           created_by?: string
+          gender?: Database["public"]["Enums"]["product_gender"] | null
+          id?: string
           product_id?: string
           size_id?: string
           updated_at?: string
@@ -715,6 +721,7 @@ export type Database = {
       }
       products: {
         Row: {
+          genders: Database["public"]["Enums"]["product_gender"][]
           labor_cost_usdt: number
           model_code: string | null
           category_id: string
@@ -724,7 +731,6 @@ export type Database = {
           description: string | null
           fit: Database["public"]["Enums"]["product_fit"] | null
           fulfillment_type: Database["public"]["Enums"]["fulfillment_type"]
-          gender: Database["public"]["Enums"]["product_gender"] | null
           id: string
           is_active: boolean
           kind: Database["public"]["Enums"]["product_kind"]
@@ -734,6 +740,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          genders?: Database["public"]["Enums"]["product_gender"][]
           labor_cost_usdt?: number
           model_code?: string | null
           category_id: string
@@ -743,7 +750,6 @@ export type Database = {
           description?: string | null
           fit?: Database["public"]["Enums"]["product_fit"] | null
           fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"]
-          gender?: Database["public"]["Enums"]["product_gender"] | null
           id?: string
           is_active?: boolean
           kind?: Database["public"]["Enums"]["product_kind"]
@@ -753,6 +759,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          genders?: Database["public"]["Enums"]["product_gender"][]
           labor_cost_usdt?: number
           model_code?: string | null
           category_id?: string
@@ -762,7 +769,6 @@ export type Database = {
           description?: string | null
           fit?: Database["public"]["Enums"]["product_fit"] | null
           fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"]
-          gender?: Database["public"]["Enums"]["product_gender"] | null
           id?: string
           is_active?: boolean
           kind?: Database["public"]["Enums"]["product_kind"]
@@ -786,6 +792,7 @@ export type Database = {
           color_id: string | null
           created_at: string
           created_by: string
+          gender: Database["public"]["Enums"]["product_gender"] | null
           id: string
           is_active: boolean
           min_stock: number
@@ -800,6 +807,7 @@ export type Database = {
           color_id?: string | null
           created_at?: string
           created_by?: string
+          gender?: Database["public"]["Enums"]["product_gender"] | null
           id?: string
           is_active?: boolean
           min_stock?: number
@@ -814,6 +822,7 @@ export type Database = {
           color_id?: string | null
           created_at?: string
           created_by?: string
+          gender?: Database["public"]["Enums"]["product_gender"] | null
           id?: string
           is_active?: boolean
           min_stock?: number
@@ -1858,6 +1867,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          gender: Database["public"]["Enums"]["product_gender"] | null
           id: string
           product_id: string
           quantity: number
@@ -1870,6 +1880,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          gender?: Database["public"]["Enums"]["product_gender"] | null
           id?: string
           product_id: string
           quantity: number
@@ -1882,6 +1893,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          gender?: Database["public"]["Enums"]["product_gender"] | null
           id?: string
           product_id?: string
           quantity?: number
@@ -4061,6 +4073,7 @@ export type Database = {
         Row: {
           color_name: string | null
           discount_percent: number
+          gender: Database["public"]["Enums"]["product_gender"] | null
           id: string
           kind: Database["public"]["Enums"]["quote_item_kind"]
           parent_item_id: string | null
@@ -4080,6 +4093,7 @@ export type Database = {
         Insert: {
           color_name?: string | null
           discount_percent?: number
+          gender?: Database["public"]["Enums"]["product_gender"] | null
           id?: string
           kind: Database["public"]["Enums"]["quote_item_kind"]
           parent_item_id?: string | null
@@ -4099,6 +4113,7 @@ export type Database = {
         Update: {
           color_name?: string | null
           discount_percent?: number
+          gender?: Database["public"]["Enums"]["product_gender"] | null
           id?: string
           kind?: Database["public"]["Enums"]["quote_item_kind"]
           parent_item_id?: string | null
@@ -4537,6 +4552,10 @@ export type Database = {
         Args: { p_quote_id: string; p_channel: Database["public"]["Enums"]["message_channel"]; p_body: string; p_phone?: string; p_email?: string }
         Returns: string
       }
+      save_product_size_surcharges: {
+        Args: { p_product_id: string; p_rows: Json }
+        Returns: undefined
+      }
       set_quote_pdf_path: {
         Args: { p_quote_id: string; p_path: string }
         Returns: undefined
@@ -4594,6 +4613,10 @@ export type Database = {
       retry_offline_sale: {
         Args: { p_rejection_id: string }
         Returns: Json
+      }
+      size_surcharge_usd: {
+        Args: { p_gender: Database["public"]["Enums"]["product_gender"]; p_product_id: string; p_size_id: string }
+        Returns: number
       }
       sync_offline_sale: {
         Args: { p_client_ref: string; p_payload: Json }

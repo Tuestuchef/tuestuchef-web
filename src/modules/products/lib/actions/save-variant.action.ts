@@ -41,12 +41,13 @@ export async function createVariantCombinationsAction(_prev: ActionState, formDa
 
   const parsed = bulkVariantsSchema.safeParse({
     product_id: formData.get("product_id"),
+    genders: formData.getAll("genders"),
     color_ids: formData.getAll("color_ids"),
     size_ids: formData.getAll("size_ids"),
   })
   if (!parsed.success) return { status: "error", message: "Selección inválida." }
 
-  const result = await createVariantCombinations(parsed.data.product_id, parsed.data.color_ids, parsed.data.size_ids)
+  const result = await createVariantCombinations(parsed.data.product_id, parsed.data.genders, parsed.data.color_ids, parsed.data.size_ids)
   if (!result.ok) return { status: "error", message: variantError(result) }
 
   refresh()

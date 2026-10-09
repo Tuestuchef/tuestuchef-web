@@ -4,18 +4,16 @@ import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.clie
 
 import type { RecipeLineInput } from "../schemas/products.schema"
 import type { MaterialOption, ProductMarginRow, RecipeLine } from "../types/products.types"
-
-const variantLabel = (v: { color: { name: string } | null; size: { name: string } | null }) =>
-  [v.color?.name, v.size?.name].filter(Boolean).join(" · ") || "Única"
+import { variantLabel } from "../utils/variant-label.util"
 
 export async function listRecipe(productId: string): Promise<RecipeLine[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("product_recipe_lines")
     .select(
-      `id, quantity, size_id, raw_variant_id, raw_product_id,
+      `id, quantity, size_id, gender, raw_variant_id, raw_product_id,
        size:sizes(name, sort_order),
-       raw_variant:product_variants(sku, color:colors(name), size:sizes(name), product:products(name, unit)),
+       raw_variant:product_variants(sku, gender, color:colors(name), size:sizes(name), product:products(name, unit)),
        raw_product:products!product_recipe_lines_raw_product_id_fkey(name, unit)`,
     )
     .eq("product_id", productId)
@@ -37,6 +35,7 @@ export async function listRecipe(productId: string): Promise<RecipeLine[]> {
         : `${line.raw_product?.name ?? "—"} · mismo color que la prenda`,
       unit: (specific?.product?.unit ?? line.raw_product?.unit ?? "unit") as RecipeLine["unit"],
       sizeName: line.size?.name ?? null,
+      gender: line.gender,
       quantity: Number(line.quantity),
     }
   })
@@ -47,7 +46,7 @@ export async function listMaterialOptions(): Promise<MaterialOption[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, unit, variants:product_variants(id, sku, is_active, color:colors(name), size:sizes(name))")
+    .select("id, name, unit, variants:product_variants(id, sku, is_active, gender, color:colors(name), size:sizes(name))")
     .eq("kind", "raw_material")
     .eq("is_active", true)
     .order("name")
@@ -77,6 +76,7 @@ export async function addRecipeLine(input: RecipeLineInput) {
     raw_variant_id: kind === "variant" ? id : null,
     raw_product_id: kind === "product" ? id : null,
     size_id: input.size_id ?? null,
+    gender: input.gender,
     quantity: input.quantity,
   })
 }

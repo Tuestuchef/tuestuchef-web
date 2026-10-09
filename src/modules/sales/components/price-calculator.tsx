@@ -9,10 +9,11 @@ import { Button } from "@/common/components/ui/button"
 import { Input } from "@/common/components/ui/input"
 import { cn } from "@/common/lib/utils"
 import { formatMoney, formatRate } from "@/common/lib/utils/format-money.util"
+import { GENDER_LABELS } from "@/modules/products/lib/constants/products.constants"
 
 import { PRICE_CALCULATOR_MESSAGES, PRICE_CALCULATOR_STORAGE_KEY } from "../lib/constants/sales.constants"
 import type { CalculatorProduct, PriceCalculatorData } from "../lib/types/sales.types"
-import { type CalculatorLine, calculatorTotals, calculatorWhatsappText, lineExtraUsd } from "../lib/utils/price-calculator.util"
+import { type CalculatorLine, calculatorTotals, calculatorWhatsappText, lineExtraUsd, sizeSurchargesFor } from "../lib/utils/price-calculator.util"
 import { unitsPerUsd } from "../lib/utils/sale-math.util"
 
 const ALL = "all"
@@ -82,7 +83,7 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
   // Tocar un producto suma uno a su línea sin opciones (o la crea).
   const addProduct = (productId: string) =>
     setLines((all) => {
-      const base = all.find((l) => l.productId === productId && !l.sizeId && !l.colorId)
+      const base = all.find((l) => l.productId === productId && !l.sizeId && !l.colorId && !l.gender)
       return base ? all.map((l) => (l === base ? { ...l, quantity: l.quantity + 1 } : l)) : [...all, { id: newLineId(), productId, quantity: 1 }]
     })
 
@@ -98,16 +99,20 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
       })
     )
 
-  // Elegir talla o color con recargo. Si ya hay una línea igual del mismo producto, se juntan.
-  const setOption = (lineId: string, patch: Pick<CalculatorLine, "sizeId"> | Pick<CalculatorLine, "colorId">) =>
+  // Elegir género, talla o color con recargo. Si ya hay una línea igual del mismo producto, se juntan.
+  const setOption = (lineId: string, patch: Pick<CalculatorLine, "gender"> | Pick<CalculatorLine, "sizeId"> | Pick<CalculatorLine, "colorId">) =>
     setLines((all) => {
       const current = all.find((l) => l.id === lineId)
       if (!current) return all
-      const next = { ...current, ...patch }
+      let next = { ...current, ...patch }
+      // Otro género: la talla elegida puede no cobrar extra en él.
+      const product = byId.get(next.productId)
+      if ("gender" in patch && product && !sizeSurchargesFor(product, next.gender).some((s) => s.id === next.sizeId)) next = { ...next, sizeId: null }
       const twin = all.find(
         (l) =>
           l.id !== lineId &&
           l.productId === next.productId &&
+          (l.gender ?? null) === (next.gender ?? null) &&
           (l.sizeId ?? null) === (next.sizeId ?? null) &&
           (l.colorId ?? null) === (next.colorId ?? null)
       )
@@ -118,7 +123,7 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
   const terms = normalize(search).split(/\s+/).filter(Boolean)
   const shown = products.filter((p) => {
     if (category !== ALL && p.categoryId !== category) return false
-    const haystack = normalize([p.name, p.categoryName, ...p.colors].join(" "))
+    const haystack = normalize([p.name, p.categoryName, ...p.colors, ...p.genders.map((g) => GENDER_LABELS[g])].join(" "))
     return terms.every((term) => haystack.includes(term))
   })
 
@@ -229,7 +234,12 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
             {visibleLines.map((line) => {
               const product = byId.get(line.productId)!
               const extra = lineExtraUsd(product, line)
-              const hasOptions = product.sizeSurcharges.length > 0 || product.colorSurcharges.length > 0
+              const sizeOptions = sizeSurchargesFor(product, line.gender)
+              const hasOptions =
+                product.genders.length > 1 ||
+                Object.values(product.genderSizeSurcharges).some((list) => list.length > 0) ||
+                product.sizeSurcharges.length > 0 ||
+                product.colorSurcharges.length > 0
               return (
                 <li key={line.id} className="grid gap-2 py-2">
                   <div className="flex items-center gap-2">
@@ -245,6 +255,16 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
                       <PlusIcon aria-hidden />
                     </Button>
                   </div>
+                  {/* Género (si ofrece varios): define qué tallas cobran extra. */}
+                  {product.genders.length > 1 && (
+                    <div role="radiogroup" aria-label={`Género de ${product.name}`} className="flex flex-wrap gap-1.5">
+                      {product.genders.map((g) => (
+                        <OptionChip key={g} selected={line.gender === g} onClick={() => setOption(line.id, { gender: line.gender === g ? null : g })}>
+                          {GENDER_LABELS[g]}
+                        </OptionChip>
+                      ))}
+                    </div>
+                  )}
                   {/* Solo si el producto cobra extra en alguna talla o color: se elige aquí o queda como opcional en el mensaje. */}
                   {product.colorSurcharges.length > 0 && (
                     <div role="radiogroup" aria-label={`Color de ${product.name}`} className="flex flex-wrap gap-1.5">
@@ -258,12 +278,12 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
                       ))}
                     </div>
                   )}
-                  {product.sizeSurcharges.length > 0 && (
+                  {sizeOptions.length > 0 && (
                     <div role="radiogroup" aria-label={`Talla de ${product.name}`} className="flex flex-wrap gap-1.5">
                       <OptionChip selected={!line.sizeId} onClick={() => setOption(line.id, { sizeId: null })}>
                         Otra talla
                       </OptionChip>
-                      {product.sizeSurcharges.map((sz) => (
+                      {sizeOptions.map((sz) => (
                         <OptionChip key={sz.id} selected={line.sizeId === sz.id} onClick={() => setOption(line.id, { sizeId: sz.id })}>
                           {sz.name} +{formatMoney(sz.amountUsd, "USD")}
                         </OptionChip>

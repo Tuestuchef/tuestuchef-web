@@ -1,4 +1,5 @@
 import type { Currency } from "@/common/lib/constants/currency.constants"
+import type { ProductGender } from "@/modules/products/lib/constants/products.constants"
 
 import type {
   DeliveryMethod,
@@ -24,6 +25,10 @@ export type SellableVariant = {
   sku: string
   productName: string
   variantLabel: string
+  // Para elegir con botones: género, color y talla (con su orden en la lista).
+  gender: ProductGender | null
+  color: { name: string; sort: number } | null
+  size: { name: string; sort: number } | null
   fulfillmentType: "stock" | "made_to_order" | "both"
   stock: number
   pricesUsd: Record<string, number>
@@ -178,6 +183,10 @@ export type CalculatorProduct = {
   // elegir por línea; si no, el mensaje los avisa como opcionales.
   sizeSurcharges: CalculatorSurcharge[]
   colorSurcharges: CalculatorSurcharge[]
+  // Géneros que ofrece (vacío = no aplica) y, por género, sus recargos por talla (los del género o,
+  // si no tiene, los de todos). Con géneros, la talla se elige después del género.
+  genders: ProductGender[]
+  genderSizeSurcharges: Partial<Record<ProductGender, CalculatorSurcharge[]>>
 }
 
 // Una talla o un color que cobra extra en un producto.

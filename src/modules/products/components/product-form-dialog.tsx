@@ -28,6 +28,7 @@ import {
   FIT_LABELS,
   FULFILLMENT_LABELS,
   GENDER_LABELS,
+  GENDERS,
   type ProductKind,
   UNIT_LABELS,
 } from "../lib/constants/products.constants"
@@ -99,7 +100,7 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
           </Button>
         )}
       </DialogTrigger>
-      {/* Más ancho que el diálogo por defecto: la fila de género, cierre y corte necesita tres columnas. */}
+      {/* Más ancho que el diálogo por defecto: varias filas de dos y tres columnas. */}
       <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{product ? `Editar ${noun}` : isRaw ? "Nueva materia prima" : `Nuevo ${noun}`}</DialogTitle>
@@ -108,7 +109,7 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
               ? "Ej.: “Tela antifluido”. Los colores van en las variantes; la unidad define cómo se compra y se consume."
               : isCombo
                 ? "Ej.: “Combo Escuela”. Después agregas sus componentes y su precio por método de pago."
-                : "El producto es el modelo (ej.: “Filipina manga corta dama broche”). Colores y tallas van en las variantes."}
+                : "El producto es el modelo (ej.: “Filipina manga corta broche”). Géneros, colores y tallas van en las variantes."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="grid gap-4" noValidate>
@@ -172,14 +173,32 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
           </div>
 
           {!isRaw && !isCombo && (
-            <div className="grid gap-4 sm:grid-cols-3 [&>*]:min-w-0">
-              <OptionalSelect
-                id="product-gender"
-                name="gender"
-                label="Género"
-                options={GENDER_LABELS}
-                defaultValue={product?.gender}
-              />
+            <fieldset className="grid gap-2">
+              <legend className="mb-1 text-sm font-medium">
+                Géneros <span className="font-normal text-muted-foreground">(opcional)</span>
+              </legend>
+              <div className="flex flex-wrap gap-x-5 gap-y-2">
+                {GENDERS.map((gender) => (
+                  <label key={gender} className="flex min-h-10 items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      name="genders"
+                      value={gender}
+                      defaultChecked={product?.genders.includes(gender)}
+                      className="size-5 accent-primary"
+                    />
+                    {GENDER_LABELS[gender]}
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Cada variante es de un género, con su propio stock. Sin marcar = no aplica (gorros, estuches…).
+              </p>
+            </fieldset>
+          )}
+
+          {!isRaw && !isCombo && (
+            <div className="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
               <OptionalSelect
                 id="product-closure"
                 name="closure"
@@ -203,7 +222,7 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
               htmlFor="product-model-code"
               error={errors.model_code}
               optional
-              hint={`Va en el SKU para distinguir modelos de la misma categoría (ej.: MC → FIL-MC-BR-NEG-S). Hasta 6 letras o números. Se usa al crear variantes: cambiarlo no toca los SKU que ya existen.`}
+              hint={`Va en el SKU para distinguir modelos de la misma categoría (ej.: MC → FIL-MC-C-BR-NEG-S). Hasta 6 letras o números. Se usa al crear variantes: cambiarlo no toca los SKU que ya existen.`}
             >
               <Input
                 id="product-model-code"

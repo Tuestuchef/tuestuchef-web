@@ -6,7 +6,7 @@ import type { HelpTopicKey } from "@/common/lib/constants/help.constants"
 import CatalogItemDialog from "../components/catalog-item-dialog"
 import SurchargesDialog from "../components/surcharges-dialog"
 import { listCatalog } from "../lib/services/catalog.service"
-import { listSurchargeableProducts, listSurcharges } from "../lib/services/surcharges.service"
+import { listGenderSizeSurcharges, listSurchargeableProducts, listSurcharges } from "../lib/services/surcharges.service"
 import type { CatalogKind } from "../lib/types/products.types"
 
 const COPY: Record<
@@ -40,10 +40,11 @@ const COPY: Record<
 const CatalogScreen = async ({ kind }: { kind: CatalogKind }) => {
   // Tallas y colores pueden tener recargo en ciertos productos; las categorías no.
   const surchargeKind = kind === "sizes" ? "size" : kind === "colors" ? "color" : null
-  const [items, surcharges, products] = await Promise.all([
+  const [items, surcharges, products, perGender] = await Promise.all([
     listCatalog(kind),
     surchargeKind ? listSurcharges(surchargeKind) : Promise.resolve({} as Record<string, Record<string, number>>),
     surchargeKind ? listSurchargeableProducts() : Promise.resolve([]),
+    kind === "sizes" ? listGenderSizeSurcharges() : Promise.resolve({} as Record<string, string[]>),
   ])
   const copy = COPY[kind]
 
@@ -68,7 +69,13 @@ const CatalogScreen = async ({ kind }: { kind: CatalogKind }) => {
                   {!item.is_active && <StatusBadge tone="warning">Inactivo</StatusBadge>}
                   {/* Tallas y colores: productos que cobran más en esta talla o este color. */}
                   {surchargeKind && (
-                    <SurchargesDialog kind={surchargeKind} target={item} products={products} current={surcharges[item.id] ?? {}} />
+                    <SurchargesDialog
+                      kind={surchargeKind}
+                      target={item}
+                      products={products}
+                      current={surcharges[item.id] ?? {}}
+                      perGender={perGender[item.id]}
+                    />
                   )}
                   <CatalogItemDialog kind={kind} noun={copy.noun} codeHint={copy.codeHint} item={item} />
                 </li>

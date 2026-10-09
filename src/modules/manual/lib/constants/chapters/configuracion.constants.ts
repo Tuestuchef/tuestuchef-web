@@ -211,6 +211,12 @@ export const SETTINGS_CHAPTER: ManualChapter = {
           ],
         },
         {
+          kind: "callout",
+          tone: "info",
+          title: "Recargo por talla distinto para dama y caballero",
+          body: "El recargo de **Configuración → Tallas** es igual para todos los géneros. Si cambia según el género (p. ej. caballero desde 3XL +$3 por talla y dama solo 6XL), cárgalo en la tabla **Precio por talla** de la página del producto: ese manda, y aquí el producto aparece como \"Por género\".",
+        },
+        {
           kind: "effects",
           items: [
             { icon: TagsIcon, title: "Categorías de producto", effect: "Filipinas (FIL), Delantales (DEL)… Primera parte del SKU.", chapter: "inventario" },

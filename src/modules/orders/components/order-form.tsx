@@ -1,6 +1,6 @@
 "use client"
 
-import { Loader2Icon, MinusIcon, PackagePlusIcon, PaletteIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
+import { Loader2Icon, MinusIcon, PaletteIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -10,16 +10,15 @@ import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
 import { Button } from "@/common/components/ui/button"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/common/components/ui/command"
 import { Input } from "@/common/components/ui/input"
 import { Label } from "@/common/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/common/components/ui/popover"
 import { Switch } from "@/common/components/ui/switch"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import { parseAmount } from "@/common/lib/utils/parse-amount.util"
 import CustomerPicker, { type PickedCustomer } from "@/modules/customers/components/customer-picker"
 import ComboPickerDialog, { type ComboSelection } from "@/modules/sales/components/combo-picker-dialog"
+import ProductPicker from "@/modules/sales/components/product-picker"
 import { CHANNEL_LABELS, DELIVERY_LABELS, MANUAL_CHANNELS, type DeliveryMethod, type SaleChannel } from "@/modules/sales/lib/constants/sales.constants"
 import type { SellableVariant } from "@/modules/sales/lib/types/sales.types"
 import { comboExtraUsd } from "@/modules/sales/lib/utils/combo.util"
@@ -65,7 +64,6 @@ const OrderForm = ({
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [lines, setLines] = useState<OrderLine[]>([])
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [comboToPick, setComboToPick] = useState<SellableVariant | null>(null)
   const [customizing, setCustomizing] = useState<string | null>(null)
   const [customer, setCustomer] = useState<PickedCustomer | null>(null)
@@ -136,18 +134,13 @@ const OrderForm = ({
     promisedDate < today && "La fecha prometida no puede ser pasada.",
   ].filter(Boolean) as string[]
 
-  const addVariant = (variant: SellableVariant) => {
-    setPickerOpen(false)
-    if (variant.components) {
-      setComboToPick(variant)
-      return
-    }
+  // Una variante elegida (género, color y talla) con su cantidad; si ya está, suma.
+  const addVariant = (variant: SellableVariant, quantity: number) =>
     setLines((prev) => {
       const existing = prev.find((l) => l.variantId === variant.id && !l.components)
-      if (existing) return prev.map((l) => (l === existing ? { ...l, quantity: l.quantity + 1 } : l))
-      return [...prev, { key: `${variant.id}-${Date.now()}`, variantId: variant.id, quantity: 1, customizations: [] }]
+      if (existing) return prev.map((l) => (l === existing ? { ...l, quantity: l.quantity + quantity } : l))
+      return [...prev, { key: `${variant.id}-${Date.now()}`, variantId: variant.id, quantity, customizations: [] }]
     })
-  }
   const setQuantity = (key: string, quantity: number) =>
     setLines((prev) => (quantity <= 0 ? prev.filter((l) => l.key !== key) : prev.map((l) => (l.key === key ? { ...l, quantity } : l))))
   const customizingLine = priced.find((l) => l.key === customizing)
@@ -205,37 +198,13 @@ const OrderForm = ({
       {/* Productos */}
       <section className="grid gap-2">
         <Label>Productos</Label>
-        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-          <PopoverTrigger asChild>
-            <Button type="button" variant="outline" className="h-11 justify-start font-normal text-muted-foreground md:h-9">
-              <PackagePlusIcon aria-hidden />
-              Buscar por nombre, color, talla o SKU
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-(--radix-popover-trigger-width) min-w-72 p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Filipina negra M…" />
-              <CommandList>
-                <CommandEmpty>No hay coincidencias.</CommandEmpty>
-                <CommandGroup>
-                  {variants.map((variant) => (
-                    <CommandItem key={variant.id} value={`${variant.productName} ${variant.variantLabel} ${variant.sku}`} onSelect={() => addVariant(variant)}>
-                      <span className="grid min-w-0 flex-1">
-                        <span className="truncate">
-                          {variant.productName} <span className="text-muted-foreground">· {variant.variantLabel}</span>
-                        </span>
-                        <span className="font-mono text-xs text-muted-foreground">{variant.sku}</span>
-                      </span>
-                      <span className="text-xs text-muted-foreground tabular-nums">
-                        {variant.components ? "Combo" : variant.fulfillmentType === "made_to_order" ? "Por encargo" : `Hay ${variant.stock}`}
-                      </span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <ProductPicker
+          variants={variants}
+          priceMethodId={priceMethodId}
+          available={(id) => variantById.get(id)?.stock ?? 0}
+          onAdd={addVariant}
+          onCombo={setComboToPick}
+        />
 
         {priced.length > 0 && (
           <ul className="divide-y rounded-lg border">

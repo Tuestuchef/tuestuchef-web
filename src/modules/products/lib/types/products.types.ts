@@ -23,6 +23,9 @@ export type ProductSurcharges = {
   colors: { name: string; amountUsd: number }[]
 }
 
+// Recargo de una talla para un género (null = todos los géneros), en USD.
+export type SizeSurchargeRow = { sizeId: string; gender: ProductGender | null; amountUsd: number }
+
 export type CatalogKind = "product_categories" | "sizes" | "colors"
 export type CatalogItem = Tables<"sizes">
 
@@ -46,6 +49,7 @@ export type ProductListItem = {
 export type VariantWithStock = {
   id: string
   sku: string
+  gender: ProductGender | null
   colorId: string | null
   colorName: string | null
   sizeId: string | null
@@ -76,7 +80,7 @@ export type ComboComponent = {
 export type ComboComponentOption = { id: string; name: string }
 
 export type ProductAttributes = {
-  gender: ProductGender | null
+  genders: ProductGender[]
   closure: ProductClosure | null
   fit: ProductFit | null
 }
@@ -121,6 +125,7 @@ export type RecipeLine = {
   materialLabel: string
   unit: ProductUnit
   sizeName: string | null
+  gender: ProductGender | null
   quantity: number
 }
 

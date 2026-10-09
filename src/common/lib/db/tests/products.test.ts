@@ -54,14 +54,14 @@ beforeAll(async () => {
   for (const s of sizes.rows) ids[`size_${s.code}`] = s.id
 
   const product = await owner<{ id: string }>(
-    `insert into public.products (category_id, name, gender, closure, fulfillment_type)
-     values ('${ids.cat}', 'Filipina manga corta dama broche', 'women', 'snap', 'both') returning id`
+    `insert into public.products (category_id, name, genders, closure, fulfillment_type)
+     values ('${ids.cat}', 'Filipina manga corta dama broche', '{women}', 'snap', 'both') returning id`
   )
   ids.product = product.rows[0].id
   const variants = await owner<{ id: string; sku: string }>(
-    `insert into public.product_variants (product_id, color_id, size_id, sku) values
-      ('${ids.product}', '${ids.VIN}', '${ids.size_M}', 'FIL-D-BR-VIN-M'),
-      ('${ids.product}', '${ids.NEG}', '${ids.size_S}', 'FIL-D-BR-NEG-S')
+    `insert into public.product_variants (product_id, gender, color_id, size_id, sku) values
+      ('${ids.product}', 'women', '${ids.VIN}', '${ids.size_M}', 'FIL-D-BR-VIN-M'),
+      ('${ids.product}', 'women', '${ids.NEG}', '${ids.size_S}', 'FIL-D-BR-NEG-S')
      returning id, sku`
   )
   for (const v of variants.rows) ids[v.sku] = v.id
@@ -86,21 +86,21 @@ describe("catálogo", () => {
   it("una combinación color × talla no se repite (tampoco sin talla)", async () => {
     await expect(
       owner(
-        `insert into public.product_variants (product_id, color_id, size_id, sku) values ('${ids.product}', '${ids.VIN}', '${ids.size_M}', 'OTRO-SKU')`
+        `insert into public.product_variants (product_id, gender, color_id, size_id, sku) values ('${ids.product}', 'women', '${ids.VIN}', '${ids.size_M}', 'OTRO-SKU')`
       )
     ).rejects.toThrow(/product_variants_unique_combo/)
-    await owner(`insert into public.product_variants (product_id, color_id, sku) values ('${ids.product}', '${ids.VIN}', 'FIL-VIN')`)
+    await owner(`insert into public.product_variants (product_id, gender, color_id, sku) values ('${ids.product}', 'women', '${ids.VIN}', 'FIL-VIN')`)
     await expect(
-      owner(`insert into public.product_variants (product_id, color_id, sku) values ('${ids.product}', '${ids.VIN}', 'FIL-VIN-2')`)
+      owner(`insert into public.product_variants (product_id, gender, color_id, sku) values ('${ids.product}', 'women', '${ids.VIN}', 'FIL-VIN-2')`)
     ).rejects.toThrow(/product_variants_unique_combo/)
   })
 
   it("SKU único y con formato", async () => {
     await expect(
-      owner(`insert into public.product_variants (product_id, size_id, sku) values ('${ids.product}', '${ids.size_L}', 'FIL-D-BR-VIN-M')`)
+      owner(`insert into public.product_variants (product_id, gender, size_id, sku) values ('${ids.product}', 'women', '${ids.size_L}', 'FIL-D-BR-VIN-M')`)
     ).rejects.toThrow(/duplicate key|unique/)
     await expect(
-      owner(`insert into public.product_variants (product_id, size_id, sku) values ('${ids.product}', '${ids.size_L}', 'fil d br')`)
+      owner(`insert into public.product_variants (product_id, gender, size_id, sku) values ('${ids.product}', 'women', '${ids.size_L}', 'fil d br')`)
     ).rejects.toThrow(/sku_check|check constraint/)
   })
 
@@ -224,7 +224,7 @@ describe("stock", () => {
 describe("carga inicial en lote", () => {
   it("todo o nada: un SKU malo no deja nada cargado", async () => {
     const v = await owner<{ id: string }>(
-      `insert into public.product_variants (product_id, color_id, size_id, sku) values ('${ids.product}', '${ids.NEG}', '${ids.size_L}', 'FIL-D-BR-NEG-L') returning id`
+      `insert into public.product_variants (product_id, gender, color_id, size_id, sku) values ('${ids.product}', 'women', '${ids.NEG}', '${ids.size_L}', 'FIL-D-BR-NEG-L') returning id`
     )
     ids["FIL-D-BR-NEG-L"] = v.rows[0].id
     await expect(

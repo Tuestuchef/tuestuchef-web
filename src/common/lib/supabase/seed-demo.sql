@@ -199,8 +199,8 @@ begin
   insert into public.product_variants (product_id, sku) values (p_buttons, 'INS-BOT') returning id into v_buttons;
 
   -- Productos terminados
-  insert into public.products (category_id, name, fulfillment_type, gender, closure, labor_cost_usdt)
-    values (cat_fil, 'Filipina dama broche', 'stock', 'women', 'snap', 4) returning id into p_filipina;
+  insert into public.products (category_id, name, fulfillment_type, genders, closure, labor_cost_usdt)
+    values (cat_fil, 'Filipina dama broche', 'stock', '{women}', 'snap', 4) returning id into p_filipina;
   insert into public.products (category_id, name, fulfillment_type, labor_cost_usdt)
     values (cat_del, 'Delantal con bolsillos', 'stock', 1.5) returning id into p_apron;
   insert into public.products (category_id, name, fulfillment_type, labor_cost_usdt)
@@ -208,8 +208,8 @@ begin
   insert into public.products (category_id, name, fulfillment_type, fit, labor_cost_usdt)
     values (cat_pan, 'Pantalón jogger', 'stock', 'jogger', 3) returning id into p_pants;
 
-  insert into public.product_variants (product_id, color_id, size_id, sku)
-  select p_filipina, c.id, s.id, 'FIL-D-BR-' || c.code || '-' || s.code
+  insert into public.product_variants (product_id, gender, color_id, size_id, sku)
+  select p_filipina, 'women', c.id, s.id, 'FIL-D-BR-' || c.code || '-' || s.code
   from public.colors c cross join public.sizes s
   where c.code in ('NEG', 'BLA', 'VIN') and s.code in ('S', 'M', 'L');
   insert into public.product_variants (product_id, color_id, sku)

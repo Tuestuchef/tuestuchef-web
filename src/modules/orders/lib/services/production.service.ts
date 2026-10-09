@@ -6,9 +6,7 @@ import { toCaracasDate } from "@/common/lib/utils/format-date.util"
 import type { ProductionStage } from "../constants/orders.constants"
 import type { PieceRateInput } from "../schemas/orders.schema"
 import type { MaterialRequirement, PieceRate, ProductionCard } from "../types/orders.types"
-
-const variantLabel = (v: { color: { name: string } | null; size: { name: string } | null } | null) =>
-  v ? [v.color?.name, v.size?.name].filter(Boolean).join(" · ") || "Única" : ""
+import { variantLabel } from "@/modules/products/lib/utils/variant-label.util"
 
 // Todo lo que está en producción, con su etapa y quién lo tiene.
 export async function listProductionCards(): Promise<ProductionCard[]> {
@@ -24,7 +22,7 @@ export async function listProductionCards(): Promise<ProductionCard[]> {
   const [items, sales, members, suppliers, customs, nexts] = await Promise.all([
     supabase
       .from("sale_items")
-      .select("id, variant:product_variants(color:colors(name), size:sizes(name), product:products(name))")
+      .select("id, variant:product_variants(gender, color:colors(name), size:sizes(name), product:products(name))")
       .in("id", itemIds),
     supabase.from("sales").select("id, customer:customers(first_name, last_name)").in("id", saleIds),
     memberIds.length ? supabase.from("team_members").select("id, full_name").in("id", memberIds) : Promise.resolve({ data: [] }),

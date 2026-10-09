@@ -7,6 +7,7 @@ export type QuoteDisplayRow =
       kind: "group"
       key: string
       productName: string
+      genderName: string | null
       colorName: string | null
       sizes: { sizeName: string; quantity: number }[]
       quantity: number
@@ -29,7 +30,7 @@ export function groupQuoteItemsBySize(items: QuoteItem[]): QuoteDisplayRow[] {
       rows.push({ kind: "line", item })
       continue
     }
-    const key = [item.productName, item.colorName ?? "", item.usdUnitPrice, item.vesUnitPrice, item.discountPercent].join("|")
+    const key = [item.productName, item.genderName ?? "", item.colorName ?? "", item.usdUnitPrice, item.vesUnitPrice, item.discountPercent].join("|")
     const group = groups.get(key)
     if (group) {
       group.items.push(item)
@@ -42,6 +43,7 @@ export function groupQuoteItemsBySize(items: QuoteItem[]): QuoteDisplayRow[] {
       kind: "group",
       key,
       productName: item.productName,
+      genderName: item.genderName,
       colorName: item.colorName,
       sizes: [],
       quantity: item.quantity,

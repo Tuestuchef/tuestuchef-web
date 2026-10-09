@@ -5,6 +5,8 @@ import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.clie
 import { resolveImageUrl } from "@/modules/products/lib/services/product-images.service"
 import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.service"
 
+import type { ProductGender } from "@/modules/products/lib/constants/products.constants"
+
 import type { CalculatorProduct, CalculatorSurcharge, PriceCalculatorData } from "../types/sales.types"
 import { comboSurcharges } from "../utils/combo.util"
 
@@ -15,7 +17,7 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
     supabase
       .from("products")
       .select(
-        `id, name, kind, category:product_categories(id, name),
+        `id, name, kind, genders, category:product_categories(id, name),
          variants:product_variants(is_active, color:colors(name)),
          images:product_images(path, is_primary)`
       )
@@ -32,7 +34,7 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
       .order("name"),
     supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "products").order("min_quantity"),
     getRateStatus(),
-    supabase.from("size_surcharges").select("product_id, amount_usd, target_id:size_id, target:sizes(name, sort_order)"),
+    supabase.from("size_surcharges").select("product_id, gender, amount_usd, target_id:size_id, target:sizes(name, sort_order)"),
     supabase.from("color_surcharges").select("product_id, amount_usd, target_id:color_id, target:colors(name, sort_order)"),
   ])
   if (productsResult.error) throw productsResult.error
@@ -71,8 +73,21 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
       return sorted(components ? comboSurcharges(components, (id) => map.get(id) ?? []) : (map.get(productId) ?? []))
     }
   }
-  const sizeSurchargesOf = byProduct(surchargesResult.data)
+  const sizeRows = surchargesResult.data ?? []
+  // Por talla, sin género. En un combo cuenta el más alto de cada talla entre sus piezas (de cualquier género).
+  const sizeSurchargesOf = byProduct(sizeRows)
   const colorSurchargesOf = byProduct(colorSurchargesResult.data)
+  // Por género: los del género o, si no tiene, los de todos los géneros.
+  const genderSizeSurchargesOf = (productId: string, genders: ProductGender[]) =>
+    Object.fromEntries(
+      genders.map((g) => {
+        const own = byProduct(sizeRows.filter((r) => r.gender === g))(productId)
+        const all = byProduct(sizeRows.filter((r) => r.gender === null))(productId)
+        const merged = [...own, ...all.filter((a) => !own.some((o) => o.id === a.id))]
+        const order = (id: string) => sizeRows.find((r) => r.target_id === id)?.target?.sort_order ?? 0
+        return [g, merged.sort((a, b) => order(a.id) - order(b.id))]
+      })
+    ) as Partial<Record<ProductGender, CalculatorSurcharge[]>>
 
   const products: CalculatorProduct[] = await Promise.all(
     productsResult.data
@@ -91,8 +106,10 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
           imageUrl: primary ? await resolveImageUrl(primary.path) : null,
           pricesUsd: prices.get(p.id) ?? {},
           piecesPerUnit: p.kind === "combo" ? (comboPieces.get(p.id) ?? 1) : 1,
-          sizeSurcharges: sizeSurchargesOf(p.id),
+          sizeSurcharges: p.genders.length && p.kind !== "combo" ? [] : sizeSurchargesOf(p.id),
           colorSurcharges: colorSurchargesOf(p.id),
+          genders: p.kind === "combo" ? [] : p.genders,
+          genderSizeSurcharges: p.kind === "combo" ? {} : genderSizeSurchargesOf(p.id, p.genders),
         }
       })
   )

@@ -86,7 +86,10 @@ export const SALES_CHAPTER: ManualChapter = {
         {
           kind: "steps",
           items: [
-            { title: "Agrega los productos", body: "Búscalos por nombre o código y ajusta la cantidad con + y −." },
+            {
+              title: "Agrega los productos",
+              body: "Busca el producto (también por color, talla o código: \"filipina 3/4 dama negra\") y tócalo: eliges el **género**, el **color** y la **talla** con botones, ves el precio y el stock, y la cantidad. **Agregar y elegir otra** suma otra combinación sin cerrar. En el carrito ajustas la cantidad con + y −.",
+            },
             {
               title: "Elige el método de pago",
               body:
@@ -168,7 +171,7 @@ export const SALES_CHAPTER: ManualChapter = {
             },
             {
               title: "Elige talla o color, si cobran extra",
-              body: "Si un producto cobra extra en alguna talla (p. ej. 3XL) o color (p. ej. pata de gallo), debajo de él aparecen esas opciones. Tócala si el cliente ya la pidió: el total la incluye. **Otra talla o color** agrega otra línea del mismo producto (p. ej. 2 en M y 1 en 4XL). En un combo, la opción suma lo de todas sus piezas (3XL: filipina +$3 y pantalón +$2 = +$5).",
+              body: "Si un producto cobra extra en alguna talla (p. ej. 3XL) o color (p. ej. pata de gallo), debajo de él aparecen esas opciones. Tócala si el cliente ya la pidió: el total la incluye. **Otra talla o color** agrega otra línea del mismo producto (p. ej. 2 en M y 1 en 4XL). En un combo, la opción suma lo de todas sus piezas (3XL: filipina +$3 y pantalón +$2 = +$5). Si el producto se hace en dama y caballero, toca primero el **género**: las tallas con recargo dependen de él (y si no lo eliges, el mensaje avisa los extras de cada uno).",
             },
             {
               title: "Copia para WhatsApp",

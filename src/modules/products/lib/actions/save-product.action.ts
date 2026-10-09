@@ -22,7 +22,8 @@ export async function saveProductAction(
   const auth = await authorizeAction(ROLE_GROUPS.MANAGEMENT)
   if (!auth.ok) return { status: "error", message: auth.error }
 
-  const parsed = productSchema.safeParse(Object.fromEntries(formData))
+  // Los géneros llegan como varias casillas con el mismo nombre.
+  const parsed = productSchema.safeParse({ ...Object.fromEntries(formData), genders: formData.getAll("genders") })
   if (!parsed.success) return { status: "error", fieldErrors: z.flattenError(parsed.error).fieldErrors }
 
   const { data, error } = await saveProduct(parsed.data)
