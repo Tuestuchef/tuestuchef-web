@@ -485,7 +485,7 @@ export const HELP_TOPICS = {
       {
         heading: "Tasas",
         items: [
-          "Se actualizan solas cada mañana (6:00) desde el BCV y el paralelo.",
+          "Se actualizan solas cada día a las 6:00 p. m. desde el BCV y el paralelo.",
           "Corregir tasa: registra una manual que queda como vigente. Lo ya registrado conserva su tasa.",
           "Tasa de otra fecha: al elegir el día, las tres tasas se llenan solas desde el historial (BCV y paralelo). Revisa y guarda.",
           "Al registrar algo con fecha pasada sin tasa, el sistema la trae sola del historial. Si ese día no tiene paralelo, se estima desde el día más cercano y la nota lo dice.",

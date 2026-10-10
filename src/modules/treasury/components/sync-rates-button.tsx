@@ -9,7 +9,7 @@ import { cn } from "@/common/lib/utils"
 
 import { syncExchangeRatesAction } from "../lib/actions/sync-exchange-rates.action"
 
-// Trae ahora las tasas de DolarAPI (lo mismo que hace el cron cada mañana).
+// Trae ahora las tasas de DolarAPI (lo mismo que hace el cron cada día a las 6:00 p. m.).
 const SyncRatesButton = () => {
   const [pending, startTransition] = useTransition()
 

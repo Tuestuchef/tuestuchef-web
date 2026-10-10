@@ -14,7 +14,7 @@ const MESSAGES = {
   skip_manual: "Hoy ya hay una tasa corregida a mano; no se reemplazó.",
 } as const
 
-// Lo mismo que hace el cron cada mañana, a demanda (owner y admin).
+// Lo mismo que hace el cron cada día a las 6:00 p. m., a demanda (owner y admin).
 export async function syncExchangeRatesAction(): Promise<ActionState> {
   const auth = await authorizeAction(ROLE_GROUPS.MANAGEMENT)
   if (!auth.ok) return { status: "error", message: auth.error }

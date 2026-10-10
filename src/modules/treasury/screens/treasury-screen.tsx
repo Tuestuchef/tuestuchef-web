@@ -57,7 +57,7 @@ const TreasuryScreen = async ({ transferSaved }: TreasuryScreenProps) => {
           <div className="grid gap-1">
             <CardTitle>Tasa vigente</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Se actualiza sola cada mañana (6:00) desde el BCV.
+              Se actualiza sola cada día a las 6:00 p. m. desde el BCV.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

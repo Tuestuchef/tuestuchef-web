@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { serverEnv } from "@/common/lib/config/server-env.config"
 import { syncExchangeRatesFromApi } from "@/modules/treasury/lib/services/rate-sync.service"
 
-// Vercel Cron la llama cada mañana (vercel.json) con Authorization: Bearer CRON_SECRET.
+// Vercel Cron la llama cada día a las 6:00 p. m. de Caracas (22:00 UTC, vercel.json) con Authorization: Bearer CRON_SECRET.
 export async function GET(request: NextRequest) {
   const secret = serverEnv.CRON_SECRET
   if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
