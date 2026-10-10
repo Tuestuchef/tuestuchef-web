@@ -329,12 +329,17 @@ export const SALES_CHAPTER: ManualChapter = {
     },
     {
       id: "corregir",
-      heading: "Corregir un error: anular",
+      heading: "Corregir un error: editar o anular",
       blocks: [
         {
           kind: "text",
           body:
-            "Una venta **no se edita ni se borra**. Si algo quedó mal, owner o admin la [[anular|anulan]] con un motivo y se registra de nuevo bien. Así siempre se puede ver qué pasó y quién lo hizo.",
+            "Owner y admin pueden **editar** una venta sin anularla: el cliente, el canal, la entrega y las notas. Y **corregir un pago**: si se marcó el método equivocado (efectivo en vez de Zelle), el monto no era o no pagó. El pago se revierte en su cuenta con su misma fecha y entra el correcto, así los saldos quedan bien. Siempre con motivo, y todo queda en el **Historial de cambios** de la venta: qué cambió, quién y cuándo.",
+        },
+        {
+          kind: "text",
+          body:
+            "Los productos, las cantidades y los precios **no se editan**. Si el error está ahí, owner o admin la [[anular|anulan]] con un motivo y se registra de nuevo bien. Una venta nunca se borra: siempre se puede ver qué pasó y quién lo hizo.",
         },
         {
           kind: "effects",

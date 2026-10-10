@@ -13,12 +13,21 @@ import { SALES_MESSAGES } from "../constants/sales.constants"
 import {
   type AddPaymentField,
   addPaymentSchema,
+  correctPaymentSchema,
+  editSaleSchema,
   itemStatusSchema,
   salesSettingsSchema,
   type VoidSaleField,
   voidSaleSchema,
 } from "../schemas/sales.schema"
-import { addSalePayment, setSaleItemStatus, updateSalesSettings, voidSale } from "../services/sales.service"
+import {
+  addSalePayment,
+  correctSalePayment,
+  editSaleDetails,
+  setSaleItemStatus,
+  updateSalesSettings,
+  voidSale,
+} from "../services/sales.service"
 import type { SaleRatesForDate } from "../types/sales.types"
 
 const ok = (message: string) => ({ status: "success" as const, message, submissionId: crypto.randomUUID() })
@@ -57,6 +66,38 @@ export async function voidSaleAction(
 
   refresh()
   return ok(SALES_MESSAGES.VOIDED)
+}
+
+type Result = { ok: true; message: string } | { ok: false; error: string }
+
+// Editar cliente, canal, entrega y notas (owner y admin, con motivo; queda en el historial).
+export async function editSaleAction(input: unknown): Promise<Result> {
+  const auth = await authorizeAction(ROLE_GROUPS.MANAGEMENT)
+  if (!auth.ok) return { ok: false, error: auth.error }
+
+  const parsed = editSaleSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Revisa los datos." }
+
+  const { error } = await editSaleDetails(parsed.data)
+  if (error) return { ok: false, error: toUserError(error, "No se pudo editar la venta.") }
+
+  refresh()
+  return { ok: true, message: SALES_MESSAGES.EDITED }
+}
+
+// Corregir o quitar un pago (owner y admin): se revierte en su cuenta y entra el correcto.
+export async function correctPaymentAction(input: unknown): Promise<Result> {
+  const auth = await authorizeAction(ROLE_GROUPS.MANAGEMENT)
+  if (!auth.ok) return { ok: false, error: auth.error }
+
+  const parsed = correctPaymentSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Revisa los datos." }
+
+  const { error } = await correctSalePayment(parsed.data)
+  if (error) return { ok: false, error: toUserError(error, "No se pudo corregir el pago.") }
+
+  refresh()
+  return { ok: true, message: parsed.data.payment_method_id ? SALES_MESSAGES.PAYMENT_CORRECTED : SALES_MESSAGES.PAYMENT_REMOVED }
 }
 
 // Avanza el estado de una o varias líneas (p. ej. "marcar todo entregado").

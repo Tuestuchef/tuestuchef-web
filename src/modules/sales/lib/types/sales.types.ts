@@ -107,6 +107,7 @@ export type SaleDetailItem = {
 
 export type SaleDetailPayment = {
   id: string
+  methodId: string
   methodName: string
   currency: Currency
   amount: number
@@ -131,6 +132,8 @@ export type SaleDetail = {
   volumeDiscount: { percent: number; usd: number } | null
   discount: { type: DiscountType; value: number; usd: number; reason: string; byName: string | null } | null
   deliveryFeeUsd: number
+  isOrder: boolean
+  isCancelledOrder: boolean
   // IVA sobre el total (después de descuentos); null si la venta no lleva IVA.
   vat: { percent: number; usd: number } | null
   totalUsd: number
@@ -145,6 +148,24 @@ export type SaleDetail = {
   items: SaleDetailItem[]
   payments: SalePaymentWithLedger[]
   void: { reason: string; at: string; byName: string | null } | null
+  // Cambios hechos después de registrarla (owner o admin), del más viejo al más nuevo.
+  edits: SaleEdit[]
+}
+
+// Un pago en el historial: método, moneda y monto.
+export type PaymentSnapshot = { method: string; currency: Currency; amount: number }
+
+export type SaleEditChange =
+  | { field: "customer" | "channel" | "delivery_method" | "notes"; from: string | null; to: string | null }
+  // to nulo: el pago se quitó.
+  | { field: "payment"; from: PaymentSnapshot; to: PaymentSnapshot | null }
+
+export type SaleEdit = {
+  id: string
+  at: string
+  byName: string | null
+  reason: string
+  changes: SaleEditChange[]
 }
 
 export type SalePaymentWithLedger = SaleDetailPayment & { ledgerEntryId: string }

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest"
 // Respuestas por tabla: lo justo para armar el libro.
 const DATA: Record<string, unknown[]> = {
   sales: [],
-  sale_payments: [],
+  sale_payments_all: [],
   purchases: [],
   payroll_entries: [],
   ledger_entries: [

@@ -7,11 +7,12 @@ import { caracasMonthRange, caracasNoonIso, toCaracasDate } from "@/common/lib/u
 import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.service"
 
 import type { PaymentStatus, SaleItemStatus } from "../constants/sales.constants"
-import type { AddPaymentInput, CreateSaleInput } from "../schemas/sales.schema"
+import type { AddPaymentInput, CorrectPaymentInput, CreateSaleInput, EditSaleInput } from "../schemas/sales.schema"
 import { round } from "../utils/sale-math.util"
 import type {
   ReceivableGroup,
   SaleDetail,
+  SaleEditChange,
   SaleFormData,
   SaleListItem,
   SalesFilters,
@@ -178,6 +179,28 @@ export async function addSalePayment(input: AddPaymentInput) {
   })
 }
 
+export async function editSaleDetails(input: EditSaleInput) {
+  const supabase = await createSupabaseServerClient()
+  return supabase.rpc("edit_sale_details", {
+    p_sale_id: input.sale_id,
+    p_customer_id: input.customer_id,
+    p_channel: input.channel,
+    p_delivery_method: input.delivery_method,
+    p_notes: input.notes,
+    p_reason: input.reason,
+  })
+}
+
+export async function correctSalePayment(input: CorrectPaymentInput) {
+  const supabase = await createSupabaseServerClient()
+  return supabase.rpc("correct_sale_payment", {
+    p_payment_id: input.payment_id,
+    p_payment_method_id: input.payment_method_id,
+    p_amount: input.amount,
+    p_reason: input.reason,
+  })
+}
+
 export async function voidSale(saleId: string, reason: string) {
   const supabase = await createSupabaseServerClient()
   return supabase.rpc("void_sale", { p_sale_id: saleId, p_reason: reason })
@@ -328,7 +351,7 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
   if (error) throw error
   if (!sale) return null
 
-  const [itemsResult, paymentsResult, summaryResult, voidResult] = await Promise.all([
+  const [itemsResult, paymentsResult, summaryResult, voidResult, editsResult, orderResult, cancellationResult] = await Promise.all([
     supabase
       .from("sale_items")
       .select(
@@ -340,10 +363,11 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
       .eq("sale_id", id)
       .order("created_at"),
     supabase
-      .from("sale_payments")
+      .from("sale_payments_all")
       .select(
-        `id, ledger_entry_id, currency, amount, applied_rate, usd_amount, usdt_value, occurred_at, receipt_path, is_backdated,
-         method:payment_methods(name), author:profiles!sale_payments_created_by_fkey(full_name)`
+        `id, payment_method_id, ledger_entry_id, currency, amount, applied_rate, usd_amount, usdt_value, occurred_at, receipt_path, is_backdated,
+         method:payment_methods(name), author:profiles!sale_payments_created_by_fkey(full_name),
+         correction:sale_payment_corrections!sale_payment_corrections_payment_id_fkey(edit_id)`
       )
       .eq("sale_id", id)
       .order("occurred_at"),
@@ -353,9 +377,17 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
       .select("reason, created_at, author:profiles!sale_voids_created_by_fkey(full_name)")
       .eq("sale_id", id)
       .maybeSingle(),
+    supabase
+      .from("sale_edits")
+      .select("id, reason, changes, created_at, author:profiles!sale_edits_created_by_fkey(full_name)")
+      .eq("sale_id", id)
+      .order("created_at"),
+    supabase.from("orders").select("sale_id").eq("sale_id", id).maybeSingle(),
+    supabase.from("order_cancellations").select("sale_id").eq("sale_id", id).maybeSingle(),
   ])
   if (itemsResult.error) throw itemsResult.error
   if (paymentsResult.error) throw paymentsResult.error
+  if (editsResult.error) throw editsResult.error
   const statuses = await getItemStatuses(itemsResult.data.map((i) => i.id))
 
   return {
@@ -384,6 +416,8 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
           }
         : null,
     deliveryFeeUsd: Number(sale.delivery_fee_usd),
+    isOrder: Boolean(orderResult.data),
+    isCancelledOrder: Boolean(cancellationResult.data),
     vat: Number(sale.vat_usd) > 0 ? { percent: Number(sale.vat_percent), usd: Number(sale.vat_usd) } : null,
     totalUsd: Number(sale.total_usd),
     paidUsd: Number(summaryResult.data?.paid_usd ?? 0),
@@ -418,8 +452,10 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
         lineTotalUsd: Number(c.line_total_usd),
       })),
     })),
-    payments: paymentsResult.data.map((p) => ({
+    // Los pagos corregidos no cuentan: quedan en el historial de cambios.
+    payments: paymentsResult.data.filter((p) => !p.correction).map((p) => ({
       id: p.id,
+      methodId: p.payment_method_id,
       ledgerEntryId: p.ledger_entry_id,
       methodName: p.method?.name ?? "—",
       currency: p.currency,
@@ -435,6 +471,13 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
     void: voidResult.data
       ? { reason: voidResult.data.reason, at: voidResult.data.created_at, byName: voidResult.data.author?.full_name ?? null }
       : null,
+    edits: editsResult.data.map((e) => ({
+      id: e.id,
+      at: e.created_at,
+      byName: e.author?.full_name ?? null,
+      reason: e.reason,
+      changes: e.changes as SaleEditChange[],
+    })),
   }
 }
 

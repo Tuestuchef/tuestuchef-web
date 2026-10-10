@@ -474,8 +474,8 @@ begin
   -- ---------------------------------------------------------------- fechas de registro
   -- Todo lo creado arriba lleva created_at = ahora; se iguala a la fecha del hecho para que el
   -- demo no aparezca entero como "retroactivo". Solo filas de esta transacción (created_at = now()).
-  alter table public.sales disable trigger sales_immutable;
-  alter table public.sale_payments disable trigger sale_payments_immutable;
+  alter table public.sales disable trigger sales_guard_update;
+  alter table public.sale_payments_all disable trigger sale_payments_immutable;
   alter table public.purchases disable trigger purchases_immutable;
   alter table public.purchase_payments disable trigger purchase_payments_immutable;
   alter table public.ledger_entries disable trigger ledger_entries_immutable;
@@ -484,7 +484,7 @@ begin
   alter table public.payroll_entries disable trigger payroll_entries_immutable;
 
   update public.sales set created_at = occurred_at, is_backdated = false where created_at >= now();
-  update public.sale_payments set created_at = occurred_at, is_backdated = false where created_at >= now();
+  update public.sale_payments_all set created_at = occurred_at, is_backdated = false where created_at >= now();
   update public.purchases set created_at = occurred_at, is_backdated = false where created_at >= now();
   update public.purchase_payments set created_at = occurred_at, is_backdated = false where created_at >= now();
   update public.ledger_entries set created_at = occurred_at where created_at >= now();
@@ -492,8 +492,8 @@ begin
   update public.production_runs set created_at = occurred_at, is_backdated = false where created_at >= now();
   update public.payroll_entries set created_at = occurred_at where created_at >= now();
 
-  alter table public.sales enable trigger sales_immutable;
-  alter table public.sale_payments enable trigger sale_payments_immutable;
+  alter table public.sales enable trigger sales_guard_update;
+  alter table public.sale_payments_all enable trigger sale_payments_immutable;
   alter table public.purchases enable trigger purchases_immutable;
   alter table public.purchase_payments enable trigger purchase_payments_immutable;
   alter table public.ledger_entries enable trigger ledger_entries_immutable;

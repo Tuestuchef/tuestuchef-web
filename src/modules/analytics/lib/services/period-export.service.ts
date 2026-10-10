@@ -51,8 +51,10 @@ export async function buildPeriodWorkbook(month: string): Promise<Buffer> {
       .lt("occurred_at", to)
       .order("occurred_at"),
     supabase
-      .from("sale_payments")
-      .select("occurred_at, currency, amount, applied_rate, usd_amount, usdt_value, sale:sales(number), method:payment_methods(name)")
+      .from("sale_payments_all")
+      .select(
+        "occurred_at, currency, amount, applied_rate, usd_amount, usdt_value, sale:sales(number), method:payment_methods(name), correction:sale_payment_corrections!sale_payment_corrections_payment_id_fkey(payment_id)"
+      )
       .gte("occurred_at", from)
       .lt("occurred_at", to)
       .order("occurred_at"),
@@ -178,7 +180,8 @@ export async function buildPeriodWorkbook(month: string): Promise<Buffer> {
       { header: "Equivale USD", key: "usd", money: true },
       { header: "Valor real USDT", key: "usdt", money: true },
     ],
-    (payments.data ?? []).map((p) => ({
+    // Los pagos corregidos no cuentan (su reverso y el pago correcto están en el libro).
+    (payments.data ?? []).filter((p) => !p.correction).map((p) => ({
       date: caracasDate(p.occurred_at),
       number: p.sale ? formatSaleNumber(p.sale.number) : "",
       method: p.method?.name ?? "",

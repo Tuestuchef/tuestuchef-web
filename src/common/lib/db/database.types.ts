@@ -1291,7 +1291,7 @@ export type Database = {
           },
         ]
       }
-      sale_payments: {
+      sale_payments_all: {
         Row: {
           is_backdated: boolean
           amount: number
@@ -1382,6 +1382,87 @@ export type Database = {
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_edits: {
+        Row: {
+          changes: Json
+          created_at: string
+          created_by: string
+          id: string
+          reason: string
+          sale_id: string
+        }
+        Insert: {
+          changes: Json
+          created_at?: string
+          created_by?: string
+          id?: string
+          reason: string
+          sale_id: string
+        }
+        Update: {
+          changes?: Json
+          created_at?: string
+          created_by?: string
+          id?: string
+          reason?: string
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_edits_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_edits_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_payment_corrections: {
+        Row: {
+          created_at: string
+          edit_id: string
+          payment_id: string
+          replacement_payment_id: string | null
+          reversal_entry_id: string
+        }
+        Insert: {
+          created_at?: string
+          edit_id: string
+          payment_id: string
+          replacement_payment_id?: string | null
+          reversal_entry_id: string
+        }
+        Update: {
+          created_at?: string
+          edit_id?: string
+          payment_id?: string
+          replacement_payment_id?: string | null
+          reversal_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_payment_corrections_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: true
+            referencedRelation: "sale_payments_all"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_payment_corrections_replacement_payment_id_fkey"
+            columns: ["replacement_payment_id"]
+            isOneToOne: true
+            referencedRelation: "sale_payments_all"
             referencedColumns: ["id"]
           },
         ]
@@ -4354,6 +4435,30 @@ export type Database = {
       }
     }
     Views: {
+      sale_payments: {
+        Row: {
+          is_backdated: boolean | null
+          amount: number | null
+          applied_rate: number | null
+          bcv_eur_rate: number | null
+          bcv_usd_rate: number | null
+          binance_rate: number | null
+          created_at: string | null
+          created_by: string | null
+          currency: Database["public"]["Enums"]["currency"] | null
+          id: string | null
+          ledger_entry_id: string | null
+          occurred_at: string | null
+          payment_method_id: string | null
+          rate_kind: Database["public"]["Enums"]["payment_rate_kind"] | null
+          receipt_path: string | null
+          sale_id: string | null
+          usd_amount: number | null
+          usd_usdt_rate: number | null
+          usdt_value: number | null
+        }
+        Relationships: []
+      }
       current_salary_agreements: {
         Row: {
           amount: number | null
@@ -4910,6 +5015,21 @@ export type Database = {
           p_occurred_at?: string
           p_payment_method_id: string
           p_receipt_path?: string
+          p_sale_id: string
+        }
+        Returns: string
+      }
+      correct_sale_payment: {
+        Args: { p_amount: number | null; p_payment_id: string; p_payment_method_id: string | null; p_reason: string }
+        Returns: string
+      }
+      edit_sale_details: {
+        Args: {
+          p_channel: Database["public"]["Enums"]["sale_channel"]
+          p_customer_id: string | null
+          p_delivery_method: Database["public"]["Enums"]["delivery_method"]
+          p_notes: string | null
+          p_reason: string
           p_sale_id: string
         }
         Returns: string

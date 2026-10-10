@@ -95,6 +95,30 @@ export const voidSaleSchema = z.object({
   reason: z.string().trim().min(3, { error: "Explica el motivo." }).max(300),
 })
 
+// Editar los datos de una venta (owner y admin), siempre con motivo.
+export const editSaleSchema = z.object({
+  sale_id: z.uuid(),
+  customer_id: z.uuid().nullable(),
+  channel: z.enum(E.sale_channel),
+  delivery_method: z.enum(E.delivery_method),
+  notes: z.string().trim().max(500).nullable(),
+  reason: z.string().trim().min(3, { error: "Explica el motivo." }).max(300),
+})
+
+export type EditSaleInput = z.infer<typeof editSaleSchema>
+
+// Corregir un pago (otro método u otro monto) o quitarlo (payment_method_id nulo).
+export const correctPaymentSchema = z
+  .object({
+    payment_id: z.uuid(),
+    payment_method_id: z.uuid().nullable(),
+    amount: z.number().positive().max(1_000_000_000).nullable(),
+    reason: z.string().trim().min(3, { error: "Explica el motivo." }).max(300),
+  })
+  .refine((v) => v.payment_method_id === null || v.amount !== null, { error: "Indica el monto.", path: ["amount"] })
+
+export type CorrectPaymentInput = z.infer<typeof correctPaymentSchema>
+
 export const itemStatusSchema = z.object({
   sale_item_id: z.uuid(),
   status: z.enum(E.sale_item_status),

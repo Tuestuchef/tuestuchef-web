@@ -154,13 +154,17 @@ export const HELP_TOPICS = {
           "Marcar entregado: pasa a entregado todo lo que está listo.",
           "WhatsApp: elige el mensaje (nota de entrega), revísalo y se abre WhatsApp con el texto listo. Queda en Mensajes enviados.",
           "Nota de entrega: para imprimir o guardar como PDF. No es factura fiscal.",
+          "Editar (owner y admin): cliente, canal, entrega y notas, con motivo.",
+          "Corregir un pago (owner y admin): otro método u otro monto, o quitarlo si no pagó. Se revierte en su cuenta con la misma fecha y entra el correcto.",
           "Anular, con motivo: revierte los pagos y devuelve el inventario (owner y admin).",
         ],
       },
       {
         heading: "Recuerda",
         items: [
-          "Una venta no se edita ni se borra. Si hubo un error, se anula y se registra de nuevo.",
+          "Cada cambio queda en el Historial de cambios de la venta: qué cambió, quién, cuándo y por qué.",
+          "Productos, cantidades y precios no se editan: si hubo un error ahí, se anula y se registra de nuevo.",
+          "No se edita una venta anulada, un pedido cancelado ni nada de un mes cerrado.",
           "Los estados solo avanzan; no se pueden devolver.",
         ],
       },

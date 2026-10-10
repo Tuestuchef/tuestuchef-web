@@ -19,8 +19,11 @@ import MessageActions from "@/modules/messages/components/message-actions"
 import MessageHistory from "@/modules/messages/components/message-history"
 
 import AddPaymentDialog from "../components/add-payment-dialog"
+import CorrectPaymentDialog from "../components/correct-payment-dialog"
+import EditSaleDialog from "../components/edit-sale-dialog"
 import { AdvanceItemButton, DeliverReadyButton } from "../components/item-status-controls"
 import PaymentStatusBadge from "../components/payment-status-badge"
+import SaleEditHistory from "../components/sale-edit-history"
 import VoidSaleDialog from "../components/void-sale-dialog"
 import {
   CHANNEL_LABELS,
@@ -41,6 +44,8 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
   const label = formatSaleNumber(sale.number)
   const isVoided = Boolean(sale.void)
   const hasBalance = !isVoided && sale.balanceUsd > 0.01
+  // Owner y admin corrigen datos y pagos (no en anuladas ni pedidos cancelados; un mes cerrado lo frena la base).
+  const canEdit = canManage && !isVoided && !sale.isCancelledOrder
   const readyItems = sale.items.filter((i) => i.status === "ready").map((i) => i.id)
 
   return (
@@ -99,6 +104,18 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
             Nota de entrega
           </Link>
         </Button>
+        {canEdit && (
+          <EditSaleDialog
+            saleId={sale.id}
+            label={label}
+            customer={sale.customer ? { id: sale.customer.id, name: sale.customer.name } : null}
+            channel={sale.channel}
+            deliveryMethod={sale.deliveryMethod}
+            notes={sale.notes}
+            isOrder={sale.isOrder}
+            hasDeliveryFee={sale.deliveryFeeUsd > 0}
+          />
+        )}
         {canManage && !isVoided && <VoidSaleDialog saleId={sale.id} label={label} />}
       </div>
 
@@ -250,6 +267,7 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
                       = {usd(payment.usdAmount)}
                       {canManage && ` · ${formatUsdt(payment.usdtValue)}`}
                     </span>
+                    {canEdit && <CorrectPaymentDialog payment={payment} methods={formData.methods} />}
                   </div>
                 </li>
               ))}
@@ -257,6 +275,8 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
           )}
         </CardContent>
       </Card>
+
+      <SaleEditHistory edits={sale.edits} />
 
       <MessageHistory filter={{ saleId: sale.id }} />
 
