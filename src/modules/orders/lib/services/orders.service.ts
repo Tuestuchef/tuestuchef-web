@@ -7,7 +7,7 @@ import { getSaleFormData } from "@/modules/sales/lib/services/sales.service"
 import { OPEN_ORDER_STATUSES, type OrderStatus, type ProductionStage } from "../constants/orders.constants"
 import type { CancelOrderInput, CreateOrderInput, OrderSettingsInput } from "../schemas/orders.schema"
 import type { Assignee, OrderDetail, OrderFormData, OrderListItem, OrderSettings } from "../types/orders.types"
-import { listCustomizationTypes } from "./order-settings.service"
+import { getCustomizationOptions } from "./order-settings.service"
 import { variantLabel } from "@/modules/products/lib/utils/variant-label.util"
 
 const fullName = (c: { first_name: string; last_name: string | null } | null) =>
@@ -32,17 +32,15 @@ export async function updateOrderSettings(input: OrderSettingsInput) {
 
 export async function getOrderFormData(): Promise<OrderFormData> {
   const supabase = await createSupabaseServerClient()
-  const [sale, types, settings, tiers, quoteSettings] = await Promise.all([
+  const [sale, customization, settings, quoteSettings] = await Promise.all([
     getSaleFormData(),
-    listCustomizationTypes(),
+    getCustomizationOptions(),
     getOrderSettings(),
-    supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "customization").order("min_quantity"),
     supabase.from("quote_settings").select("vat_percent").maybeSingle(),
   ])
   return {
     ...sale,
-    customizationTypes: types.filter((t) => t.isActive),
-    customizationTiers: (tiers.data ?? []).map((t) => ({ minQuantity: t.min_quantity, percent: Number(t.percent) })),
+    ...customization,
     settings,
     vatPercent: Number(quoteSettings.data?.vat_percent ?? 0),
   }

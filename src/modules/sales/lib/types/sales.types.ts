@@ -76,6 +76,19 @@ export type SaleListItem = {
   createdAt: string
 }
 
+export type SaleItemCustomization = {
+  id: string
+  typeName: string
+  quantity: number
+  text: string | null
+  names: string[]
+  hasLogo: boolean
+  position: string | null
+  note: string | null
+  charged: boolean
+  lineTotalUsd: number
+}
+
 export type SaleDetailItem = {
   id: string
   // Componente de un combo: la línea del combo a la que pertenece.
@@ -88,6 +101,8 @@ export type SaleDetailItem = {
   lineTotalUsd: number
   source: SaleLineSource
   status: SaleItemStatus | null
+  // Nombre bordado, logo…: qué se le hizo y si se cobró aparte.
+  customizations: SaleItemCustomization[]
 }
 
 export type SaleDetailPayment = {

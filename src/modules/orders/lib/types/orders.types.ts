@@ -30,13 +30,17 @@ export type OrderSettings = {
   defaultLeadDays: number
 }
 
-export type OrderFormData = SaleFormData & {
+export type CustomizationOptions = {
   customizationTypes: CustomizationType[]
   customizationTiers: { minQuantity: number; percent: number }[]
-  settings: OrderSettings
-  // Tasa de IVA de la configuración (la misma de los presupuestos).
-  vatPercent: number
 }
+
+export type OrderFormData = SaleFormData &
+  CustomizationOptions & {
+    settings: OrderSettings
+    // Tasa de IVA de la configuración (la misma de los presupuestos).
+    vatPercent: number
+  }
 
 export type OrderListItem = {
   saleId: string

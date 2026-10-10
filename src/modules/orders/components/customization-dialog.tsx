@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/common/components/ui/dialog"
 import { Input } from "@/common/components/ui/input"
+import { Switch } from "@/common/components/ui/switch"
 import { Textarea } from "@/common/components/ui/textarea"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import { parseAmount } from "@/common/lib/utils/parse-amount.util"
@@ -32,6 +33,8 @@ export type LineCustomization = {
   position?: string
   sizeCm?: number
   note?: string
+  // Solo en ventas: si se cobra aparte o solo queda anotada.
+  charged?: boolean
 }
 
 type CustomizationDialogProps = {
@@ -40,8 +43,9 @@ type CustomizationDialogProps = {
   lineQuantity: number
   types: CustomizationType[]
   storageEnabled: boolean
-  // En un presupuesto, los nombres y el logo se piden después, en el pedido.
-  mode?: "order" | "quote"
+  // En un presupuesto, los nombres y el logo se piden después, en el pedido. En una venta rápida
+  // cobrarla es opcional, sin mínimo de piezas ni archivo de logo obligatorio.
+  mode?: "order" | "quote" | "sale"
   onClose: () => void
   onSave: (customization: LineCustomization) => void
 }
@@ -49,8 +53,11 @@ type CustomizationDialogProps = {
 // Agregar una personalización a una línea: tipo, piezas, texto o nombres, logo y medida.
 const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnabled, mode = "order", onClose, onSave }: CustomizationDialogProps) => {
   const isQuote = mode === "quote"
-  const usable = types.filter((t) => t.unitPriceUsd !== null)
+  const isSale = mode === "sale"
+  // En ventas se puede anotar aunque el tipo no tenga precio (sin cobrarla).
+  const usable = isSale ? types : types.filter((t) => t.unitPriceUsd !== null)
   const [typeId, setTypeId] = useState(usable[0]?.id ?? "")
+  const [charged, setCharged] = useState(true)
   const [quantity, setQuantity] = useState(String(lineQuantity))
   const [text, setText] = useState("")
   const [names, setNames] = useState("")
@@ -61,6 +68,7 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
   const [error, setError] = useState<string | null>(null)
 
   const type = usable.find((t) => t.id === typeId)
+  const canCharge = type?.unitPriceUsd !== null && type?.unitPriceUsd !== undefined
   const nameList = names
     .split("\n")
     .map((n) => n.trim())
@@ -68,6 +76,7 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
 
   const reset = () => {
     setQuantity(String(lineQuantity))
+    setCharged(true)
     setText("")
     setNames("")
     setLogoPath(null)
@@ -84,11 +93,15 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
     const problem =
       !Number.isInteger(qty) || qty < 1 || qty > lineQuantity
         ? `Las piezas van de 1 a ${lineQuantity}.`
-        : !isQuote && type.requiresText && !text.trim() && nameList.length === 0
+        : isSale && !text.trim() && nameList.length === 0 && !logoPath
+          ? type.requiresLogo
+            ? "Escribe qué logo lleva."
+            : "Escribe el nombre o el texto."
+        : !isQuote && !isSale && type.requiresText && !text.trim() && nameList.length === 0
           ? "Escribe el texto o la lista de nombres."
           : nameList.length > 0 && nameList.length !== qty
             ? `Van ${nameList.length} nombres para ${qty} piezas.`
-            : !isQuote && type.requiresLogo && !logoPath
+            : !isQuote && !isSale && type.requiresLogo && !logoPath
               ? "Sube el archivo del logo."
               : type.maxSizeCm !== null && sizeCm !== undefined && sizeCm > type.maxSizeCm
                 ? `"${type.name}" es de hasta ${type.maxSizeCm} cm: más grande es logo de pecho.`
@@ -107,6 +120,7 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
       position: position.trim() || undefined,
       sizeCm,
       note: note.trim() || undefined,
+      charged: isSale ? charged && canCharge : undefined,
     })
     reset()
   }
@@ -142,7 +156,20 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
                 options={usable.map((t) => ({ value: t.id, label: t.name }))}
               />
             </FormField>
-            {type && (
+            {type && isSale && (
+              <label className="flex items-center justify-between gap-3 text-sm">
+                <span>
+                  Cobrarla aparte
+                  <span className="block text-xs text-muted-foreground">
+                    {canCharge
+                      ? `${formatMoney(type.unitPriceUsd ?? 0, "USD")} c/u. Apagado, solo queda anotada.`
+                      : "Sin precio cargado: solo queda anotada."}
+                  </span>
+                </span>
+                <Switch checked={charged && canCharge} disabled={!canCharge} onCheckedChange={setCharged} />
+              </label>
+            )}
+            {type && !isSale && (
               <p className="text-xs text-muted-foreground">
                 {formatMoney(type.unitPriceUsd ?? 0, "USD")} c/u · desde {type.minQuantity} {type.minQuantity === 1 ? "pieza" : "piezas"} por pedido
                 {type.maxSizeCm !== null && ` · hasta ${type.maxSizeCm} cm`}
@@ -169,8 +196,13 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
                 )}
               </>
             )}
+            {type?.requiresLogo && isSale && (
+              <FormField label="Qué logo" htmlFor="cz-logo-name">
+                <Input id="cz-logo-name" value={text} onChange={(e) => setText(e.target.value)} placeholder="Logo Restaurante Mar" className="h-11 md:h-9" />
+              </FormField>
+            )}
             {type?.requiresLogo && !isQuote && (
-              <ReceiptField enabled={storageEnabled} name="logo_path" label="Logo (JPG, PNG o PDF)" onPathChange={setLogoPath} />
+              <ReceiptField enabled={storageEnabled} name="logo_path" label={isSale ? "Archivo del logo" : "Logo (JPG, PNG o PDF)"} onPathChange={setLogoPath} />
             )}
             <div className="grid grid-cols-2 gap-3">
               <FormField label="Posición" htmlFor="cz-position" optional>

@@ -25,6 +25,8 @@ import { cn } from "@/common/lib/utils"
 import { formatMoney, formatRate } from "@/common/lib/utils/format-money.util"
 import { parseAmount } from "@/common/lib/utils/parse-amount.util"
 import CustomerPicker, { type PickedCustomer } from "@/modules/customers/components/customer-picker"
+import CustomizationDialog, { type LineCustomization } from "@/modules/orders/components/customization-dialog"
+import type { CustomizationOptions } from "@/modules/orders/lib/types/orders.types"
 
 import { createSaleAction } from "../lib/actions/create-sale.action"
 import {
@@ -63,11 +65,13 @@ type CartLine = {
   quantity: number
   source: SaleLineSource
   components?: ComboSelection["components"]
+  // Nombre bordado, logo…: cobrada aparte o solo anotada (solo en productos sueltos).
+  customizations: LineCustomization[]
 }
 type PaymentMode = "full" | "custom" | "none"
 type PaymentRow = { key: number; methodId: string; amount: string }
 
-type SaleFormProps = SaleFormData & { canManage: boolean }
+type SaleFormProps = SaleFormData & CustomizationOptions & { canManage: boolean; storageEnabled: boolean }
 
 const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3 })
 const usd = (value: number) => formatMoney(value, "USD")
@@ -96,6 +100,9 @@ const SaleForm = ({
   staffMaxBackdateDays,
   volumeTiers,
   today,
+  customizationTypes,
+  customizationTiers,
+  storageEnabled,
   canManage,
 }: SaleFormProps) => {
   const router = useRouter()
@@ -104,6 +111,7 @@ const SaleForm = ({
 
   const [cart, setCart] = useState<CartLine[]>([])
   const [comboToPick, setComboToPick] = useState<SellableVariant | null>(null)
+  const [customizing, setCustomizing] = useState<string | null>(null)
   const [priceMethodId, setPriceMethodId] = useState(methods[0]?.id ?? "")
   const [customer, setCustomer] = useState<PickedCustomer | null>(null)
   const [channel, setChannel] = useState<SaleChannel>("in_person")
@@ -141,6 +149,7 @@ const SaleForm = ({
     return { ...line, variant, price, total: price === undefined ? 0 : round(lineTotal(price, line.quantity) + extra) }
   })
   const missingPrice = lines.filter((l) => l.price === undefined)
+  const customizingLine = lines.find((l) => l.key === customizing)
 
   // Stock pedido por variante: líneas sueltas y piezas de combos.
   const stockWanted = new Map<string, number>()
@@ -165,7 +174,21 @@ const SaleForm = ({
   const volumePct = volumePercent(volumeTiers, pieces)
   const volume = round((subtotal * volumePct) / 100)
   const nextTier = volumeTiers.find((t) => t.minQuantity > pieces)
-  const discountBase = round(subtotal - volume)
+  // Personalización cobrada: por tipo, con su descuento al mayor (como la base). No entra en el
+  // descuento al mayor de productos, pero sí en el descuento manual.
+  const typeById = new Map(customizationTypes.map((t) => [t.id, t]))
+  const chargedPerType = new Map<string, number>()
+  for (const line of cart)
+    for (const c of line.customizations) if (c.charged) chargedPerType.set(c.typeId, (chargedPerType.get(c.typeId) ?? 0) + c.quantity)
+  const customizationTotal = round(
+    [...chargedPerType].reduce(
+      (sum, [typeId, qty]) =>
+        sum + round(qty * (typeById.get(typeId)?.unitPriceUsd ?? 0) * (1 - volumePercent(customizationTiers, qty) / 100)),
+      0
+    )
+  )
+  const customizationOverLine = cart.find((l) => l.customizations.some((c) => c.quantity > l.quantity))
+  const discountBase = round(subtotal + customizationTotal - volume)
   const parsedDiscount = showDiscount ? (parseAmount(discountValue) ?? 0) : 0
   const discount = Math.min(discountUsd(discountBase, discountType, parsedDiscount), discountBase)
   const fee = deliveryMethod === "delivery" ? (parseAmount(deliveryFee) ?? 0) : 0
@@ -203,6 +226,8 @@ const SaleForm = ({
     cart.length === 0 && SALES_MESSAGES.EMPTY_CART,
     customer?.blockedReason && `Cliente bloqueado: no se le puede vender (${customer.blockedReason}).`,
     missingPrice[0] && SALES_MESSAGES.NO_PRICE(missingPrice[0].variant.productName, priceMethod?.name ?? ""),
+    customizationOverLine &&
+      `La personalización de "${variantById.get(customizationOverLine.variantId)?.productName}" tiene más piezas que la línea.`,
     shortStock[0] && `No hay suficiente "${shortStock[0].productName}" (${shortStock[0].sku}) en inventario.`,
     overDiscountLimit && `El descuento máximo sin owner o admin es ${staffMaxDiscountPercent}%.`,
     showDiscount && discount > 0 && !discountReason.trim() && "Indica el motivo del descuento.",
@@ -221,7 +246,7 @@ const SaleForm = ({
         variant.fulfillmentType === "made_to_order" || (variant.fulfillmentType === "both" && variant.stock < quantity)
           ? "made_to_order"
           : "stock"
-      return [...prev, { key: variant.id, variantId: variant.id, quantity, source }]
+      return [...prev, { key: variant.id, variantId: variant.id, quantity, source, customizations: [] }]
     })
   const addCombo = (selection: ComboSelection) => {
     if (!comboToPick) return
@@ -229,7 +254,7 @@ const SaleForm = ({
     setComboToPick(null)
     setCart((prev) => [
       ...prev,
-      { key: `${combo.id}-${Date.now()}`, variantId: combo.id, quantity: selection.quantity, source: "combo", components: selection.components },
+      { key: `${combo.id}-${Date.now()}`, variantId: combo.id, quantity: selection.quantity, source: "combo", components: selection.components, customizations: [] },
     ])
   }
   const setQuantity = (key: string, quantity: number) =>
@@ -292,7 +317,22 @@ const SaleForm = ({
                 quantity: l.quantity,
                 components: l.components.map((c) => ({ variant_id: c.variantId, quantity: c.quantity, source: c.source })),
               }
-            : { variant_id: l.variantId, quantity: l.quantity, source: l.source }
+            : {
+                variant_id: l.variantId,
+                quantity: l.quantity,
+                source: l.source,
+                customizations: l.customizations.map((c) => ({
+                  type_id: c.typeId,
+                  quantity: c.quantity,
+                  text: c.text,
+                  names: c.names,
+                  logo_path: c.logoPath,
+                  position: c.position,
+                  size_cm: c.sizeCm,
+                  note: c.note,
+                  charged: Boolean(c.charged),
+                })),
+              }
         ),
         payments: payments.map((p) => ({ payment_method_id: p.methodId, amount: p.amount })),
         delivery_fee_usd: fee,
@@ -425,13 +465,63 @@ const SaleForm = ({
                   {line.source === "stock" && line.quantity > line.variant.stock && (
                     <StatusBadge tone="error">Stock insuficiente</StatusBadge>
                   )}
+                  {customizationTypes.length > 0 && (
+                    <Button type="button" variant="outline" size="sm" onClick={() => setCustomizing(line.key)}>
+                      <PlusIcon aria-hidden />
+                      Personalizar
+                    </Button>
+                  )}
                 </div>
+                )}
+                {line.customizations.length > 0 && (
+                  <ul className="grid gap-1 border-l-2 pl-2 text-xs">
+                    {line.customizations.map((c) => (
+                      <li key={c.key} className="flex items-start justify-between gap-2">
+                        <span className="min-w-0">
+                          {quantityFormat.format(c.quantity)} × {typeById.get(c.typeId)?.name}
+                          {(c.text || c.names) && <>: {c.text ?? c.names?.join(", ")}</>}
+                          {c.logoPath && " · con archivo"}
+                          {c.position && ` · ${c.position}`}
+                          <span className="text-muted-foreground"> · {c.charged ? "se cobra" : "sin cobrar"}</span>
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 shrink-0"
+                          onClick={() =>
+                            setCart((prev) =>
+                              prev.map((l) => (l.key === line.key ? { ...l, customizations: l.customizations.filter((x) => x.key !== c.key) } : l))
+                            )
+                          }
+                        >
+                          <Trash2Icon aria-hidden />
+                          <span className="sr-only">Quitar personalización</span>
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      <CustomizationDialog
+        key={customizing ?? "none"}
+        mode="sale"
+        open={Boolean(customizingLine)}
+        lineLabel={customizingLine ? `${customizingLine.quantity} × ${customizingLine.variant.productName} · ${customizingLine.variant.variantLabel}` : ""}
+        lineQuantity={customizingLine?.quantity ?? 1}
+        types={customizationTypes}
+        storageEnabled={storageEnabled}
+        onClose={() => setCustomizing(null)}
+        onSave={(c) => {
+          setCart((prev) => prev.map((l) => (l.key === customizing ? { ...l, customizations: [...l.customizations, c] } : l)))
+          setCustomizing(null)
+        }}
+      />
 
       <ComboPickerDialog combo={comboToPick} variants={variants} available={availableFor} priceMethodId={priceMethodId} onCancel={() => setComboToPick(null)} onConfirm={addCombo} />
 
@@ -644,10 +734,16 @@ const SaleForm = ({
       {/* Resumen y registrar */}
       <div className="sticky bottom-0 -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
         <dl className="grid gap-1 text-sm tabular-nums">
-          {(volume > 0 || discount > 0 || fee > 0) && (
+          {(volume > 0 || discount > 0 || fee > 0 || customizationTotal > 0) && (
             <div className="flex justify-between text-muted-foreground">
               <dt>Subtotal</dt>
               <dd>{usd(subtotal)}</dd>
+            </div>
+          )}
+          {customizationTotal > 0 && (
+            <div className="flex justify-between text-muted-foreground">
+              <dt>Personalización</dt>
+              <dd>{usd(customizationTotal)}</dd>
             </div>
           )}
           {volume > 0 && (

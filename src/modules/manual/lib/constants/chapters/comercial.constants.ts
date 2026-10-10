@@ -91,6 +91,10 @@ export const SALES_CHAPTER: ManualChapter = {
               body: "Busca el producto (también por color, talla o código: \"filipina 3/4 dama negra\") y tócalo: eliges el **género**, el **color** y la **talla** con botones, ves el precio y el stock, y la cantidad. **Agregar y elegir otra** suma otra combinación sin cerrar. En el carrito ajustas la cantidad con + y −.",
             },
             {
+              title: "¿Lleva personalización?",
+              body: "Toca **Personalizar** en la línea: el tipo (nombre bordado, logo…), cuántas piezas y el nombre o qué logo lleva (el archivo es opcional). **Cobrarla aparte** suma su precio al total; apágalo si ya iba incluida y queda solo anotada. Sale en el detalle y en la nota de entrega.",
+            },
+            {
               title: "Elige el método de pago",
               body:
                 "Define el precio: cada producto tiene un [[precio-por-metodo|precio por método]]. Por eso la filipina puede salir en 28 por pago móvil y en 25 en efectivo.",

@@ -24,12 +24,26 @@ const comboComponentSchema = z.object({
   source: z.enum(["stock", "made_to_order"]),
 })
 
+// Personalización de una línea suelta: cobrada aparte o solo anotada.
+const saleCustomizationSchema = z.object({
+  type_id: z.uuid(),
+  quantity: z.number().int().positive().max(10_000),
+  text: z.string().trim().max(60).optional(),
+  names: z.array(z.string().trim().min(1).max(40)).max(1000).optional(),
+  logo_path: z.string().trim().max(300).optional(),
+  position: z.string().trim().max(60).optional(),
+  size_cm: z.number().positive().max(100).optional(),
+  note: z.string().trim().max(300).optional(),
+  charged: z.boolean(),
+})
+
 // Una línea suelta, o un combo con la talla y el color de cada pieza.
 const saleItemSchema = z.object({
   variant_id: z.uuid(),
   quantity: z.number().positive().max(10_000),
   source: z.enum(E.sale_line_source).optional(),
   components: z.array(comboComponentSchema).max(500).optional(),
+  customizations: z.array(saleCustomizationSchema).max(10).optional(),
 })
 
 const salePaymentSchema = z.object({

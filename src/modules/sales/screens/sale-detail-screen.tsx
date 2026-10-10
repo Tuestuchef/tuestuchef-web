@@ -138,6 +138,25 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
                   </div>
                   {(!item.parentId || item.lineTotalUsd > 0) && <span className="text-sm tabular-nums">{usd(item.lineTotalUsd)}</span>}
                 </div>
+                {item.customizations.length > 0 && (
+                  <ul className="grid gap-0.5 border-l-2 pl-2 text-xs">
+                    {item.customizations.map((c) => (
+                      <li key={c.id} className="flex items-start justify-between gap-3">
+                        <span className="min-w-0">
+                          {quantityFormat.format(c.quantity)} × {c.typeName}
+                          {(c.text || c.names.length > 0) && <>: {c.text ?? c.names.join(", ")}</>}
+                          <span className="text-muted-foreground">
+                            {c.position && ` · ${c.position}`}
+                            {c.note && ` · ${c.note}`}
+                            {c.hasLogo && " · con archivo del logo"}
+                            {!c.charged && " · sin cobrar"}
+                          </span>
+                        </span>
+                        {c.charged && <span className="tabular-nums">{usd(c.lineTotalUsd)}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {item.source !== "combo" && (
                 <div className="flex flex-wrap items-center gap-2">
                   {item.source === "made_to_order" && <StatusBadge tone="info">Por encargo</StatusBadge>}

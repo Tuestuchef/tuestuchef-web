@@ -109,6 +109,15 @@ export const HELP_TOPICS = {
         ],
       },
       {
+        heading: "Personalización",
+        items: [
+          "Toca Personalizar en la línea (productos sueltos, no combos): elige el tipo (nombre bordado, logo…), cuántas piezas y escribe el nombre o qué logo lleva. El archivo del logo es opcional.",
+          "Cobrarla aparte suma el precio del tipo al total. Apágalo si ya iba incluida: queda anotada sin monto.",
+          "En ventas no hay mínimo de piezas. Un tipo sin precio cargado solo se puede anotar.",
+          "Se ve en el detalle de la venta y en la nota de entrega.",
+        ],
+      },
+      {
         heading: "Por encargo e inventario",
         items: [
           "Los productos de inventario descuentan stock; si no alcanza, no se puede vender.",

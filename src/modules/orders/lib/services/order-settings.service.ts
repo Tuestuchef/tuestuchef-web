@@ -3,7 +3,7 @@ import "server-only"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 
 import type { CustomizationTypeInput, VolumeTierInput } from "../schemas/orders.schema"
-import type { CustomizationType, VolumeTier } from "../types/orders.types"
+import type { CustomizationOptions, CustomizationType, VolumeTier } from "../types/orders.types"
 
 const toNumber = (value: number | null) => (value === null ? null : Number(value))
 
@@ -59,4 +59,17 @@ export async function addVolumeTier(input: VolumeTierInput) {
 export async function deleteVolumeTier(id: string) {
   const supabase = await createSupabaseServerClient()
   return supabase.from("volume_discount_tiers").delete().eq("id", id).select("id")
+}
+
+// Tipos activos y descuento al mayor de la personalización (para pedidos y ventas).
+export async function getCustomizationOptions(): Promise<CustomizationOptions> {
+  const supabase = await createSupabaseServerClient()
+  const [types, tiers] = await Promise.all([
+    listCustomizationTypes(),
+    supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "customization").order("min_quantity"),
+  ])
+  return {
+    customizationTypes: types.filter((t) => t.isActive),
+    customizationTiers: (tiers.data ?? []).map((t) => ({ minQuantity: t.min_quantity, percent: Number(t.percent) })),
+  }
 }

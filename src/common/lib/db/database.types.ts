@@ -2787,6 +2787,7 @@ export type Database = {
       sale_item_customizations: {
         Row: {
           created_at: string
+          charged: boolean
           created_by: string
           customization_type_id: string
           discount_percent: number
@@ -2803,6 +2804,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          charged?: boolean
           created_by?: string
           customization_type_id: string
           discount_percent?: number
@@ -2819,6 +2821,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          charged?: boolean
           created_by?: string
           customization_type_id?: string
           discount_percent?: number

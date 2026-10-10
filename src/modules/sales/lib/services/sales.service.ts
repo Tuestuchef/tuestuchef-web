@@ -333,7 +333,9 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
       .from("sale_items")
       .select(
         `id, parent_item_id, quantity, unit_price_usd, line_total_usd, source,
-         variant:product_variants(sku, gender, color:colors(name), size:sizes(name), product:products(name))`
+         variant:product_variants(sku, gender, color:colors(name), size:sizes(name), product:products(name)),
+         customizations:sale_item_customizations(id, quantity, text, position, note, logo_path, charged, line_total_usd,
+           type:customization_types(name), names:sale_item_customization_names(ordinal, name))`
       )
       .eq("sale_id", id)
       .order("created_at"),
@@ -403,6 +405,18 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
       lineTotalUsd: Number(item.line_total_usd),
       source: item.source,
       status: statuses.get(item.id) ?? null,
+      customizations: item.customizations.map((c) => ({
+        id: c.id,
+        typeName: c.type?.name ?? "—",
+        quantity: Number(c.quantity),
+        text: c.text,
+        names: [...c.names].sort((a, b) => a.ordinal - b.ordinal).map((n) => n.name),
+        hasLogo: Boolean(c.logo_path),
+        position: c.position,
+        note: c.note,
+        charged: c.charged,
+        lineTotalUsd: Number(c.line_total_usd),
+      })),
     })),
     payments: paymentsResult.data.map((p) => ({
       id: p.id,

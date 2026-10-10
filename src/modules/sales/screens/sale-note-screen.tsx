@@ -1,11 +1,13 @@
 import { ChevronLeftIcon } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { Fragment } from "react"
 
 import Logo from "@/common/components/logo/logo"
 import { Button } from "@/common/components/ui/button"
 import { brandConfig } from "@/common/lib/config/brand.config"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
+import { cn } from "@/common/lib/utils"
 import { formatDate } from "@/common/lib/utils/format-date.util"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import { getBusinessProfile } from "@/modules/business/lib/services/business-profile.service"
@@ -83,7 +85,8 @@ const SaleNoteScreen = async ({ id }: { id: string }) => {
           </thead>
           <tbody className="tabular-nums">
             {sale.items.map((item) => (
-              <tr key={item.id} className={item.parentId ? "align-top text-muted-foreground" : "border-b align-top"}>
+              <Fragment key={item.id}>
+              <tr className={cn("align-top", item.parentId ? "text-muted-foreground" : item.customizations.length === 0 && "border-b")}>
                 <td className={item.parentId ? "py-1 pl-3" : "py-2"}>{quantityFormat.format(item.quantity)}</td>
                 <td className={item.parentId ? "py-1 pl-3" : "py-2"}>
                   {item.source === "combo" ? item.productName : `${item.productName} · ${item.variantLabel}`}
@@ -97,6 +100,19 @@ const SaleNoteScreen = async ({ id }: { id: string }) => {
                 <td className="py-2 text-right">{item.parentId && item.lineTotalUsd === 0 ? "" : `${item.parentId ? "+" : ""}${usd(item.unitPriceUsd)}`}</td>
                 <td className="py-2 text-right">{item.parentId && item.lineTotalUsd === 0 ? "" : usd(item.lineTotalUsd)}</td>
               </tr>
+              {/* Personalización de la línea: la cobrada con su precio; la anotada, sin monto. */}
+              {item.customizations.map((c, index) => (
+                <tr key={c.id} className={index === item.customizations.length - 1 ? "border-b align-top" : "align-top"}>
+                  <td className="py-1 pl-3">{quantityFormat.format(c.quantity)}</td>
+                  <td className="py-1 pl-3">
+                    {c.typeName}
+                    {(c.text || c.names.length > 0) && `: ${c.text ?? c.names.join(", ")}`}
+                  </td>
+                  <td className="py-1 text-right">{c.charged ? usd(c.lineTotalUsd / c.quantity) : ""}</td>
+                  <td className="py-1 text-right">{c.charged ? usd(c.lineTotalUsd) : "Incluido"}</td>
+                </tr>
+              ))}
+              </Fragment>
             ))}
           </tbody>
         </table>
