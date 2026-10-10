@@ -1,5 +1,6 @@
 import "server-only"
 
+import { fetchAll } from "@/common/lib/db/fetch-all.util"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 
 import { GENDER_LABELS, type ProductGender } from "../constants/products.constants"
@@ -14,7 +15,7 @@ async function loadSkuContext(productId: string) {
     supabase.from("products").select("genders, closure, fit, model_code, category:product_categories(code)").eq("id", productId).maybeSingle(),
     supabase.from("colors").select("id, code"),
     supabase.from("sizes").select("id, code"),
-    supabase.from("product_variants").select("sku"),
+    fetchAll((from, to) => supabase.from("product_variants").select("sku").order("sku").range(from, to)),
   ])
   const colorCode = new Map((colors ?? []).map((c) => [c.id, c.code]))
   const sizeCode = new Map((sizes ?? []).map((s) => [s.id, s.code]))

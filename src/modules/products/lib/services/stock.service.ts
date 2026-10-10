@@ -1,5 +1,6 @@
 import "server-only"
 
+import { fetchAll } from "@/common/lib/db/fetch-all.util"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 import { caracasNoonIso, toCaracasDate } from "@/common/lib/utils/format-date.util"
 
@@ -42,6 +43,7 @@ export async function createStockMovement(input: StockMovementInput) {
 export async function listStockVariantOptions(): Promise<StockVariantOption[]> {
   const supabase = await createSupabaseServerClient()
   const [{ data: variants, error }, { data: balances }, { data: recipes }] = await Promise.all([
+    fetchAll((from, to) =>
     supabase
       .from("product_variants")
       .select(
@@ -50,8 +52,10 @@ export async function listStockVariantOptions(): Promise<StockVariantOption[]> {
       .eq("is_active", true)
       .eq("product.is_active", true)
       .neq("product.fulfillment_type", "made_to_order")
-      .order("sku"),
-    supabase.from("stock_balances").select("variant_id, quantity"),
+      .order("sku")
+      .range(from, to)
+    ),
+    fetchAll((from, to) => supabase.from("stock_balances").select("variant_id, quantity").order("variant_id").range(from, to)),
     supabase.from("product_recipe_lines").select("product_id"),
   ])
   if (error) throw error
@@ -101,15 +105,26 @@ export async function previewInitialStock(rows: StockCsvRow[]): Promise<InitialS
   if (!rows.length) return []
   const supabase = await createSupabaseServerClient()
   const skus = rows.map((r) => r.sku)
-  const [{ data: variants }, { data: moved }] = await Promise.all([
-    supabase
-      .from("product_variants")
-      .select("id, sku, is_active, gender, color:colors(name), size:sizes(name), product:products(name, is_active, fulfillment_type)")
-      .in("sku", skus),
-    supabase.from("stock_movements").select("variant_id, product_variants!inner(sku)").in("product_variants.sku", skus),
-  ])
-  const bySku = new Map((variants ?? []).map((v) => [v.sku, v]))
-  const withMovements = new Set((moved ?? []).map((m) => m.variant_id))
+  // Por tandas: una carga puede traer más de 1.000 SKU (límite de filas y largo de la URL).
+  const chunks = Array.from({ length: Math.ceil(skus.length / 200) }, (_, i) => skus.slice(i * 200, i * 200 + 200))
+  const results = await Promise.all(
+    chunks.map((chunk) =>
+      Promise.all([
+        supabase
+          .from("product_variants")
+          .select("id, sku, is_active, gender, color:colors(name), size:sizes(name), product:products(name, is_active, fulfillment_type)")
+          .in("sku", chunk),
+        // Solo importa si tiene alguno: un movimiento por variante basta.
+        fetchAll((from, to) =>
+          supabase.from("stock_movements").select("variant_id, product_variants!inner(sku)").in("product_variants.sku", chunk).order("id").range(from, to)
+        ),
+      ])
+    )
+  )
+  const variants = results.flatMap(([v]) => v.data ?? [])
+  const moved = results.flatMap(([, m]) => m.data ?? [])
+  const bySku = new Map(variants.map((v) => [v.sku, v]))
+  const withMovements = new Set(moved.map((m) => m.variant_id))
 
   return rows.map((row) => {
     const variant = bySku.get(row.sku)

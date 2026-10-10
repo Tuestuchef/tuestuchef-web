@@ -1,5 +1,6 @@
 import "server-only"
 
+import { fetchAll } from "@/common/lib/db/fetch-all.util"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 
 import { GENDERS, type ProductKind } from "../constants/products.constants"
@@ -29,7 +30,7 @@ export async function listProducts(
 
   const [{ data: products, error }, { data: balances, error: balancesError }] = await Promise.all([
     query,
-    supabase.from("stock_balances").select("product_id, quantity, is_low"),
+    fetchAll((from, to) => supabase.from("stock_balances").select("product_id, quantity, is_low").order("variant_id").range(from, to)),
   ])
   if (error) throw error
   if (balancesError) throw balancesError

@@ -1,6 +1,7 @@
 import "server-only"
 
 import type { Currency } from "@/common/lib/constants/currency.constants"
+import { fetchAll } from "@/common/lib/db/fetch-all.util"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 import { caracasMonthRange, caracasNoonIso, toCaracasDate } from "@/common/lib/utils/format-date.util"
 import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.service"
@@ -35,6 +36,7 @@ const fullName = (c: { first_name: string; last_name: string | null } | null) =>
 export async function getSaleFormData(): Promise<SaleFormData> {
   const supabase = await createSupabaseServerClient()
   const [variantsResult, balancesResult, pricesResult, methodsResult, settingsResult, rateStatus, componentsResult, tiersResult, surchargesResult, colorSurchargesResult] = await Promise.all([
+    fetchAll((from, to) =>
     supabase
       .from("product_variants")
       .select(
@@ -43,8 +45,10 @@ export async function getSaleFormData(): Promise<SaleFormData> {
       .eq("is_active", true)
       .eq("product.is_active", true)
       .neq("product.kind", "raw_material")
-      .order("sku"),
-    supabase.from("stock_balances").select("variant_id, quantity"),
+      .order("sku")
+      .range(from, to)
+    ),
+    fetchAll((from, to) => supabase.from("stock_balances").select("variant_id, quantity").order("variant_id").range(from, to)),
     supabase.from("product_prices").select("product_id, payment_method_id, amount_usd"),
     supabase
       .from("payment_methods")
