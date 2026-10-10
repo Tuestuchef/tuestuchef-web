@@ -14,7 +14,7 @@ import { getBusinessProfile } from "@/modules/business/lib/services/business-pro
 import { formatPhone, formatTaxId } from "@/modules/customers/lib/utils/normalize-contact.util"
 
 import PrintButton from "../components/print-button"
-import { formatSaleNumber, ITEM_STATUS_LABELS } from "../lib/constants/sales.constants"
+import { formatSaleNumber, ITEM_STATUS_LABELS, SHIPPING_FEE_LABELS } from "../lib/constants/sales.constants"
 import { getSaleDetail } from "../lib/services/sales.service"
 
 const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3 })
@@ -138,7 +138,7 @@ const SaleNoteScreen = async ({ id }: { id: string }) => {
           )}
           {sale.deliveryFeeUsd > 0 && (
             <div className="flex justify-between">
-              <dt>Delivery</dt>
+              <dt>{SHIPPING_FEE_LABELS[sale.deliveryMethod]}</dt>
               <dd>{usd(sale.deliveryFeeUsd)}</dd>
             </div>
           )}

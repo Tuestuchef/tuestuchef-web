@@ -5169,7 +5169,7 @@ export type Database = {
       order_stock_mode: "reserve_and_produce" | "produce_all"
       supplier_kind: "goods" | "workshop"
       volume_discount_scope: "products" | "customization"
-      delivery_method: "pickup" | "delivery"
+      delivery_method: "pickup" | "delivery" | "national_shipping"
       discount_type: "amount" | "percent"
       payment_rate_kind: "bcv_usd" | "bcv_eur" | "none"
       sale_channel: "in_person" | "whatsapp" | "instagram" | "online_store"
@@ -5252,7 +5252,7 @@ export const Constants = {
       order_stock_mode: ["reserve_and_produce", "produce_all"],
       supplier_kind: ["goods", "workshop"],
       volume_discount_scope: ["products", "customization"],
-      delivery_method: ["pickup", "delivery"],
+      delivery_method: ["pickup", "delivery", "national_shipping"],
       discount_type: ["amount", "percent"],
       payment_rate_kind: ["bcv_usd", "bcv_eur", "none"],
       sale_channel: ["in_person", "whatsapp", "instagram", "online_store"],

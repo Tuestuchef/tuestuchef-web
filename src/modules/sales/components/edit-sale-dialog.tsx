@@ -25,7 +25,9 @@ import CustomerPicker, { type PickedCustomer } from "@/modules/customers/compone
 import { editSaleAction } from "../lib/actions/sale-operations.action"
 import {
   CHANNEL_LABELS,
+  chargesShipping,
   DELIVERY_LABELS,
+  DELIVERY_METHODS,
   type DeliveryMethod,
   MANUAL_CHANNELS,
   type SaleChannel,
@@ -141,7 +143,7 @@ const EditSaleDialog = (props: EditSaleDialogProps) => {
               label="Entrega"
               value={deliveryMethod}
               onChange={(v) => setDeliveryMethod(v as DeliveryMethod)}
-              options={(props.hasDeliveryFee ? (["delivery"] as const) : (["pickup", "delivery"] as const)).map((d) => ({
+              options={DELIVERY_METHODS.filter((d) => !props.hasDeliveryFee || chargesShipping(d)).map((d) => ({
                 value: d,
                 label: DELIVERY_LABELS[d],
               }))}

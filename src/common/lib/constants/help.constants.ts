@@ -86,7 +86,7 @@ export const HELP_TOPICS = {
           "En el carrito ajustas la cantidad con + y −.",
           "Elige el método de pago: define el precio de cada producto.",
           "Cliente opcional: búscalo o créalo sin salir. Sin cliente = venta rápida.",
-          "Elige canal y entrega. Si es delivery, agrega el cobro del delivery.",
+          "Elige canal y entrega: retira, delivery o envío nacional. En delivery y envío nacional puedes agregar su cobro aparte.",
           "Indica el pago: pagó todo, abono o mixto (varios métodos), o por cobrar.",
           "Toca Registrar venta.",
         ],

@@ -20,7 +20,16 @@ import { parseAmount } from "@/common/lib/utils/parse-amount.util"
 import CustomerPicker, { type PickedCustomer } from "@/modules/customers/components/customer-picker"
 import ComboPickerDialog, { type ComboSelection } from "@/modules/sales/components/combo-picker-dialog"
 import ProductPicker from "@/modules/sales/components/product-picker"
-import { CHANNEL_LABELS, DELIVERY_LABELS, MANUAL_CHANNELS, type DeliveryMethod, type SaleChannel } from "@/modules/sales/lib/constants/sales.constants"
+import {
+  CHANNEL_LABELS,
+  chargesShipping,
+  DELIVERY_LABELS,
+  DELIVERY_METHODS,
+  MANUAL_CHANNELS,
+  SHIPPING_FEE_LABELS,
+  type DeliveryMethod,
+  type SaleChannel,
+} from "@/modules/sales/lib/constants/sales.constants"
 import type { SellableVariant } from "@/modules/sales/lib/types/sales.types"
 import { comboExtraUsd } from "@/modules/sales/lib/utils/combo.util"
 import { lineTotal, round, usdToMethodAmount, volumePercent } from "@/modules/sales/lib/utils/sale-math.util"
@@ -108,7 +117,7 @@ const OrderForm = ({
     const type = typeById.get(typeId)
     return type && qty < type.minQuantity ? [`"${type.name}" es desde ${type.minQuantity} piezas (van ${qty}).`] : []
   })
-  const fee = deliveryMethod === "delivery" ? (parseAmount(deliveryFee) ?? 0) : 0
+  const fee = chargesShipping(deliveryMethod) ? (parseAmount(deliveryFee) ?? 0) : 0
   // IVA sobre lo que queda después de descuentos, sin el delivery (como la base).
   const vat = vatEnabled ? round(((productsSubtotal + customizationTotal - volume) * vatPercent) / 100) : 0
   const total = round(productsSubtotal + customizationTotal - volume + fee + vat)
@@ -342,12 +351,12 @@ const OrderForm = ({
             label="Entrega"
             value={deliveryMethod}
             onChange={(v) => setDeliveryMethod(v as DeliveryMethod)}
-            options={(["pickup", "delivery"] as const).map((d) => ({ value: d, label: DELIVERY_LABELS[d] }))}
+            options={DELIVERY_METHODS.map((d) => ({ value: d, label: DELIVERY_LABELS[d] }))}
           />
         </FormField>
       </div>
-      {deliveryMethod === "delivery" && (
-        <FormField label="Cobro de delivery (USD)" htmlFor="order-fee" optional>
+      {chargesShipping(deliveryMethod) && (
+        <FormField label={`Cobro de ${SHIPPING_FEE_LABELS[deliveryMethod].toLowerCase()} (USD)`} htmlFor="order-fee" optional>
           <Input id="order-fee" inputMode="decimal" value={deliveryFee} onChange={(e) => setDeliveryFee(e.target.value)} placeholder="0" className="h-11 md:h-9" />
         </FormField>
       )}
@@ -443,7 +452,7 @@ const OrderForm = ({
           )}
           {fee > 0 && (
             <div className="flex justify-between text-muted-foreground">
-              <dt>Delivery</dt>
+              <dt>{SHIPPING_FEE_LABELS[deliveryMethod]}</dt>
               <dd>{usd(fee)}</dd>
             </div>
           )}

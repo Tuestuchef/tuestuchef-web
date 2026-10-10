@@ -100,7 +100,7 @@ export const SALES_CHAPTER: ManualChapter = {
                 "Define el precio: cada producto tiene un [[precio-por-metodo|precio por método]]. Por eso la filipina puede salir en 28 por pago móvil y en 25 en efectivo.",
             },
             { title: "Cliente (opcional)", body: "Búscalo o créalo sin salir. Sin cliente es una venta rápida." },
-            { title: "Canal y entrega", body: "Tienda, WhatsApp o Instagram; retiro o delivery (con su cobro aparte)." },
+            { title: "Canal y entrega", body: "Tienda, WhatsApp o Instagram; retiro, delivery o envío nacional (los dos últimos con su cobro aparte)." },
             {
               title: "Indica el pago",
               body: "Pagó todo, abonó una parte, pagó con varios métodos (mixto) o queda [[por-cobrar]].",

@@ -31,12 +31,15 @@ import type { CustomizationOptions } from "@/modules/orders/lib/types/orders.typ
 import { createSaleAction } from "../lib/actions/create-sale.action"
 import {
   CHANNEL_LABELS,
+  chargesShipping,
   DELIVERY_LABELS,
+  DELIVERY_METHODS,
   type DeliveryMethod,
   type DiscountType,
   LAST_CHANNEL_STORAGE_KEY,
   MANUAL_CHANNELS,
   SALES_MESSAGES,
+  SHIPPING_FEE_LABELS,
   type SaleChannel,
   type SaleLineSource,
   SOURCE_LABELS,
@@ -191,7 +194,7 @@ const SaleForm = ({
   const discountBase = round(subtotal + customizationTotal - volume)
   const parsedDiscount = showDiscount ? (parseAmount(discountValue) ?? 0) : 0
   const discount = Math.min(discountUsd(discountBase, discountType, parsedDiscount), discountBase)
-  const fee = deliveryMethod === "delivery" ? (parseAmount(deliveryFee) ?? 0) : 0
+  const fee = chargesShipping(deliveryMethod) ? (parseAmount(deliveryFee) ?? 0) : 0
   const total = round(discountBase - discount + fee)
   const overDiscountLimit = !canManage && discountPercent(discountBase, discount) > staffMaxDiscountPercent + 0.0001
 
@@ -564,12 +567,12 @@ const SaleForm = ({
               setDeliveryMethod(v as DeliveryMethod)
               setDelivered(channel === "in_person" && v === "pickup")
             }}
-            options={(["pickup", "delivery"] as const).map((d) => ({ value: d, label: DELIVERY_LABELS[d] }))}
+            options={DELIVERY_METHODS.map((d) => ({ value: d, label: DELIVERY_LABELS[d] }))}
           />
         </FormField>
       </div>
-      {deliveryMethod === "delivery" && (
-        <FormField label="Cobro de delivery (USD)" htmlFor="sale-fee" optional hint="Se suma al total de la venta.">
+      {chargesShipping(deliveryMethod) && (
+        <FormField label={`Cobro de ${SHIPPING_FEE_LABELS[deliveryMethod].toLowerCase()} (USD)`} htmlFor="sale-fee" optional hint="Se suma al total de la venta.">
           <Input
             id="sale-fee"
             inputMode="decimal"
@@ -767,7 +770,7 @@ const SaleForm = ({
           )}
           {fee > 0 && (
             <div className="flex justify-between text-muted-foreground">
-              <dt>Delivery</dt>
+              <dt>{SHIPPING_FEE_LABELS[deliveryMethod]}</dt>
               <dd>{usd(fee)}</dd>
             </div>
           )}

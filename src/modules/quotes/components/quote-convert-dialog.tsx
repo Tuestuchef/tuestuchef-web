@@ -19,7 +19,7 @@ import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import CustomerPicker, { type PickedCustomer } from "@/modules/customers/components/customer-picker"
 import { STOCK_MODE_LABELS, type OrderStockMode } from "@/modules/orders/lib/constants/orders.constants"
-import { CHANNEL_LABELS, DELIVERY_LABELS, MANUAL_CHANNELS, type DeliveryMethod, type SaleChannel } from "@/modules/sales/lib/constants/sales.constants"
+import { CHANNEL_LABELS, DELIVERY_LABELS, DELIVERY_METHODS, MANUAL_CHANNELS, type DeliveryMethod, type SaleChannel } from "@/modules/sales/lib/constants/sales.constants"
 
 import { convertQuoteAction } from "../lib/actions/quotes.action"
 import type { QuoteCurrencies } from "../lib/types/quotes.types"
@@ -190,7 +190,7 @@ const QuoteConvertDialog = ({
                 label="Entrega"
                 value={deliveryMethod}
                 onChange={(v) => setDeliveryMethod(v as DeliveryMethod)}
-                options={(["pickup", "delivery"] as const).map((d) => ({ value: d, label: DELIVERY_LABELS[d] }))}
+                options={DELIVERY_METHODS.map((d) => ({ value: d, label: DELIVERY_LABELS[d] }))}
               />
             </FormField>
           </div>

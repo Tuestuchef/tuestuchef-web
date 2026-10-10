@@ -1,5 +1,6 @@
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 
+import { SHIPPING_FEE_LABELS } from "../constants/sales.constants"
 import type { SaleDetail } from "../types/sales.types"
 
 const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3 })
@@ -22,7 +23,7 @@ export function buildSaleDetailText(sale: SaleDetail): string {
   ]
   if (sale.volumeDiscount) lines.push(`Al mayor ${sale.volumeDiscount.percent}%: −${usd(sale.volumeDiscount.usd)}`)
   if (sale.discount) lines.push(`Descuento: −${usd(sale.discount.usd)}`)
-  if (sale.deliveryFeeUsd > 0) lines.push(`Delivery: ${usd(sale.deliveryFeeUsd)}`)
+  if (sale.deliveryFeeUsd > 0) lines.push(`${SHIPPING_FEE_LABELS[sale.deliveryMethod]}: ${usd(sale.deliveryFeeUsd)}`)
   if (sale.vat) lines.push(`IVA ${sale.vat.percent}%: ${usd(sale.vat.usd)}`)
   lines.push(`*Total: ${usd(sale.totalUsd)}*`)
   if (sale.paidUsd > 0) lines.push(`Pagado: ${usd(sale.paidUsd)}`)

@@ -30,6 +30,7 @@ import {
   DELIVERY_LABELS,
   formatSaleNumber,
   ITEM_STATUS_LABELS,
+  SHIPPING_FEE_LABELS,
 } from "../lib/constants/sales.constants"
 import { getSaleDetail, getSaleFormData } from "../lib/services/sales.service"
 
@@ -211,7 +212,7 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
             )}
             {sale.deliveryFeeUsd > 0 && (
               <div className="flex justify-between text-muted-foreground">
-                <dt>Delivery</dt>
+                <dt>{SHIPPING_FEE_LABELS[sale.deliveryMethod]}</dt>
                 <dd>{usd(sale.deliveryFeeUsd)}</dd>
               </div>
             )}

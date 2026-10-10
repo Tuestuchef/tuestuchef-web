@@ -21,6 +21,19 @@ export const MANUAL_CHANNELS: readonly SaleChannel[] = ["in_person", "whatsapp",
 export const DELIVERY_LABELS: Record<DeliveryMethod, string> = {
   pickup: "Retira",
   delivery: "Delivery",
+  national_shipping: "Envío nacional",
+}
+
+export const DELIVERY_METHODS: readonly DeliveryMethod[] = ["pickup", "delivery", "national_shipping"]
+
+// Delivery y envío nacional pueden llevar cobro aparte; retiro no.
+export const chargesShipping = (method: DeliveryMethod) => method !== "pickup"
+
+// Cómo se llama ese cobro en la venta, la nota y el mensaje.
+export const SHIPPING_FEE_LABELS: Record<DeliveryMethod, string> = {
+  pickup: "Delivery",
+  delivery: "Delivery",
+  national_shipping: "Envío",
 }
 
 export const SOURCE_LABELS: Record<SaleLineSource, string> = {
