@@ -129,7 +129,7 @@ export const HELP_TOPICS = {
         heading: "Fecha pasada",
         items: [
           "En 'Más opciones' puedes cambiar la fecha. Se usan las tasas de ese día.",
-          "Staff puede ir hasta 7 días atrás (configurable). Si no hay tasas de esa fecha, owner o admin debe cargarlas.",
+          "Staff puede ir hasta 7 días atrás (configurable). Si ese día no tiene tasas, se traen solas del historial (BCV y paralelo).",
         ],
       },
       {
@@ -487,7 +487,8 @@ export const HELP_TOPICS = {
         items: [
           "Se actualizan solas cada mañana (6:00) desde el BCV y el paralelo.",
           "Corregir tasa: registra una manual que queda como vigente. Lo ya registrado conserva su tasa.",
-          "Tasa de otra fecha: carga las tasas de un día pasado para ventas o movimientos retroactivos.",
+          "Tasa de otra fecha: al elegir el día, las tres tasas se llenan solas desde el historial (BCV y paralelo). Revisa y guarda.",
+          "Al registrar algo con fecha pasada sin tasa, el sistema la trae sola del historial. Si ese día no tiene paralelo, se estima desde el día más cercano y la nota lo dice.",
           "Las tasas no se editan una vez cargadas; una corrección es otra tasa del mismo día.",
         ],
       },

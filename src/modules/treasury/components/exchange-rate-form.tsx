@@ -1,5 +1,7 @@
 "use client"
 
+import { useState, useTransition } from "react"
+
 import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
@@ -8,7 +10,7 @@ import { Input } from "@/common/components/ui/input"
 import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
 import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
 
-import { createExchangeRateAction } from "../lib/actions/create-exchange-rate.action"
+import { createExchangeRateAction, getHistoricalRatesAction } from "../lib/actions/create-exchange-rate.action"
 import type { ExchangeRateField } from "../lib/schemas/exchange-rate.schema"
 
 type ExchangeRateFormProps = {
@@ -32,6 +34,21 @@ const ExchangeRateForm = ({ onSuccess, submitLabel = "Guardar tasa del día", de
   const { state, onSubmit, pending } = useFormAction(createExchangeRateAction)
   useActionFeedback(state, onSuccess)
   const errors = state.fieldErrors ?? {}
+  // Fecha pasada: las tasas se llenan solas desde el historial de DolarAPI (se pueden ajustar).
+  const [date, setDate] = useState("")
+  const [history, setHistory] = useState<Awaited<ReturnType<typeof getHistoricalRatesAction>> | "none" | null>(null)
+  const [loading, startLoading] = useTransition()
+  const values: Partial<Record<RateField, number>> =
+    history && history !== "none"
+      ? { binance_usdt: history.parallelUsd, bcv_usd: history.bcvUsd, bcv_eur: history.bcvEur }
+      : (defaults ?? {})
+
+  const changeDate = (next: string) => {
+    setDate(next)
+    setHistory(null)
+    if (!next) return
+    startLoading(async () => setHistory((await getHistoricalRatesAction(next)) ?? "none"))
+  }
 
   return (
     <form key={state.submissionId} onSubmit={onSubmit} className="grid gap-4" noValidate>
@@ -39,24 +56,33 @@ const ExchangeRateForm = ({ onSuccess, submitLabel = "Guardar tasa del día", de
 
       {maxDate && (
         <FormField label="Fecha de la tasa" htmlFor="rate-date" error={errors.rate_date}>
-          <DateField id="rate-date" name="rate_date" max={maxDate} required />
+          <DateField id="rate-date" name="rate_date" max={maxDate} value={date} onChange={changeDate} required />
         </FormField>
+      )}
+      {maxDate && date && (
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          {loading
+            ? "Buscando las tasas de ese día…"
+            : history === "none"
+              ? "No hay datos de ese día en el historial: escríbelas."
+              : history?.estimated
+                ? `Del historial de DolarAPI. Ese día no tiene paralelo: el USDT se estimó desde el ${history.parallelFrom.split("-").reverse().join("/")}.`
+                : history
+                  ? "Del historial de DolarAPI. Revisa y guarda."
+                  : null}
+        </p>
       )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         {RATE_FIELDS.map((field) => (
-          <FormField key={field.name} label={field.label} htmlFor={`rate-${field.name}`} error={errors[field.name]}>
+          <FormField key={`${field.name}-${values[field.name] ?? ""}`} label={field.label} htmlFor={`rate-${field.name}`} error={errors[field.name]}>
             <Input
               id={`rate-${field.name}`}
               name={field.name}
               inputMode="decimal"
               autoComplete="off"
               placeholder="0,00"
-              defaultValue={
-                defaults?.[field.name] !== undefined
-                  ? String(defaults[field.name]).replace(".", ",")
-                  : undefined
-              }
+              defaultValue={values[field.name] !== undefined ? String(values[field.name]).replace(".", ",") : undefined}
               aria-invalid={Boolean(errors[field.name])}
               className="h-11 md:h-9"
             />

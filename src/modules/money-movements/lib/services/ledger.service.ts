@@ -1,5 +1,7 @@
 import "server-only"
 
+import { ensureRatesForDate } from "@/modules/treasury/lib/services/rate-history.service"
+
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 import { createReceiptDownloadUrl } from "@/common/lib/services/receipts.service"
 import { getStorage } from "@/common/lib/services/storage.service"
@@ -84,6 +86,7 @@ export async function listEntries(filters: MovementFilters): Promise<LedgerEntry
 }
 
 export async function createEntry(input: LedgerEntryInput) {
+  await ensureRatesForDate(input.date)
   const supabase = await createSupabaseServerClient()
   const isBackdated = input.date && input.date !== toCaracasDate()
 

@@ -1,5 +1,7 @@
 import "server-only"
 
+import { ensureRatesForDate } from "@/modules/treasury/lib/services/rate-history.service"
+
 import type { Currency } from "@/common/lib/constants/currency.constants"
 import { fetchAll } from "@/common/lib/db/fetch-all.util"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
@@ -150,6 +152,7 @@ export async function getSaleFormData(): Promise<SaleFormData> {
 }
 
 export async function createSale(input: CreateSaleInput) {
+  await ensureRatesForDate(input.date)
   const supabase = await createSupabaseServerClient()
   return supabase.rpc("create_sale", {
     p_channel: input.channel,
@@ -169,6 +172,7 @@ export async function createSale(input: CreateSaleInput) {
 }
 
 export async function addSalePayment(input: AddPaymentInput) {
+  await ensureRatesForDate(input.date)
   const supabase = await createSupabaseServerClient()
   return supabase.rpc("add_sale_payment", {
     p_sale_id: input.sale_id,

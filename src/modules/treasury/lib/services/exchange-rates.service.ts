@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.clie
 import type { ExchangeRateInput } from "../schemas/exchange-rate.schema"
 import type { ExchangeRate, RateStatus } from "../types/treasury.types"
 import { isRateCurrent } from "../utils/rate-status.util"
+import { ensureRatesForDate } from "./rate-history.service"
 
 export async function getRateStatus(): Promise<RateStatus> {
   const supabase = await createSupabaseServerClient()
@@ -49,8 +50,10 @@ export async function createExchangeRate(input: ExchangeRateInput) {
   })
 }
 
-// Tasas vigentes en una fecha (la de esa fecha o la registrada ese día). null si no hay.
+// Tasas vigentes en una fecha (la de esa fecha o la registrada ese día). Si es pasada y no hay,
+// se trae del historial de DolarAPI. null si tampoco hay ahí.
 export async function getRatesForDate(date: string): Promise<ExchangeRate | null> {
+  await ensureRatesForDate(date)
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.rpc("exchange_rate_for_date", { p_date: date })
   if (error) throw error

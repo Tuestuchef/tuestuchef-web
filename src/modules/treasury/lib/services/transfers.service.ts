@@ -5,8 +5,10 @@ import { caracasNoonIso } from "@/common/lib/utils/format-date.util"
 
 import type { AccountTransferInput } from "../schemas/account-transfer.schema"
 import type { TransferSummary } from "../types/treasury.types"
+import { ensureRatesForDate } from "./rate-history.service"
 
 export async function createTransfer(input: AccountTransferInput) {
+  await ensureRatesForDate(input.date)
   const supabase = await createSupabaseServerClient()
   return supabase.rpc("create_account_transfer", {
     p_from_account_id: input.from_account_id,

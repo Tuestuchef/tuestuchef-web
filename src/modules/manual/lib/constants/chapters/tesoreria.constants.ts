@@ -94,7 +94,7 @@ export const TREASURY_CHAPTER: ManualChapter = {
             },
             {
               title: "Tasa de otro día",
-              body: "Para registrar algo [[retroactiva|retroactivo]], owner o admin cargan la tasa de esa fecha en Tasas y cuentas.",
+              body: "Para registrar algo [[retroactiva|retroactivo]] no hace falta buscar la tasa: si ese día no la tiene, el sistema la trae sola del historial de DolarAPI (BCV dólar, BCV euro y paralelo, este desde febrero 2026). Si ese día no tiene paralelo, se estima desde el más cercano y la tasa lo dice en su nota. En **Tasa de otra fecha** también se llenan solas al elegir el día.",
             },
           ],
         },

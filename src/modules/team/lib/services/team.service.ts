@@ -1,5 +1,7 @@
 import "server-only"
 
+import { ensureRatesForDate } from "@/modules/treasury/lib/services/rate-history.service"
+
 import type { Currency } from "@/common/lib/constants/currency.constants"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 import { caracasMonthRange, caracasNoonIso, toCaracasDate, toCaracasMonth } from "@/common/lib/utils/format-date.util"
@@ -148,6 +150,7 @@ export async function addSalaryAgreement(input: SalaryAgreementInput) {
 }
 
 export async function registerPayroll(input: PayrollInput) {
+  await ensureRatesForDate(input.date)
   const supabase = await createSupabaseServerClient()
   const occurredAt = input.date && input.date !== toCaracasDate() ? caracasNoonIso(input.date) : undefined
   if (input.kind === "advance") {

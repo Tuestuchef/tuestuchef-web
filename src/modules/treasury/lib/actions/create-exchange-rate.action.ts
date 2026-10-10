@@ -12,6 +12,8 @@ import { toUserError } from "@/common/lib/utils/to-user-error.util"
 import { TREASURY_MESSAGES } from "../constants/treasury.constants"
 import { exchangeRateSchema, type ExchangeRateField } from "../schemas/exchange-rate.schema"
 import { createExchangeRate } from "../services/exchange-rates.service"
+import { getHistoricalRates } from "../services/rate-history.service"
+import type { HistoricalRates } from "../utils/rate-history.util"
 
 // Todos los roles; staff solo si aún no hay tasa de hoy (lo decide RLS).
 export async function createExchangeRateAction(
@@ -43,4 +45,11 @@ export async function createExchangeRateAction(
 
   refresh()
   return { status: "success", message: TREASURY_MESSAGES.RATE_SAVED, submissionId: crypto.randomUUID() }
+}
+
+// Tasas de un día pasado según el historial de DolarAPI, para llenar el formulario (owner y admin).
+export async function getHistoricalRatesAction(date: string): Promise<HistoricalRates | null> {
+  const auth = await authorizeAction(ROLE_GROUPS.MANAGEMENT)
+  if (!auth.ok || !z.iso.date().safeParse(date).success || date >= toCaracasDate()) return null
+  return getHistoricalRates(date)
 }

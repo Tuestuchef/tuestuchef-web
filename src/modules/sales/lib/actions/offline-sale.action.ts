@@ -5,7 +5,9 @@ import { z } from "zod"
 
 import { ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { authorizeAction } from "@/common/lib/services/session.service"
+import { toCaracasDate } from "@/common/lib/utils/format-date.util"
 import { toUserError } from "@/common/lib/utils/to-user-error.util"
+import { ensureRatesForDate } from "@/modules/treasury/lib/services/rate-history.service"
 
 import { createSaleSchema } from "../schemas/sales.schema"
 import { discardOfflineSale, retryOfflineSale, syncOfflineSale } from "../services/offline-sales.service"
@@ -28,6 +30,8 @@ export async function syncOfflineSaleAction(input: unknown): Promise<SyncResult>
   const parsed = syncSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Venta sin conexión inválida." }
 
+  // Una venta guardada sin señal puede ser de un día anterior: que ese día tenga su tasa.
+  await ensureRatesForDate(toCaracasDate(parsed.data.occurredAt))
   const { data, error } = await syncOfflineSale(parsed.data.clientRef, parsed.data.occurredAt, parsed.data.sale)
   if (error || !data) return { ok: false, error: toUserError(error, "No se pudo enviar la venta.") }
   if (data.status !== "rejected") refresh()

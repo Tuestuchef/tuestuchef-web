@@ -1,5 +1,7 @@
 import "server-only"
 
+import { ensureRatesForDate } from "@/modules/treasury/lib/services/rate-history.service"
+
 import { fetchAll } from "@/common/lib/db/fetch-all.util"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 import { caracasNoonIso, toCaracasDate } from "@/common/lib/utils/format-date.util"
@@ -14,6 +16,7 @@ import type { StockCsvRow } from "../utils/parse-stock-csv.util"
 import { variantLabel } from "../utils/variant-label.util"
 
 export async function createStockMovement(input: StockMovementInput) {
+  await ensureRatesForDate(input.date)
   const supabase = await createSupabaseServerClient()
   const isBackdated = input.date && input.date !== toCaracasDate()
 
