@@ -1315,6 +1315,7 @@ export const HELP_TOPICS = {
         heading: "Sueldo",
         items: [
           "Monto, moneda y frecuencia. Un cambio no edita el anterior: se agrega uno nuevo con su fecha.",
+          "Moneda: bolívares, dólares, USDT, o dólares o euros a tasa BCV: se acuerda en USD o EUR y se paga en Bs con la tasa BCV del día del pago.",
         ],
       },
       {

@@ -21,6 +21,7 @@ import SalaryAgreementDialog from "../components/salary-agreement-dialog"
 import TeamMemberFormDialog from "../components/team-member-form-dialog"
 import { FREQUENCY_LABELS, PAYROLL_KIND_LABELS } from "../lib/constants/team.constants"
 import { getTeamMember, listLinkableProfiles } from "../lib/services/team.service"
+import { formatSalary } from "../lib/utils/salary.util"
 
 const TeamMemberScreen = async ({ id }: { id: string }) => {
   const [detail, accounts, rateStatus] = await Promise.all([getTeamMember(id), listAccounts({ activeOnly: true }), getRateStatus()])
@@ -30,7 +31,7 @@ const TeamMemberScreen = async ({ id }: { id: string }) => {
     detail.member.pay_basis === "salary" ? Promise.resolve([]) : listPendingPiecework(id),
   ])
   const { member, currentSalary, agreements, entries, pendingAdvances } = detail
-  const rates = rateStatus.rate ? { bcvUsd: Number(rateStatus.rate.bcv_usd), usdUsdt: Number(rateStatus.rate.usd_usdt) } : null
+  const rates = rateStatus.rate ? { bcvUsd: Number(rateStatus.rate.bcv_usd), bcvEur: Number(rateStatus.rate.bcv_eur), usdUsdt: Number(rateStatus.rate.usd_usdt) } : null
   const accountOptions = accounts.map((a) => ({ id: a.id, name: a.name, currency: a.currency }))
   const payrollProps = {
     memberId: member.id,
@@ -117,7 +118,7 @@ const TeamMemberScreen = async ({ id }: { id: string }) => {
         <CardContent className="grid gap-3 text-sm">
           {currentSalary ? (
             <p className="text-lg font-semibold tabular-nums">
-              {formatMoney(currentSalary.amount, currentSalary.currency)}{" "}
+              {formatSalary(currentSalary)}{" "}
               <span className="text-sm font-normal text-muted-foreground">
                 {FREQUENCY_LABELS[currentSalary.frequency].toLowerCase()} · desde {formatDate(`${currentSalary.effectiveFrom}T12:00:00-04:00`)}
               </span>
@@ -136,7 +137,7 @@ const TeamMemberScreen = async ({ id }: { id: string }) => {
                       {a.notes && <span className="text-muted-foreground"> · {a.notes}</span>}
                     </span>
                     <span>
-                      {formatMoney(a.amount, a.currency)} {FREQUENCY_LABELS[a.frequency].toLowerCase()}
+                      {formatSalary(a)} {FREQUENCY_LABELS[a.frequency].toLowerCase()}
                     </span>
                   </li>
                 ))}

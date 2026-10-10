@@ -1,11 +1,12 @@
 import type { Currency } from "@/common/lib/constants/currency.constants"
 import type { Tables } from "@/common/lib/db/database.types"
 
-import type { PayrollEntryKind, SalaryFrequency } from "../constants/team.constants"
+import type { PayrollEntryKind, SalaryFrequency, SalaryRateKind } from "../constants/team.constants"
 
 export type TeamMember = Tables<"team_members">
 
-export type Salary = { amount: number; currency: Currency; frequency: SalaryFrequency; effectiveFrom: string }
+// rateKind bcv_usd / bcv_eur: amount en USD / EUR, se paga en Bs (currency VES) con la tasa BCV.
+export type Salary = { amount: number; currency: Currency; rateKind: SalaryRateKind; frequency: SalaryFrequency; effectiveFrom: string }
 
 export type TeamMemberListItem = {
   id: string

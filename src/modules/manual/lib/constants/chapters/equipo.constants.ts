@@ -52,7 +52,7 @@ export const TEAM_CHAPTER: ManualChapter = {
           kind: "flow",
           nodes: [
             { icon: UserPlusIcon, title: "Agregar a la persona", detail: "Nombre, cargo y contacto." },
-            { icon: FileSignatureIcon, title: "Definir su sueldo", detail: "Monto, moneda y frecuencia (semanal, quincenal o mensual)." },
+            { icon: FileSignatureIcon, title: "Definir su sueldo", detail: "Monto, moneda y frecuencia (semanal, quincenal o mensual). Puede ser en Bs, dólares, USDT, o en dólares o euros a tasa BCV (se paga en Bs con la tasa del día)." },
             { icon: HandCoinsIcon, title: "Adelantos", detail: "Si pide dinero antes, queda pendiente." },
             { icon: BanknoteIcon, title: "Pagar el sueldo", detail: "Se descuentan los adelantos y sale el neto." },
           ],

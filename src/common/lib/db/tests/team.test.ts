@@ -105,6 +105,25 @@ describe("equipo: RLS e inmutabilidad", () => {
     expect(Number(current.amount)).toBe(250)
   })
 
+  it("un sueldo a tasa BCV se acuerda en USD o EUR y se paga en Bs", async () => {
+    await admin(
+      "insert into public.salary_agreements (team_member_id, amount, currency, rate_kind, frequency, effective_from) values ($1, 300, 'VES', 'bcv_eur', 'monthly', public.caracas_today())",
+      [ids.seamstress]
+    )
+    const current = await one(owner<{ amount: string; currency: string; rate_kind: string }>(
+      "select amount, currency, rate_kind from public.current_salary_agreements where team_member_id = $1",
+      [ids.seamstress]
+    ))
+    expect(current).toMatchObject({ currency: "VES", rate_kind: "bcv_eur" })
+    // A tasa BCV siempre se paga en Bs.
+    await expect(
+      admin(
+        "insert into public.salary_agreements (team_member_id, amount, currency, rate_kind, frequency, effective_from) values ($1, 300, 'USD', 'bcv_usd', 'monthly', public.caracas_today())",
+        [ids.seamstress]
+      )
+    ).rejects.toThrow(/rate_kind_currency/)
+  })
+
   it("nadie borra personas del equipo", async () => {
     await expect(owner("delete from public.team_members where id = $1", [ids.seamstress])).rejects.toThrow(/permission denied/)
   })

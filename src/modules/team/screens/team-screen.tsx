@@ -10,6 +10,7 @@ import { formatMoney } from "@/common/lib/utils/format-money.util"
 import TeamMemberFormDialog from "../components/team-member-form-dialog"
 import { FREQUENCY_LABELS } from "../lib/constants/team.constants"
 import { listLinkableProfiles, listTeam } from "../lib/services/team.service"
+import { formatSalary } from "../lib/utils/salary.util"
 
 const usd = (value: number) => formatMoney(value, "USD")
 
@@ -62,7 +63,7 @@ const TeamScreen = async () => {
                     {[
                       m.jobTitle,
                       m.salary
-                        ? `${formatMoney(m.salary.amount, m.salary.currency)} ${FREQUENCY_LABELS[m.salary.frequency].toLowerCase()}`
+                        ? `${formatSalary(m.salary)} ${FREQUENCY_LABELS[m.salary.frequency].toLowerCase()}`
                         : "Sin sueldo definido",
                     ]
                       .filter(Boolean)

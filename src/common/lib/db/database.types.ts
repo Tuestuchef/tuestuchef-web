@@ -2167,6 +2167,7 @@ export type Database = {
           frequency: Database["public"]["Enums"]["salary_frequency"]
           id: string
           notes: string | null
+          rate_kind: Database["public"]["Enums"]["payment_rate_kind"]
           team_member_id: string
         }
         Insert: {
@@ -2178,6 +2179,7 @@ export type Database = {
           frequency: Database["public"]["Enums"]["salary_frequency"]
           id?: string
           notes?: string | null
+          rate_kind?: Database["public"]["Enums"]["payment_rate_kind"]
           team_member_id: string
         }
         Update: {
@@ -2189,6 +2191,7 @@ export type Database = {
           frequency?: Database["public"]["Enums"]["salary_frequency"]
           id?: string
           notes?: string | null
+          rate_kind?: Database["public"]["Enums"]["payment_rate_kind"]
           team_member_id?: string
         }
         Relationships: [
@@ -4469,6 +4472,7 @@ export type Database = {
           frequency: Database["public"]["Enums"]["salary_frequency"] | null
           id: string | null
           notes: string | null
+          rate_kind: Database["public"]["Enums"]["payment_rate_kind"] | null
           team_member_id: string | null
         }
         Relationships: []

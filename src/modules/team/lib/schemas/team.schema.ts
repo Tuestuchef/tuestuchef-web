@@ -9,6 +9,8 @@ import {
 } from "@/common/lib/schemas/form-fields.schema"
 import { normalizePhone } from "@/modules/customers/lib/utils/normalize-contact.util"
 
+import { SALARY_PAY_OPTIONS, type SalaryPayOption } from "../constants/team.constants"
+
 const E = Constants.public.Enums
 
 const optionalUuid = z
@@ -43,7 +45,10 @@ export const teamMemberSchema = z.object({
 export const salaryAgreementSchema = z.object({
   team_member_id: z.uuid(),
   amount: positiveAmountSchema("el sueldo"),
-  currency: z.enum(E.currency, { error: "Elige la moneda." }),
+  // Moneda y forma de pago en un solo campo (ver SALARY_PAY_OPTIONS).
+  currency: z
+    .enum(SALARY_PAY_OPTIONS.map((o) => o.value) as [SalaryPayOption, ...SalaryPayOption[]], { error: "Elige la moneda." })
+    .transform((value) => SALARY_PAY_OPTIONS.find((o) => o.value === value)!),
   frequency: z.enum(E.salary_frequency, { error: "Elige la frecuencia." }),
   // Desde cuándo rige (puede ser futura: un aumento ya acordado).
   effective_from: z.iso.date({ error: "Indica desde cuándo rige." }),

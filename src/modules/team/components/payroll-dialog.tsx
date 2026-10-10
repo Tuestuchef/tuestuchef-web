@@ -27,6 +27,7 @@ import BackdateField from "@/modules/sales/components/backdate-field"
 import { registerPayrollAction } from "../lib/actions/team.action"
 import { FREQUENCY_LABELS, type PayrollEntryKind } from "../lib/constants/team.constants"
 import type { PayrollEntryItem, Salary } from "../lib/types/team.types"
+import { formatSalary, type PayrollRates, salaryInUsd } from "../lib/utils/salary.util"
 
 type PayrollDialogProps = {
   kind: PayrollEntryKind
@@ -34,7 +35,7 @@ type PayrollDialogProps = {
   memberName: string
   accounts: { id: string; name: string; currency: Currency }[]
   // Tasas de hoy: solo para sugerir el monto en la moneda de la cuenta.
-  rates: { bcvUsd: number; usdUsdt: number } | null
+  rates: PayrollRates | null
   today: string
   salary: Salary | null
   pendingAdvances: PayrollEntryItem[]
@@ -72,7 +73,7 @@ const PayrollDialog = ({
 
   const account = accounts.find((a) => a.id === accountId)
   // Sugerencia en USD: sueldo − adelantos marcados.
-  const grossUsd = salary ? salary.amount / unitsPerUsd(salary.currency, rates) : 0
+  const grossUsd = salary ? salaryInUsd(salary, rates) : 0
   const advancesUsd = useMemo(
     () => pendingAdvances.filter((a) => settle.has(a.id)).reduce((sum, a) => sum + a.usdAmount, 0),
     [pendingAdvances, settle]
@@ -110,7 +111,7 @@ const PayrollDialog = ({
           <DialogDescription>
             {isPayment
               ? salary
-                ? `Sueldo ${FREQUENCY_LABELS[salary.frequency].toLowerCase()}: ${formatMoney(salary.amount, salary.currency)}. Se descuentan los adelantos marcados.`
+                ? `Sueldo ${FREQUENCY_LABELS[salary.frequency].toLowerCase()}: ${formatSalary(salary)}. Se descuentan los adelantos marcados.`
                 : "Sin sueldo definido: escribe el monto pagado."
               : "Queda pendiente y se descuenta en el próximo pago."}
           </DialogDescription>

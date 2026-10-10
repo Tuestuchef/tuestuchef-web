@@ -11,9 +11,16 @@ import type { LinkableProfile, PayrollEntryItem, Salary, TeamMemberDetail, TeamM
 
 // Todo lo de equipo es de owner y admin (RLS devuelve 0 filas a staff).
 
-const toSalary = (a: { amount: number; currency: Currency; frequency: Salary["frequency"]; effective_from: string }): Salary => ({
+const toSalary = (a: {
+  amount: number
+  currency: Currency
+  rate_kind: Salary["rateKind"]
+  frequency: Salary["frequency"]
+  effective_from: string
+}): Salary => ({
   amount: Number(a.amount),
   currency: a.currency,
+  rateKind: a.rate_kind,
   frequency: a.frequency,
   effectiveFrom: a.effective_from,
 })
@@ -23,7 +30,7 @@ export async function listTeam(): Promise<TeamMemberListItem[]> {
   const { from, to } = caracasMonthRange(toCaracasMonth())
   const [members, salaries, pending, paid] = await Promise.all([
     supabase.from("team_members").select("id, full_name, job_title, profile_id, is_active").order("is_active", { ascending: false }).order("full_name"),
-    supabase.from("current_salary_agreements").select("team_member_id, amount, currency, frequency, effective_from"),
+    supabase.from("current_salary_agreements").select("team_member_id, amount, currency, rate_kind, frequency, effective_from"),
     supabase.from("pending_salary_advances").select("team_member_id, usd_amount"),
     supabase.from("payroll_entries").select("team_member_id, usd_amount").gte("occurred_at", from).lt("occurred_at", to),
   ])
@@ -65,7 +72,7 @@ export async function getTeamMember(id: string): Promise<TeamMemberDetail | null
 
   const [agreements, current, entries, pending] = await Promise.all([
     supabase.from("salary_agreements").select("*").eq("team_member_id", id).order("effective_from", { ascending: false }).order("created_at", { ascending: false }),
-    supabase.from("current_salary_agreements").select("amount, currency, frequency, effective_from").eq("team_member_id", id).maybeSingle(),
+    supabase.from("current_salary_agreements").select("amount, currency, rate_kind, frequency, effective_from").eq("team_member_id", id).maybeSingle(),
     supabase
       .from("payroll_entries")
       .select("id, kind, currency, amount, usd_amount, period_label, occurred_at, ledger:ledger_entries(id, description, account:accounts(name))")
@@ -142,7 +149,8 @@ export async function addSalaryAgreement(input: SalaryAgreementInput) {
   return supabase.from("salary_agreements").insert({
     team_member_id: input.team_member_id,
     amount: input.amount,
-    currency: input.currency,
+    currency: input.currency.currency,
+    rate_kind: input.currency.rateKind,
     frequency: input.frequency,
     effective_from: input.effective_from,
     notes: input.notes ?? null,

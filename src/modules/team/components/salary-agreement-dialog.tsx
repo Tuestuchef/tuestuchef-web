@@ -17,12 +17,11 @@ import {
   DialogTrigger,
 } from "@/common/components/ui/dialog"
 import { Input } from "@/common/components/ui/input"
-import { CURRENCY_LABELS, type Currency } from "@/common/lib/constants/currency.constants"
 import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
 import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
 
 import { addSalaryAgreementAction } from "../lib/actions/team.action"
-import { FREQUENCY_LABELS, type SalaryFrequency } from "../lib/constants/team.constants"
+import { FREQUENCY_LABELS, SALARY_PAY_OPTIONS, type SalaryFrequency } from "../lib/constants/team.constants"
 import type { Salary } from "../lib/types/team.types"
 
 // Sueldo nuevo o cambio de sueldo: se agrega un acuerdo (los anteriores quedan como historial).
@@ -50,7 +49,7 @@ const SalaryAgreementDialog = ({ memberId, current, today }: { memberId: string;
         <form onSubmit={onSubmit} className="grid gap-4" noValidate>
           <input type="hidden" name="team_member_id" value={memberId} />
           {state.status === "error" && state.message && <StatusAlert tone="error" title={state.message} />}
-          <div className="grid grid-cols-[1fr_8rem] gap-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
             <FormField label="Monto" htmlFor="salary-amount" error={errors.amount}>
               <Input
                 id="salary-amount"
@@ -64,24 +63,26 @@ const SalaryAgreementDialog = ({ memberId, current, today }: { memberId: string;
               <select
                 id="salary-currency"
                 name="currency"
-                defaultValue={current?.currency ?? "USD"}
-                className="h-11 rounded-md border bg-background px-2 text-sm md:h-9"
+                defaultValue={
+                  current?.rateKind === "bcv_usd" ? "USD_BCV" : current?.rateKind === "bcv_eur" ? "EUR_BCV" : (current?.currency ?? "USD")
+                }
+                className="h-11 w-full min-w-0 rounded-md border bg-background px-2 text-sm md:h-9"
               >
-                {(Object.keys(CURRENCY_LABELS) as Currency[]).map((c) => (
-                  <option key={c} value={c}>
-                    {CURRENCY_LABELS[c]}
+                {SALARY_PAY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
                   </option>
                 ))}
               </select>
             </FormField>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
             <FormField label="Frecuencia" htmlFor="salary-frequency" error={errors.frequency}>
               <select
                 id="salary-frequency"
                 name="frequency"
                 defaultValue={current?.frequency ?? "biweekly"}
-                className="h-11 rounded-md border bg-background px-2 text-sm md:h-9"
+                className="h-11 w-full min-w-0 rounded-md border bg-background px-2 text-sm md:h-9"
               >
                 {(Object.keys(FREQUENCY_LABELS) as SalaryFrequency[]).map((f) => (
                   <option key={f} value={f}>
@@ -91,7 +92,7 @@ const SalaryAgreementDialog = ({ memberId, current, today }: { memberId: string;
               </select>
             </FormField>
             <FormField label="Rige desde" htmlFor="salary-from" error={errors.effective_from}>
-              <DateField id="salary-from" name="effective_from" defaultValue={today} />
+              <DateField id="salary-from" name="effective_from" defaultValue={today} className="min-w-0" />
             </FormField>
           </div>
           <FormField label="Nota" htmlFor="salary-notes" error={errors.notes} optional>
