@@ -6,6 +6,7 @@ import { useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import ChoiceChips from "@/common/components/choice-chips"
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
@@ -318,7 +319,7 @@ const OrderForm = ({
         <p className="text-xs text-muted-foreground">{STOCK_MODE_LABELS[stockMode].description}</p>
       </FormField>
       <FormField label="Fecha prometida" htmlFor="order-date" hint={`Por defecto, ${settings.defaultLeadDays} días.`}>
-        <Input id="order-date" type="date" min={today} value={promisedDate} onChange={(e) => setPromisedDate(e.target.value)} className="h-11 md:h-9" />
+        <DateField id="order-date" min={today} value={promisedDate} onChange={setPromisedDate} />
       </FormField>
 
       {/* Precio, canal y entrega */}

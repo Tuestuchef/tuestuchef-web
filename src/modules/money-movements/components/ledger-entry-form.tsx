@@ -4,6 +4,7 @@ import { ArrowDownLeftIcon, ArrowUpRightIcon, CalendarIcon } from "lucide-react"
 import { useRef, useState } from "react"
 
 import ChoiceChips from "@/common/components/choice-chips"
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import ReceiptField from "@/common/components/receipt-field"
 import StatusAlert from "@/common/components/status-alert"
@@ -261,15 +262,7 @@ const LedgerEntryForm = ({
           error={errors.date}
           hint="Con fecha pasada se usan las tasas registradas para ese día."
         >
-          <Input
-            id="entry-date"
-            type="date"
-            min={minDate}
-            max={today}
-            value={date || today}
-            onChange={(e) => setDate(e.target.value)}
-            className="h-11 md:h-9"
-          />
+          <DateField id="entry-date" min={minDate} max={today} value={date || today} onChange={setDate} />
         </FormField>
       ) : (
         <Button

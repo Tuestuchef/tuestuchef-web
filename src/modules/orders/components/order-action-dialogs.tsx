@@ -3,6 +3,7 @@
 import { CalendarIcon, CircleSlashIcon, PackageCheckIcon, ShieldCheckIcon } from "lucide-react"
 import { useState } from "react"
 
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import SubmitButton from "@/common/components/submit-button"
@@ -169,7 +170,7 @@ export const PromisedDateDialog = ({ saleId, current, today }: { saleId: string;
           <input type="hidden" name="sale_id" value={saleId} />
           {state.status === "error" && state.message && <StatusAlert tone="error" title={state.message} />}
           <FormField label="Nueva fecha" htmlFor="pd-date" error={errors.promised_date}>
-            <Input id="pd-date" name="promised_date" type="date" min={today} defaultValue={current} className="h-11 md:h-9" />
+            <DateField id="pd-date" name="promised_date" min={today} defaultValue={current} />
           </FormField>
           <FormField label="Motivo" htmlFor="pd-reason" error={errors.reason} optional>
             <Input id="pd-reason" name="reason" className="h-11 md:h-9" />

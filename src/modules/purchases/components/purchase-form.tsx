@@ -6,6 +6,7 @@ import { useMemo, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import ChoiceChips from "@/common/components/choice-chips"
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import ReceiptField from "@/common/components/receipt-field"
 import StatusAlert from "@/common/components/status-alert"
@@ -491,14 +492,7 @@ const PurchaseForm = ({
 
       {mode !== "full" && (
         <FormField label="Vence" htmlFor="purchase-due" optional hint="Fecha límite para pagar el saldo.">
-          <Input
-            id="purchase-due"
-            type="date"
-            min={date}
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="h-11 max-w-48 md:h-9"
-          />
+          <DateField id="purchase-due" min={date} value={dueDate} onChange={setDueDate} clearable className="max-w-80" />
         </FormField>
       )}
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import ReceiptField from "@/common/components/receipt-field"
 import StatusAlert from "@/common/components/status-alert"
@@ -161,7 +162,7 @@ const TransferForm = ({ accounts, rate, receiptsEnabled }: TransferFormProps) =>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField label="Fecha" htmlFor="transfer-date" error={errors.date} hint="Vacía = hoy">
-          <Input id="transfer-date" name="date" type="date" max={today} className="h-11 md:h-9" />
+          <DateField id="transfer-date" name="date" max={today} placeholder="Hoy" clearable />
         </FormField>
         <FormField label="Nota" htmlFor="transfer-note" error={errors.note} optional>
           <Input id="transfer-note" name="note" className="h-11 md:h-9" />

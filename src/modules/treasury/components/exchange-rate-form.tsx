@@ -1,5 +1,6 @@
 "use client"
 
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import SubmitButton from "@/common/components/submit-button"
@@ -38,7 +39,7 @@ const ExchangeRateForm = ({ onSuccess, submitLabel = "Guardar tasa del día", de
 
       {maxDate && (
         <FormField label="Fecha de la tasa" htmlFor="rate-date" error={errors.rate_date}>
-          <Input id="rate-date" name="rate_date" type="date" max={maxDate} required className="h-11 md:h-9" />
+          <DateField id="rate-date" name="rate_date" max={maxDate} required />
         </FormField>
       )}
 

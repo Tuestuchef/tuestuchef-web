@@ -3,10 +3,10 @@
 import { CalendarIcon, Loader2Icon } from "lucide-react"
 import { useState, useTransition } from "react"
 
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import { Button } from "@/common/components/ui/button"
-import { Input } from "@/common/components/ui/input"
 
 import { getRatesForDateAction } from "../lib/actions/sale-operations.action"
 import type { SaleRatesForDate } from "../lib/types/sales.types"
@@ -73,16 +73,7 @@ const BackdateField = ({ id, today, maxDaysBack, value, onChange, name }: Backda
         }
       >
         <div className="flex items-center gap-2">
-          <Input
-            id={id}
-            name={name}
-            type="date"
-            min={min}
-            max={today}
-            value={value || today}
-            onChange={(e) => select(e.target.value)}
-            className="h-11 md:h-9"
-          />
+          <DateField id={id} name={name} min={min} max={today} value={value || today} onChange={select} className="flex-1" />
           {loading && <Loader2Icon className="size-4 animate-spin text-muted-foreground" aria-label="Buscando tasas" />}
         </div>
       </FormField>

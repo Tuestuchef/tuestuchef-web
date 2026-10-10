@@ -3,6 +3,7 @@
 import { BadgeDollarSignIcon } from "lucide-react"
 import { useState } from "react"
 
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import SubmitButton from "@/common/components/submit-button"
@@ -90,7 +91,7 @@ const SalaryAgreementDialog = ({ memberId, current, today }: { memberId: string;
               </select>
             </FormField>
             <FormField label="Rige desde" htmlFor="salary-from" error={errors.effective_from}>
-              <Input id="salary-from" name="effective_from" type="date" defaultValue={today} className="h-11 md:h-9" />
+              <DateField id="salary-from" name="effective_from" defaultValue={today} />
             </FormField>
           </div>
           <FormField label="Nota" htmlFor="salary-notes" error={errors.notes} optional>

@@ -4,6 +4,7 @@ import { CalendarIcon, CheckIcon, ChevronsUpDownIcon } from "lucide-react"
 import { useState } from "react"
 
 import ChoiceChips from "@/common/components/choice-chips"
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import SubmitButton from "@/common/components/submit-button"
@@ -183,7 +184,7 @@ const StockMovementForm = ({ variants, allowedTypes, today }: StockMovementFormP
 
       {showDate ? (
         <FormField label="Fecha" htmlFor="stock-date" error={errors.date}>
-          <Input id="stock-date" name="date" type="date" max={today} defaultValue={today} className="h-11 md:h-9" />
+          <DateField id="stock-date" name="date" max={today} defaultValue={today} />
         </FormField>
       ) : (
         <Button

@@ -4,6 +4,7 @@ import { ArrowRightIcon, UserCogIcon } from "lucide-react"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import SubmitButton from "@/common/components/submit-button"
@@ -114,7 +115,7 @@ export const AssignStageDialog = ({ itemId, stages, assignees, defaultStage }: A
           </FormField>
           {assignee.startsWith("workshop:") && (
             <FormField label="Fecha estimada de entrega" htmlFor="as-date" optional hint="La que confirmaste con el taller.">
-              <Input id="as-date" name="expected_date" type="date" className="h-11 md:h-9" />
+              <DateField id="as-date" name="expected_date" clearable />
             </FormField>
           )}
           <FormField label="Nota" htmlFor="as-note" error={errors.note} optional>
