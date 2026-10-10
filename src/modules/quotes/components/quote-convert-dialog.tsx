@@ -6,6 +6,7 @@ import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import ChoiceChips from "@/common/components/choice-chips"
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import ReceiptField from "@/common/components/receipt-field"
 import StatusAlert from "@/common/components/status-alert"
@@ -176,7 +177,7 @@ const QuoteConvertDialog = ({
             />
           </FormField>
           <FormField label="Fecha prometida" htmlFor="qc-date">
-            <Input id="qc-date" type="date" min={today} value={promisedDate} onChange={(e) => setPromisedDate(e.target.value)} className="h-11 md:h-9" />
+            <DateField id="qc-date" min={today} value={promisedDate} onChange={setPromisedDate} />
           </FormField>
           {/* Uno debajo del otro: lado a lado, en el ancho del diálogo los botones se deforman. */}
           <div className="grid gap-4">

@@ -1,11 +1,12 @@
 import { type DocumentProps, renderToBuffer } from "@react-pdf/renderer"
 import { createElement, type ReactElement } from "react"
+import sharp from "sharp"
 import { describe, expect, it } from "vitest"
 
 import type { BusinessProfile } from "@/modules/business/lib/types/business.types"
 
 import type { QuoteDetail, QuoteItem } from "../lib/types/quotes.types"
-import QuotePdf from "./quote-pdf"
+import QuotePdf, { type PdfGalleryImage } from "./quote-pdf"
 
 const item = (over: Partial<QuoteItem>): QuoteItem => ({
   id: crypto.randomUUID(),
@@ -54,6 +55,7 @@ const quote = (over: Partial<QuoteDetail> = {}): QuoteDetail => ({
   groupBySize: true,
   terms: "Vigencia: 7 días.\nAbono: 60% para empezar.",
   headerImagePath: null,
+  images: [],
   pieces: 24,
   volumeDiscountPercent: 5,
   customizationTotalUsd: 0,
@@ -100,14 +102,27 @@ const business: BusinessProfile = {
   updatedByName: null,
 }
 
-const render = (q: QuoteDetail, draft: boolean) =>
-  renderToBuffer(createElement(QuotePdf, { quote: q, business, image: null, draft }) as ReactElement<DocumentProps>)
+const render = (q: QuoteDetail, draft: boolean, gallery: PdfGalleryImage[] = []) =>
+  renderToBuffer(createElement(QuotePdf, { quote: q, business, image: null, gallery, draft }) as ReactElement<DocumentProps>)
 
 describe("PDF del presupuesto", () => {
   it("se genera en ambas monedas, agrupado por talla, con IVA y como borrador", async () => {
     const pdf = await render(quote(), true)
     expect(pdf.subarray(0, 5).toString()).toBe("%PDF-")
     expect(pdf.length).toBeGreaterThan(2000)
+  })
+
+  it("lleva las imágenes (convertidas a JPG) con su nombre después de los artículos", async () => {
+    // Una foto WEBP como las del catálogo: sharp la pasa a JPG, igual que al generar el PDF real.
+    const webp = await sharp({ create: { width: 1600, height: 1200, channels: 3, background: { r: 150, g: 13, b: 19 } } }).webp().toBuffer()
+    const jpg = await sharp(webp).resize({ width: 900, height: 900, fit: "inside" }).jpeg({ quality: 80 }).toBuffer()
+    const without = await render(quote(), false)
+    const withImages = await render(quote(), false, [
+      { label: "Filipina manga corta · Vinotinto", data: jpg },
+      { label: null, data: jpg },
+    ])
+    expect(withImages.subarray(0, 5).toString()).toBe("%PDF-")
+    expect(withImages.length).toBeGreaterThan(without.length)
   })
 
   it("se genera solo en USD y con muchas líneas (varias páginas)", async () => {

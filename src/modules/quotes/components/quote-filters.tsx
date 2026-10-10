@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 
+import DateField from "@/common/components/date-field"
 import { Input } from "@/common/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/common/components/ui/select"
 
@@ -51,8 +52,8 @@ const QuoteFilters = ({ filters }: { filters: Filters }) => {
           ))}
         </SelectContent>
       </Select>
-      <Input type="date" aria-label="Desde" value={filters.from ?? ""} onChange={(e) => setParam("from", e.target.value)} className="h-11 md:h-9" />
-      <Input type="date" aria-label="Hasta" value={filters.to ?? ""} onChange={(e) => setParam("to", e.target.value)} className="h-11 md:h-9" />
+      <DateField aria-label="Desde" placeholder="Desde" value={filters.from ?? ""} onChange={(v) => setParam("from", v)} clearable />
+      <DateField aria-label="Hasta" placeholder="Hasta" value={filters.to ?? ""} onChange={(v) => setParam("to", v)} clearable />
     </div>
   )
 }

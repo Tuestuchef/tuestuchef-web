@@ -48,6 +48,7 @@ export type QuoteFormData = Pick<SaleFormData, "variants" | "rates" | "staffMaxD
   customizationTypes: CustomizationType[]
   customizationTiers: { minQuantity: number; percent: number }[]
   settings: QuoteSettings
+  catalogImages: CatalogImageOption[]
 }
 
 export type QuoteCustomerSnapshot = {
@@ -147,8 +148,24 @@ export type QuoteDetail = {
   // PDF oficial congelado al enviarlo (bucket privado). null en borradores.
   pdfPath: string | null
   items: QuoteItem[]
+  // Fotos después de los artículos (del catálogo o subidas), en orden.
+  images: QuoteImage[]
   events: QuoteStatusEvent[]
 }
+
+export type QuoteImage = {
+  id: string
+  source: "product" | "upload"
+  // Del catálogo: público; subidas: privado.
+  bucket: "public" | "private"
+  path: string
+  label: string | null
+  productImageId: string | null
+  url: string | null
+}
+
+// Una foto del catálogo para elegir en el presupuesto.
+export type CatalogImageOption = { id: string; productId: string; productName: string; colorName: string | null; url: string | null }
 
 export type QuoteListItem = {
   id: string

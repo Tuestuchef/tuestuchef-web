@@ -6,6 +6,7 @@ import { useId, useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import ChoiceChips from "@/common/components/choice-chips"
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
@@ -31,6 +32,7 @@ import { QUOTE_CURRENCIES_LABELS } from "../lib/constants/quotes.constants"
 import type { CustomerKind, DiscountType, QuoteCurrencies, QuoteDetail, QuoteFormData } from "../lib/types/quotes.types"
 import { customizationTotal, quoteTotals } from "../lib/utils/quote-math.util"
 import QuoteHeaderField from "./quote-header-field"
+import QuoteImagesField, { type QuoteImageDraft } from "./quote-images-field"
 
 type QuoteLine = {
   key: string
@@ -130,6 +132,7 @@ const QuoteForm = ({
   customizationTiers,
   priceLists,
   settings,
+  catalogImages,
   canManage,
   quote,
   storageEnabled,
@@ -171,6 +174,16 @@ const QuoteForm = ({
   const [terms, setTerms] = useState(quote ? (quote.terms ?? "") : settings.defaultTerms)
   const [header, setHeader] = useState<{ path: string; url: string | null } | null>(
     quote?.headerImagePath ? { path: quote.headerImagePath, url: quoteHeaderUrl } : null
+  )
+  const [images, setImages] = useState<QuoteImageDraft[]>(() =>
+    (quote?.images ?? []).map((i) => ({
+      key: i.id,
+      source: i.source,
+      productImageId: i.productImageId,
+      path: i.source === "upload" ? i.path : null,
+      url: i.url,
+      label: i.label ?? "",
+    }))
   )
 
   const variantById = useMemo(() => new Map(variants.map((v) => [v.id, v])), [variants])
@@ -298,6 +311,9 @@ const QuoteForm = ({
         discount_reason: discountReason,
         terms,
         header_image_path: header?.path ?? null,
+        images: images.map((i) =>
+          i.source === "product" ? { source: "product", product_image_id: i.productImageId, label: i.label } : { source: "upload", path: i.path, label: i.label }
+        ),
         items: lines.map((l) => ({
           variant_id: l.variantId,
           quantity: l.quantity,
@@ -521,9 +537,23 @@ const QuoteForm = ({
         )}
       </section>
 
+      {/* Imágenes: después de los artículos, en el documento y el PDF */}
+      <section className="grid gap-2">
+        <Label>
+          Imágenes <span className="font-normal text-muted-foreground">(opcional)</span>
+        </Label>
+        <QuoteImagesField
+          images={images}
+          onChange={setImages}
+          catalog={catalogImages}
+          productIds={[...new Set(lines.flatMap((l) => [variantById.get(l.variantId)?.productId ?? "", ...(l.components ?? []).map((c) => variantById.get(c.variantId)?.productId ?? "")]))]}
+          storageEnabled={storageEnabled}
+        />
+      </section>
+
       {/* Vencimiento y descuento */}
       <FormField label="Vence el" htmlFor="q-valid" hint={`Por defecto, ${settings.validityDays} días.`}>
-        <Input id="q-valid" type="date" min={today} value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="h-11 max-w-48 md:h-9" />
+        <DateField id="q-valid" min={today} value={validUntil} onChange={setValidUntil} className="max-w-80" />
       </FormField>
 
       <section className="grid gap-3">

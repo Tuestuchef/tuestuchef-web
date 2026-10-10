@@ -7,9 +7,12 @@ import {
   normalizePhone,
 } from "@/modules/customers/lib/utils/normalize-contact.util"
 
+import { QUOTE_IMAGE_MAX_BYTES, QUOTE_IMAGE_TYPES, QUOTE_IMAGES_MAX, type QuoteImageType } from "../constants/quotes.constants"
+
 const E = Constants.public.Enums
 
 export const QUOTE_HEADER_PATH_PATTERN = /^quotes\/header\/[0-9a-f-]{36}\.(png|jpg)$/
+export const QUOTE_IMAGE_PATH_PATTERN = /^quotes\/images\/[0-9a-f-]{36}\.(jpg|png|webp)$/
 
 // Opcional normalizado: vacío → null, inválido → error.
 const normalized = (normalize: (value: string) => string | null | undefined, message: string) =>
@@ -57,6 +60,17 @@ const itemSchema = z.object({
   customizations: z.array(customizationSchema).max(20).default([]),
 })
 
+// Una imagen del presupuesto: del catálogo (por su id) o subida (por su ruta), con su nombre.
+const quoteImageSchema = z.discriminatedUnion("source", [
+  z.object({ source: z.literal("product"), product_image_id: z.uuid(), label: optionalText(120) }),
+  z.object({ source: z.literal("upload"), path: z.string().regex(QUOTE_IMAGE_PATH_PATTERN, { error: "Imagen inválida." }), label: optionalText(120) }),
+])
+
+export const quoteImageUploadSchema = z.object({
+  contentType: z.enum(Object.keys(QUOTE_IMAGE_TYPES) as [QuoteImageType], { error: "Solo JPG, PNG o WEBP." }),
+  size: z.number().int().positive().max(QUOTE_IMAGE_MAX_BYTES, { error: "La imagen pesa más de 8 MB." }),
+})
+
 // Lo que se guarda en un borrador. La base vuelve a validar todo y calcula los precios.
 export const saveQuoteSchema = z
   .object({
@@ -91,6 +105,7 @@ export const saveQuoteSchema = z
       .transform((value) => value || null)
       .pipe(z.string().regex(QUOTE_HEADER_PATH_PATTERN, { error: "Imagen inválida." }).nullable()),
     items: z.array(itemSchema).min(1, { error: "Agrega al menos un producto." }).max(200),
+    images: z.array(quoteImageSchema).max(QUOTE_IMAGES_MAX, { error: `Máximo ${QUOTE_IMAGES_MAX} imágenes.` }).default([]),
   })
   .refine((v) => Boolean(v.customer_id || v.customer?.name), { error: "Elige un cliente o escribe su nombre.", path: ["customer"] })
 

@@ -31,6 +31,13 @@ export const QUOTE_STATUS_TONES: Record<QuoteStatus, StatusTone> = {
 
 export const QUOTE_LIST_LIMIT = 100
 
+// Imágenes del presupuesto (fotos del catálogo o subidas): JPG, PNG o WEBP de hasta 8 MB, máximo 12.
+export const QUOTE_IMAGE_TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" } as const
+export type QuoteImageType = keyof typeof QUOTE_IMAGE_TYPES
+export const QUOTE_IMAGE_ACCEPT = Object.keys(QUOTE_IMAGE_TYPES).join(",")
+export const QUOTE_IMAGE_MAX_BYTES = 8 * 1024 * 1024
+export const QUOTE_IMAGES_MAX = 12
+
 export const QUOTE_MESSAGES = {
   SETTINGS_SAVED: "Configuración de presupuestos guardada.",
   SAVED: "Borrador guardado.",

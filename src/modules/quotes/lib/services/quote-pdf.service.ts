@@ -6,14 +6,17 @@ import { join } from "node:path"
 import { type DocumentProps, renderToBuffer } from "@react-pdf/renderer"
 import { createElement, type ReactElement } from "react"
 
+import { documentTheme } from "@/common/lib/config/document-theme.config"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 import { getStorage } from "@/common/lib/services/storage.service"
 import { getBusinessProfile } from "@/modules/business/lib/services/business-profile.service"
 
-import QuotePdf, { type PdfImage } from "../../components/quote-pdf"
+import QuotePdf, { type PdfGalleryImage, type PdfImage } from "../../components/quote-pdf"
 import type { QuoteDetail } from "../types/quotes.types"
 
 const DOWNLOAD_TTL_SECONDS = 5 * 60
+// Lado mayor de cada foto en el PDF (suficiente para imprimir a 3 por fila).
+const GALLERY_MAX_PX = 900
 
 // Bytes de una imagen de R2 (encabezado). null si no hay, no se puede leer o no es PNG/JPG.
 async function loadImage(path: string | null, bucket: "public" | "private" = "public"): Promise<PdfImage> {
@@ -40,12 +43,43 @@ async function loadBrandLogo(): Promise<PdfImage> {
   }
 }
 
+// Fotos del presupuesto para el PDF: el PDF solo acepta JPG o PNG y una foto del celular pesa varios MB,
+// así que cada una se convierte a JPG y se achica (sharp). Las que no se pueden leer se omiten.
+async function loadGallery(images: QuoteDetail["images"]): Promise<PdfGalleryImage[]> {
+  const storage = getStorage()
+  if (!storage || images.length === 0) return []
+  const { default: sharp } = await import("sharp")
+  const loaded = await Promise.all(
+    images.map(async (image) => {
+      try {
+        const url = await storage.createDownloadUrl({ bucket: image.bucket, path: image.path, expiresInSeconds: DOWNLOAD_TTL_SECONDS })
+        const response = await fetch(url)
+        if (!response.ok) return null
+        const data = await sharp(Buffer.from(await response.arrayBuffer()))
+          .rotate()
+          .resize({ width: GALLERY_MAX_PX, height: GALLERY_MAX_PX, fit: "inside", withoutEnlargement: true })
+          // Las transparencias (PNG) quedan sobre el fondo del documento.
+          .flatten({ background: documentTheme.card })
+          .jpeg({ quality: 80 })
+          .toBuffer()
+        return { label: image.label, data }
+      } catch {
+        return null
+      }
+    })
+  )
+  return loaded.filter((image) => image !== null)
+}
+
 // Genera el PDF de un presupuesto (con los datos guardados: no recalcula nada).
 export async function renderQuotePdf(quote: QuoteDetail): Promise<Buffer> {
   const business = await getBusinessProfile()
-  const image = (await loadImage(quote.headerImagePath ?? business.headerImagePath)) ?? (await loadBrandLogo())
+  const [image, gallery] = await Promise.all([
+    loadImage(quote.headerImagePath ?? business.headerImagePath).then(async (header) => header ?? (await loadBrandLogo())),
+    loadGallery(quote.images),
+  ])
   // QuotePdf devuelve un <Document>: es lo que espera renderToBuffer.
-  const element = createElement(QuotePdf, { quote, business, image, draft: quote.status === "draft" }) as ReactElement<DocumentProps>
+  const element = createElement(QuotePdf, { quote, business, image, gallery, draft: quote.status === "draft" }) as ReactElement<DocumentProps>
   return renderToBuffer(element)
 }
 

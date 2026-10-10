@@ -4154,6 +4154,67 @@ export type Database = {
           },
         ]
       }
+      quote_images: {
+        Row: {
+          bucket: string
+          created_at: string
+          created_by: string
+          id: string
+          label: string | null
+          path: string
+          position: number
+          product_image_id: string | null
+          quote_id: string
+          source: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          label?: string | null
+          path: string
+          position?: number
+          product_image_id?: string | null
+          quote_id: string
+          source: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          label?: string | null
+          path?: string
+          position?: number
+          product_image_id?: string | null
+          quote_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_images_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_images_product_image_id_fkey"
+            columns: ["product_image_id"]
+            isOneToOne: false
+            referencedRelation: "product_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_images_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_item_customizations: {
         Row: {
           customization_type_id: string

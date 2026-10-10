@@ -8,6 +8,7 @@ import { GENDER_LABELS } from "@/modules/products/lib/constants/products.constan
 import { QUOTE_LIST_LIMIT } from "../constants/quotes.constants"
 import type { ConvertQuoteInput, QuoteFilters, SaveQuoteInput } from "../schemas/quote.schema"
 import type { QuoteDetail, QuoteFormData, QuoteItem, QuoteListItem, QuoteStatus } from "../types/quotes.types"
+import { listCatalogImageOptions, listQuoteImages } from "./quote-images.service"
 import { getQuoteSettings, listPriceLists } from "./quote-settings.service"
 
 const num = (value: number | string | null | undefined) => Number(value ?? 0)
@@ -17,7 +18,7 @@ const effectiveStatus = (status: QuoteStatus, validUntil: string, today: string)
   status === "sent" && validUntil < today ? "expired" : status
 
 export async function getQuoteFormData(): Promise<QuoteFormData> {
-  const [order, settings, priceLists] = await Promise.all([getOrderFormData(), getQuoteSettings(), listPriceLists()])
+  const [order, settings, priceLists, catalogImages] = await Promise.all([getOrderFormData(), getQuoteSettings(), listPriceLists(), listCatalogImageOptions()])
   return {
     variants: order.variants,
     rates: order.rates,
@@ -28,6 +29,7 @@ export async function getQuoteFormData(): Promise<QuoteFormData> {
     customizationTiers: order.customizationTiers,
     priceLists,
     settings,
+    catalogImages,
   }
 }
 
@@ -118,7 +120,7 @@ export async function listQuotes(filters: QuoteFilters = {}): Promise<QuoteListI
 
 export async function getQuoteDetail(id: string): Promise<QuoteDetail | null> {
   const supabase = await createSupabaseServerClient()
-  const [quoteResult, itemsResult, eventsResult] = await Promise.all([
+  const [quoteResult, itemsResult, eventsResult, images] = await Promise.all([
     supabase
       .from("quotes")
       .select(
@@ -136,6 +138,7 @@ export async function getQuoteDetail(id: string): Promise<QuoteDetail | null> {
       .select("id, status, note, created_at, author:profiles!quote_status_events_created_by_fkey(full_name)")
       .eq("quote_id", id)
       .order("created_at"),
+    listQuoteImages(id),
   ])
   if (quoteResult.error) throw quoteResult.error
   const q = quoteResult.data
@@ -235,6 +238,7 @@ export async function getQuoteDetail(id: string): Promise<QuoteDetail | null> {
     orderNumber: q.order?.number ?? null,
     pdfPath: q.pdf_path,
     items,
+    images,
     events: (eventsResult.data ?? []).map((e) => ({
       id: e.id,
       status: e.status,

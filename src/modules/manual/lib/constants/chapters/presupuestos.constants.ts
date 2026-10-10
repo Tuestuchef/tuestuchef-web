@@ -50,6 +50,10 @@ export const QUOTES_CHAPTER: ManualChapter = {
             { title: "Cliente", body: "Elige uno guardado o escribe solo el nombre (el resto es opcional). A un cliente bloqueado no se le hacen presupuestos." },
             { title: "Monedas y listas", body: "USD, Bs o ambas. Cada moneda sale de la **lista de precios** de un método de pago." },
             { title: "Productos", body: "Con su color y talla, combos y personalización (nombre bordado, logos). En un combo, la pieza con recargo (talla o color) sale aparte como \"Recargo\". Los nombres y el logo se piden después, en el pedido." },
+            {
+              title: "Imágenes (opcional)",
+              body: "Hasta 12 fotos con su nombre (\"Filipina manga corta · Vinotinto\"): **Del catálogo** toma las fotos ya subidas de cada producto y color (primero las de los productos del presupuesto) y pone el nombre solo; **Subir foto** agrega cualquier imagen (un bordado, el logo del cliente, una muestra). Se ordenan con las flechas.",
+            },
             { title: "Descuentos", body: "Por línea o del presupuesto, siempre con motivo. Staff tiene el mismo límite que en ventas." },
             { title: "IVA, IGTF y tallas", body: "IVA opcional sobre el total; la nota de IGTF es solo texto; **agrupar por talla** junta las tallas de un mismo producto en una fila." },
             { title: "Guarda el borrador", body: "La fecha, la tasa y los precios se actualizan cada vez que lo guardas." },
@@ -106,7 +110,7 @@ export const QUOTES_CHAPTER: ManualChapter = {
         {
           kind: "text",
           body:
-            "Arriba va la **imagen del encabezado** (la de Configuración → Datos de la empresa, u otra solo para ese presupuesto) con los datos de la empresa, el número, la fecha, el vencimiento y el total; luego el cliente, la tabla de artículos, los totales y las condiciones. Sin imagen, sale el logo de la marca.",
+            "Arriba va la **imagen del encabezado** (la de Configuración → Datos de la empresa, u otra solo para ese presupuesto) con los datos de la empresa, el número, la fecha, el vencimiento y el total; luego el cliente, la tabla de artículos, los totales, las **imágenes** (si tiene, cada una con su nombre) y las condiciones. Sin imagen de encabezado, sale el logo de la marca.",
         },
         {
           kind: "callout",

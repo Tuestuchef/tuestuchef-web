@@ -14,6 +14,8 @@ import { groupQuoteItemsBySize, type QuoteDisplayRow } from "../lib/utils/group-
 // Colores del tema (document-theme.config), nunca fijos. Fuente estándar Helvetica.
 
 export type PdfImage = { data: Buffer; format: "png" | "jpg" } | null
+// Foto del presupuesto ya convertida a JPG, con su nombre.
+export type PdfGalleryImage = { label: string | null; data: Buffer }
 
 const dmy = (iso: string) => {
   const [y, m, d] = iso.slice(0, 10).split("-")
@@ -51,6 +53,11 @@ const s = StyleSheet.create({
   grandTotal: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", borderTopWidth: 1, borderTopColor: t.border, paddingTop: 6 },
   grandValue: { fontSize: 13, fontFamily: "Helvetica-Bold" },
   terms: { marginTop: 18, paddingTop: 10, borderTopWidth: 1, borderTopColor: t.border, gap: 3 },
+  gallery: { marginTop: 18, paddingTop: 10, borderTopWidth: 1, borderTopColor: t.border, gap: 8 },
+  galleryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  galleryCell: { width: 165, gap: 4 },
+  galleryImage: { width: 165, height: 165, objectFit: "contain", backgroundColor: t.muted },
+  galleryLabel: { fontSize: 8, textAlign: "center" },
   footer: { position: "absolute", bottom: 24, left: 40, right: 40, flexDirection: "row", justifyContent: "space-between", fontSize: 7.5, color: t["muted-foreground"] },
   watermark: {
     position: "absolute",
@@ -64,9 +71,9 @@ const s = StyleSheet.create({
   },
 })
 
-type QuotePdfProps = { quote: QuoteDetail; business: BusinessProfile; image: PdfImage; draft: boolean }
+type QuotePdfProps = { quote: QuoteDetail; business: BusinessProfile; image: PdfImage; gallery?: PdfGalleryImage[]; draft: boolean }
 
-const QuotePdf = ({ quote, business, image, draft }: QuotePdfProps) => {
+const QuotePdf = ({ quote, business, image, gallery = [], draft }: QuotePdfProps) => {
   const showUsd = quote.currencies !== "ves"
   const showVes = quote.currencies !== "usd"
   const rate = quote.vesRate ?? 0
@@ -284,6 +291,22 @@ const QuotePdf = ({ quote, business, image, draft }: QuotePdfProps) => {
             </Text>
           )}
         </View>
+
+        {/* Imágenes: después de los artículos y sus totales, cada una con su nombre */}
+        {gallery.length > 0 && (
+          <View style={s.gallery}>
+            <Text style={s.label}>Imágenes</Text>
+            <View style={s.galleryGrid}>
+              {gallery.map((photo, index) => (
+                <View key={index} style={s.galleryCell} wrap={false}>
+                  {/* eslint-disable-next-line jsx-a11y/alt-text -- Image de react-pdf no tiene alt */}
+                  <Image src={{ data: photo.data, format: "jpg" }} style={s.galleryImage} />
+                  {photo.label && <Text style={s.galleryLabel}>{photo.label}</Text>}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Condiciones */}
         {(quote.terms || (quote.igtfNoteEnabled && quote.igtfNote)) && (

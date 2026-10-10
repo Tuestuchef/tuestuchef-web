@@ -230,6 +230,26 @@ const QuoteDocument = ({ quote, business, headerImageUrl, draft }: QuoteDocument
         )}
       </div>
 
+      {/* Imágenes: después de los artículos y sus totales, cada una con su nombre */}
+      {quote.images.length > 0 && (
+        <section className="grid gap-3 border-t pt-4">
+          <span className="text-xs font-semibold uppercase">Imágenes</span>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {quote.images.map((image) => (
+              <li key={image.id} className="grid content-start gap-1.5">
+                <div className="flex aspect-square items-center justify-center overflow-hidden rounded-md border bg-muted">
+                  {image.url && (
+                    // eslint-disable-next-line @next/next/no-img-element -- imagen de R2
+                    <img src={image.url} alt={image.label ?? "Imagen del presupuesto"} className="max-h-full max-w-full object-contain" />
+                  )}
+                </div>
+                {image.label && <span className="text-center text-xs">{image.label}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Condiciones */}
       {(quote.terms || (quote.igtfNoteEnabled && quote.igtfNote)) && (
         <section className="grid gap-2 border-t pt-4 text-sm">

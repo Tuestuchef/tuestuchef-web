@@ -1107,6 +1107,7 @@ export const HELP_TOPICS = {
           "Descuento por línea o del presupuesto, siempre con motivo; staff tiene el mismo límite que en ventas.",
           "IVA opcional sobre el total. La nota de IGTF es solo texto.",
           "Imagen del encabezado: por defecto la de Datos de la empresa; puedes subir otra solo para este presupuesto.",
+          "Imágenes (hasta 12, después de los artículos): 'Del catálogo' toma las fotos de los productos con su color y les pone el nombre; 'Subir foto' agrega cualquier imagen (bordado, logo del cliente). Cada una lleva un nombre editable y se ordena con las flechas. Salen en el PDF.",
         ],
       },
       {

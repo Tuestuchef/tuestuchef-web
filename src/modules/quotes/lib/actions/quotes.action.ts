@@ -12,7 +12,15 @@ import { headerImageUploadSchema } from "@/modules/business/lib/schemas/business
 import { normalizeEmail, normalizePhone } from "@/modules/customers/lib/utils/normalize-contact.util"
 import { whatsappLink } from "@/modules/messages/lib/utils/render-template.util"
 
-import { convertQuoteSchema, discardQuoteSchema, markQuoteSchema, QUOTE_HEADER_PATH_PATTERN, saveQuoteSchema } from "../schemas/quote.schema"
+import {
+  convertQuoteSchema,
+  discardQuoteSchema,
+  markQuoteSchema,
+  QUOTE_HEADER_PATH_PATTERN,
+  QUOTE_IMAGE_PATH_PATTERN,
+  quoteImageUploadSchema,
+  saveQuoteSchema,
+} from "../schemas/quote.schema"
 import {
   buildQuoteWhatsappText,
   getQuoteLink,
@@ -22,6 +30,7 @@ import {
   sendQuoteEmail,
 } from "../services/quote-delivery.service"
 import { createQuoteHeaderUpload, verifyQuoteHeaderImage } from "../services/quote-header.service"
+import { createQuoteImageUpload, verifyQuoteImage } from "../services/quote-images.service"
 import { storeQuotePdf } from "../services/quote-pdf.service"
 import {
   convertQuoteToOrder,
@@ -69,6 +78,25 @@ export async function verifyQuoteHeaderImageAction(path: unknown): Promise<{ ok:
   const parsed = z.string().regex(QUOTE_HEADER_PATH_PATTERN).safeParse(path)
   if (!parsed.success) return { ok: false, error: "Imagen inválida." }
   return verifyQuoteHeaderImage(parsed.data)
+}
+
+// Firma la subida de una imagen libre del presupuesto (bucket privado).
+export async function requestQuoteImageUploadAction(
+  input: unknown
+): Promise<{ ok: true; data: { path: string; uploadUrl: string; contentType: string } } | Fail> {
+  const auth = await authorizeAction(ROLE_GROUPS.ALL)
+  if (!auth.ok) return { ok: false, error: auth.error }
+  const parsed = quoteImageUploadSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
+  return createQuoteImageUpload(parsed.data.contentType)
+}
+
+export async function verifyQuoteImageAction(path: unknown): Promise<{ ok: true; data: { url: string } } | Fail> {
+  const auth = await authorizeAction(ROLE_GROUPS.ALL)
+  if (!auth.ok) return { ok: false, error: auth.error }
+  const parsed = z.string().regex(QUOTE_IMAGE_PATH_PATTERN).safeParse(path)
+  if (!parsed.success) return { ok: false, error: "Imagen inválida." }
+  return verifyQuoteImage(parsed.data)
 }
 
 export async function markQuoteAction(input: unknown): Promise<Done> {
