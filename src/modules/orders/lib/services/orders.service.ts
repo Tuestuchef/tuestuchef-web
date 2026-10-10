@@ -15,6 +15,20 @@ const fullName = (c: { first_name: string; last_name: string | null } | null) =>
 
 const today = () => toCaracasDate()
 
+// Etapas que aplican a una línea de pedido (igual que line_stage_applies en la base).
+const lineStages = (source: string, toMake: number, customized: boolean): ProductionStage[] =>
+  source === "combo"
+    ? []
+    : [
+        "to_produce",
+        ...(source === "made_to_order" && toMake > 0 ? (["cutting", "sewing"] as const) : []),
+        ...(customized ? (["customization"] as const) : []),
+        "quality_check",
+        "packing",
+        "ready",
+        "delivered",
+      ]
+
 export async function getOrderSettings(): Promise<OrderSettings> {
   const supabase = await createSupabaseServerClient()
   const { data } = await supabase.from("order_settings").select("*").maybeSingle()
@@ -200,6 +214,7 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
         isCombo: item.source === "combo",
         stage,
         nextStage: (nextById.get(item.id) as ProductionStage | null | undefined) ?? null,
+        stages: lineStages(item.source, Number(item.quantity) - Number(item.reserved_quantity), item.customizations.length > 0),
         lineTotalUsd: Number(item.line_total_usd),
         unitPriceUsd: Number(item.unit_price_usd),
         customizations: item.customizations.map((c) => ({

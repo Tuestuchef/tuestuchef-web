@@ -424,25 +424,25 @@ describe("anulación", () => {
 })
 
 describe("estados de línea", () => {
-  it("avanzan solo hacia adelante y guardan quién los cambió", async () => {
+  it("se elige cualquier estado posterior; volver atrás es de owner o admin, con motivo", async () => {
     const sale = await sell(staff, [{ variant: "gor", quantity: 1, source: "made_to_order" }])
     const item = (
       await owner<{ id: string }>("select id from public.sale_items where sale_id = $1", [sale])
     ).rows[0].id
 
-    await staff("select public.set_sale_item_status($1, 'sewing')", [item])
     await staff("select public.set_sale_item_status($1, 'ready')", [item])
-    await expect(staff("select public.set_sale_item_status($1, 'sewing')", [item])).rejects.toThrow(
-      /solo avanza/
-    )
+    await expect(staff("select public.set_sale_item_status($1, 'sewing', 'error')", [item])).rejects.toThrow(/Solo owner o admin/)
+    await expect(owner("select public.set_sale_item_status($1, 'sewing')", [item])).rejects.toThrow(/motivo/)
+    await owner("select public.set_sale_item_status($1, 'sewing', 'no estaba lista')", [item])
     await staff("select public.set_sale_item_status($1, 'delivered')", [item])
 
     const events = await owner<{ status: string; created_by: string }>(
       "select status, created_by from public.sale_item_status_events where sale_item_id = $1 order by created_at",
       [item]
     )
-    expect(events.rows.map((e) => e.status)).toEqual(["to_produce", "sewing", "ready", "delivered"])
+    expect(events.rows.map((e) => e.status)).toEqual(["to_produce", "ready", "sewing", "delivered"])
     expect(events.rows[1].created_by).toBe(STAFF)
+    expect(events.rows[2].created_by).toBe(OWNER)
   })
 })
 

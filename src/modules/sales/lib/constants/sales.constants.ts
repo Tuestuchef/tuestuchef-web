@@ -56,6 +56,9 @@ export const ITEM_STATUS_LABELS: Record<SaleItemStatus, string> = {
 // Venta normal (sin pedido): flujo corto. Los pedidos usan todas las etapas.
 export const ITEM_STATUS_ORDER: readonly SaleItemStatus[] = ["to_produce", "sewing", "ready", "delivered"]
 
+// Línea de inventario: solo falta entregarla.
+export const STOCK_ITEM_STATUS_ORDER: readonly SaleItemStatus[] = ["ready", "delivered"]
+
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   pending: "Por cobrar",
   partial: "Abono",

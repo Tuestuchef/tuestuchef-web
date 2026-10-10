@@ -18,6 +18,7 @@ import MessageActions from "@/modules/messages/components/message-actions"
 import MessageHistory from "@/modules/messages/components/message-history"
 import type { MessageKind } from "@/modules/messages/lib/types/messages.types"
 import AddPaymentDialog from "@/modules/sales/components/add-payment-dialog"
+import { ItemStatusSelect } from "@/modules/sales/components/item-status-controls"
 import { formatSaleNumber, ITEM_STATUS_LABELS } from "@/modules/sales/lib/constants/sales.constants"
 import { getSaleFormData } from "@/modules/sales/lib/services/sales.service"
 
@@ -27,7 +28,7 @@ import {
   DeliverOrderDialog,
   PromisedDateDialog,
 } from "../components/order-action-dialogs"
-import { AdvanceStageButton, AssignStageDialog } from "../components/order-stage-controls"
+import { AssignStageDialog } from "../components/order-stage-controls"
 import { ASSIGNABLE_STAGES, ORDER_STATUS_LABELS, STOCK_MODE_LABELS, type ProductionStage } from "../lib/constants/orders.constants"
 import { getCancellationQuote, getOrderDetail, listAssignees } from "../lib/services/orders.service"
 
@@ -151,7 +152,7 @@ const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }
             maxDaysBack={canManage ? null : formData.staffMaxBackdateDays}
           />
         )}
-        {order.status === "ready" && <DeliverOrderDialog saleId={order.saleId} balanceUsd={order.balanceUsd} canManage={canManage} />}
+        {open && <DeliverOrderDialog saleId={order.saleId} balanceUsd={order.balanceUsd} canManage={canManage} />}
         {open && canManage && !order.canStart && <AllowWithoutDepositDialog saleId={order.saleId} />}
         <MessageActions target={{ type: "sale", saleId: order.saleId }} kinds={messageKinds} />
         {open && <CancelOrderDialog saleId={order.saleId} quote={quote} canManage={canManage} />}
@@ -221,9 +222,11 @@ const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }
                         </span>
                       )}
                       {line.assignee?.isLate && <StatusBadge tone="error">Taller atrasado</StatusBadge>}
+                      {(open || (canManage && order.status === "delivered")) && (
+                        <ItemStatusSelect itemId={line.id} status={line.stage} options={line.stages} canGoBack={canManage} locked={["delivered"]} />
+                      )}
                       {open && (
                         <>
-                          <AdvanceStageButton itemId={line.id} nextStage={line.nextStage} />
                           <AssignStageDialog itemId={line.id} stages={assignable} assignees={assignees} defaultStage={line.nextStage ?? undefined} />
                         </>
                       )}

@@ -82,6 +82,8 @@ export type OrderLine = {
   isCombo: boolean
   stage: ProductionStage | null
   nextStage: ProductionStage | null
+  // Estados por los que pasa esta línea, en orden (las etapas que no aplican no están).
+  stages: ProductionStage[]
   lineTotalUsd: number
   unitPriceUsd: number
   customizations: OrderLineCustomization[]

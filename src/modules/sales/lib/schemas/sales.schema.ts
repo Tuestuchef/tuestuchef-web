@@ -122,6 +122,8 @@ export type CorrectPaymentInput = z.infer<typeof correctPaymentSchema>
 export const itemStatusSchema = z.object({
   sale_item_id: z.uuid(),
   status: z.enum(E.sale_item_status),
+  // Obligatorio para volver a un estado anterior (lo exige la base).
+  note: z.string().trim().max(300).optional(),
 })
 
 export const salesSettingsSchema = z.object({

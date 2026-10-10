@@ -36,7 +36,7 @@ export const DeliverOrderDialog = ({ saleId, balanceUsd, canManage }: { saleId: 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Entregar pedido</DialogTitle>
-          <DialogDescription>Se entrega completo: todas las líneas pasan a entregado.</DialogDescription>
+          <DialogDescription>Se entrega completo: todas las líneas pasan a entregado, también las que no estaban listas.</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="grid gap-4" noValidate>
           <input type="hidden" name="sale_id" value={saleId} />

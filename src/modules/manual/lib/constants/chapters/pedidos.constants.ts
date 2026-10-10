@@ -152,7 +152,7 @@ export const ORDERS_CHAPTER: ManualChapter = {
         {
           kind: "steps",
           items: [
-            { title: "Avanzar", body: "En el pedido o en el **Tablero**, el botón con el nombre de la siguiente etapa." },
+            { title: "Cambiar de etapa", body: "En el pedido, elige la etapa en la lista de cada línea: cualquiera posterior, aunque te saltes otras. En el **Tablero**, el botón pasa a la siguiente. Volver atrás es de owner o admin, con motivo." },
             { title: "Asignar", body: "Cada etapa se pone a nombre de una persona del equipo o de un **taller** (con su fecha estimada)." },
             { title: "A destajo", body: "Si quien la tiene cobra por pieza, al terminar la etapa se le cuentan las piezas." },
           ],

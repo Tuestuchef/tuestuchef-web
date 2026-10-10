@@ -210,9 +210,9 @@ export async function voidSale(saleId: string, reason: string) {
   return supabase.rpc("void_sale", { p_sale_id: saleId, p_reason: reason })
 }
 
-export async function setSaleItemStatus(itemId: string, status: SaleItemStatus) {
+export async function setSaleItemStatus(itemId: string, status: SaleItemStatus, note?: string) {
   const supabase = await createSupabaseServerClient()
-  return supabase.rpc("set_sale_item_status", { p_sale_item_id: itemId, p_status: status })
+  return supabase.rpc("set_sale_item_status", { p_sale_item_id: itemId, p_status: status, p_note: note })
 }
 
 export async function updateSalesSettings(settings: { staffMaxDiscountPercent: number; staffMaxBackdateDays: number }) {

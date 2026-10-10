@@ -227,10 +227,30 @@ describe("etapas", () => {
     expect(await advance(owner, line.id)).toBe("quality_check")
   })
 
-  it("no se puede saltar a otra etapa ni entregar una línea suelta", async () => {
+  it("no se elige una etapa que no aplica ni se entrega una línea suelta", async () => {
     const [line] = await lines(ids.bigOrder)
-    await expect(owner("select public.set_sale_item_status($1, 'packing')", [line.id])).rejects.toThrow(/siguiente etapa/)
+    // Sin personalización, esa etapa no aplica.
+    await expect(owner("select public.set_sale_item_status($1, 'customization')", [line.id])).rejects.toThrow(/no aplica/)
     await expect(owner("select public.set_sale_item_status($1, 'delivered')", [line.id])).rejects.toThrow(/pedido completo/)
+  })
+
+  it("se puede saltar etapas: el corte saltado igual consume, y lo saltado no paga destajo", async () => {
+    const id = await order(owner, [{ variant: "fil", quantity: 2 }], { mode: "produce_all", payments: [{ method: "cash", amount: 50 }] })
+    const [line] = await lines(id)
+    await owner("select public.assign_stage($1, 'sewing', $2)", [line.id, ids.maria])
+    await staff("select public.set_sale_item_status($1, 'packing')", [line.id])
+    expect((await lines(id))[0].status).toBe("packing")
+    expect((await owner("select 1 from public.production_runs where sale_item_id = $1", [line.id])).rows).toHaveLength(1)
+    const assignment = await one(owner<{ completed_at: Date | null; pieces: string | null }>("select completed_at, pieces from public.production_assignments where sale_item_id = $1", [line.id]))
+    expect(assignment.completed_at).not.toBeNull()
+    expect(assignment.pieces).toBeNull()
+    expect((await owner("select 1 from public.piecework_entries where sale_item_id = $1", [line.id])).rows).toHaveLength(0)
+
+    // Volver atrás: solo owner o admin, con motivo.
+    await expect(staff("select public.set_sale_item_status($1, 'sewing', 'me equivoqué')", [line.id])).rejects.toThrow(/Solo owner o admin/)
+    await expect(owner("select public.set_sale_item_status($1, 'sewing')", [line.id])).rejects.toThrow(/motivo/)
+    await owner("select public.set_sale_item_status($1, 'sewing', 'me equivoqué')", [line.id])
+    expect((await lines(id))[0].status).toBe("sewing")
   })
 })
 
@@ -311,13 +331,18 @@ describe("asignaciones, talleres y destajo", () => {
 })
 
 describe("entrega", () => {
-  it("solo con todo listo; con saldo pide el pago o una excepción de owner o admin", async () => {
+  it("aunque falten líneas; con saldo pide el pago o una excepción de owner o admin", async () => {
     const id = await order(owner, [{ variant: "fil", quantity: 2 }], { mode: "produce_all", payments: [{ method: "cash", amount: 50 }] })
     const [line] = await lines(id)
-    await expect(owner("select public.deliver_order($1)", [id])).rejects.toThrow(/no están listas/)
-    await advanceTo(line.id, "ready")
+    // Aunque la línea no esté lista, al entregar el pedido pasa directo a entregada.
     await owner("select public.deliver_order($1)", [id])
     expect((await overview(id)).status).toBe("delivered")
+    expect((await lines(id))[0].status).toBe("delivered")
+    expect(line.status).toBe("to_produce")
+
+    // Volver atrás desde entregado: el pedido deja de estar entregado.
+    await owner("select public.set_sale_item_status($1, 'ready', 'faltó una pieza')", [line.id])
+    expect((await overview(id)).status).toBe("ready")
 
     // Pedido pagado al 60%: entrega con saldo.
     const big = await order(owner, [{ variant: "fil", quantity: 20 }], { mode: "produce_all", payments: [{ method: "cash", amount: 300 }] })

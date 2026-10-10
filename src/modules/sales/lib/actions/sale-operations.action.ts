@@ -111,7 +111,7 @@ export async function setSaleItemsStatusAction(
   if (!parsed.success) return { ok: false, error: "Estado inválido." }
 
   for (const item of parsed.data) {
-    const { error } = await setSaleItemStatus(item.sale_item_id, item.status)
+    const { error } = await setSaleItemStatus(item.sale_item_id, item.status, item.note)
     if (error) return { ok: false, error: toUserError(error, "No se pudo actualizar el estado.") }
   }
 

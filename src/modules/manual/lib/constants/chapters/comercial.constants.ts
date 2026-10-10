@@ -281,7 +281,7 @@ export const SALES_CHAPTER: ManualChapter = {
             { title: "Listo para entregar", detail: "Al llegar aquí se descuenta la materia prima de su receta (tela, botones…)." },
             { title: "Entregado", detail: "El cliente lo tiene." },
           ],
-          note: "Los estados solo avanzan. Si falta materia prima del color, el sistema avisa y no deja marcarlo listo.",
+          note: "El estado se elige en la lista de cada producto: cualquiera posterior. Volver atrás es de owner o admin, con motivo. Si falta materia prima del color, el sistema avisa y no deja marcarlo listo.",
         },
       ],
     },

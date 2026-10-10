@@ -150,7 +150,7 @@ export const HELP_TOPICS = {
         heading: "Qué puedes hacer",
         items: [
           "Registrar pago: para abonos o saldos. En Bs se usa la tasa del día del pago.",
-          "Avanzar cada producto por encargo: por producir → confección → listo para entregar → entregado.",
+          "Elegir el estado de cada producto en su lista: cualquiera posterior (por producir → confección → listo para entregar → entregado).",
           "Marcar entregado: pasa a entregado todo lo que está listo.",
           "WhatsApp: elige el mensaje (nota de entrega), revísalo y se abre WhatsApp con el texto listo. Queda en Mensajes enviados.",
           "Nota de entrega: para imprimir o guardar como PDF. No es factura fiscal.",
@@ -165,7 +165,7 @@ export const HELP_TOPICS = {
           "Cada cambio queda en el Historial de cambios de la venta: qué cambió, quién, cuándo y por qué.",
           "Productos, cantidades y precios no se editan: si hubo un error ahí, se anula y se registra de nuevo.",
           "No se edita una venta anulada, un pedido cancelado ni nada de un mes cerrado.",
-          "Los estados solo avanzan; no se pueden devolver.",
+          "Volver a un estado anterior: solo owner o admin, con motivo. Queda en el historial; lo consumido de materia prima no vuelve.",
         ],
       },
     ],
@@ -930,14 +930,15 @@ export const HELP_TOPICS = {
         items: [
           "Por producir → corte → confección → personalización → revisión → empaque → listo para entregar.",
           "Las que no aplican se saltan solas (lo que sale del inventario no se corta ni se cose).",
-          "Al terminar el corte se descuenta la tela de la receta.",
-          "'Asignar' pone la etapa a nombre de una persona o un taller (con su fecha estimada).",
+          "El estado de cada línea se elige en su lista: cualquier etapa posterior. Volver atrás es de owner o admin, con motivo.",
+          "Al pasar el corte (aunque se salte) se descuenta la tela de la receta.",
+          "'Asignar' pone la etapa a nombre de una persona o un taller (con su fecha estimada). Una etapa saltada no cuenta piezas a destajo.",
         ],
       },
       {
         heading: "Entregar",
         items: [
-          "Se entrega completo cuando todas las líneas están listas.",
+          "Se entrega completo: las líneas que no estaban listas pasan directo a entregadas.",
           "Con saldo, primero se registra el pago; si no, solo owner o admin entregan, con motivo.",
         ],
       },

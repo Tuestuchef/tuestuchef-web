@@ -21,7 +21,7 @@ import MessageHistory from "@/modules/messages/components/message-history"
 import AddPaymentDialog from "../components/add-payment-dialog"
 import CorrectPaymentDialog from "../components/correct-payment-dialog"
 import EditSaleDialog from "../components/edit-sale-dialog"
-import { AdvanceItemButton, DeliverReadyButton } from "../components/item-status-controls"
+import { DeliverReadyButton, ItemStatusSelect } from "../components/item-status-controls"
 import PaymentStatusBadge from "../components/payment-status-badge"
 import SaleEditHistory from "../components/sale-edit-history"
 import VoidSaleDialog from "../components/void-sale-dialog"
@@ -30,6 +30,8 @@ import {
   DELIVERY_LABELS,
   formatSaleNumber,
   ITEM_STATUS_LABELS,
+  ITEM_STATUS_ORDER,
+  STOCK_ITEM_STATUS_ORDER,
   SHIPPING_FEE_LABELS,
 } from "../lib/constants/sales.constants"
 import { getSaleDetail, getSaleFormData } from "../lib/services/sales.service"
@@ -183,7 +185,15 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
                       {ITEM_STATUS_LABELS[item.status]}
                     </StatusBadge>
                   )}
-                  {!isVoided && <AdvanceItemButton itemId={item.id} status={item.status} />}
+                  {/* Un pedido cambia sus etapas desde su propia pantalla. */}
+                  {!isVoided && !sale.isOrder && (
+                    <ItemStatusSelect
+                      itemId={item.id}
+                      status={item.status}
+                      options={item.source === "made_to_order" ? ITEM_STATUS_ORDER : STOCK_ITEM_STATUS_ORDER}
+                      canGoBack={canManage}
+                    />
+                  )}
                 </div>
                 )}
               </li>
