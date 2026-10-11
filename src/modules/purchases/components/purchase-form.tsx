@@ -2,7 +2,7 @@
 
 import { FileTextIcon, Loader2Icon, PackagePlusIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useMemo, useRef, useState, useTransition } from "react"
+import { useDeferredValue, useMemo, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import ChoiceChips from "@/common/components/choice-chips"
@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/common/components/ui/
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import { parseAmount } from "@/common/lib/utils/parse-amount.util"
+import { normalizeSearch, searchList } from "@/common/lib/utils/search.util"
 import BackdateField from "@/modules/sales/components/backdate-field"
 import type { SaleRatesForDate } from "@/modules/sales/lib/types/sales.types"
 
@@ -41,6 +42,9 @@ type PaymentRow = { key: number; accountId: string; rateKind: SupplierRateKind; 
 type PaymentMode = "full" | "custom" | "credit"
 
 type PurchaseFormProps = PurchaseFormData & { canManage: boolean; receiptsEnabled: boolean }
+
+// En pantalla, como máximo (el resto se encuentra escribiendo más).
+const MAX_RESULTS = 40
 
 const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3 })
 const usd = (value: number) => formatMoney(value, "USD")
@@ -82,6 +86,13 @@ const PurchaseForm = ({
   const isBackdated = date !== today
 
   const variantById = useMemo(() => new Map(variants.map((v) => [v.id, v])), [variants])
+  const [query, setQuery] = useState("")
+  const deferredQuery = useDeferredValue(query)
+  const searchable = useMemo(
+    () => variants.map((v) => ({ item: v, haystack: normalizeSearch(`${v.productName} ${v.variantLabel} ${v.sku}`) })),
+    [variants]
+  )
+  const { matches, total: matchCount } = useMemo(() => searchList(searchable, deferredQuery, MAX_RESULTS), [searchable, deferredQuery])
   const accountById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts])
   const costCategory = categories.find((c) => c.type === "cost")?.id ?? categories[0]?.id ?? ""
   const expenseCategory = categories.find((c) => c.type === "operating_expense")?.id ?? costCategory
@@ -270,13 +281,14 @@ const PurchaseForm = ({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Tela, botones, SKU…" />
+              {/* Filtro propio: con miles de variantes, el de cmdk se frena. */}
+              <Command shouldFilter={false}>
+                <CommandInput placeholder="Tela, botones, SKU…" value={query} onValueChange={setQuery} />
                 <CommandList>
                   <CommandEmpty>No hay coincidencias.</CommandEmpty>
                   <CommandGroup>
-                    {variants.map((v) => (
-                      <CommandItem key={v.id} value={`${v.productName} ${v.variantLabel} ${v.sku}`} onSelect={() => addVariant(v.id)}>
+                    {matches.map((v) => (
+                      <CommandItem key={v.id} value={v.id} onSelect={() => addVariant(v.id)}>
                         <span className="grid min-w-0 flex-1">
                           <span className="truncate">
                             {v.productName} <span className="text-muted-foreground">· {v.variantLabel}</span>
@@ -290,6 +302,9 @@ const PurchaseForm = ({
                       </CommandItem>
                     ))}
                   </CommandGroup>
+                  {matchCount > matches.length && (
+                    <p className="px-3 py-2 text-xs text-muted-foreground">{matchCount - matches.length} más: escribe para afinar la búsqueda.</p>
+                  )}
                 </CommandList>
               </Command>
             </PopoverContent>

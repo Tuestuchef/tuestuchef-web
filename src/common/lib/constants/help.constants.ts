@@ -968,7 +968,9 @@ export const HELP_TOPICS = {
       {
         heading: "Qué puedes hacer",
         items: [
-          "Tablero: una columna por etapa; desliza de lado en el celular. Toca el botón para pasar a la siguiente.",
+          "Tablero: una columna por etapa. Arrastra cada tarjeta a la columna de su nueva etapa (en el celular, mantenla presionada y arrástrala). Las columnas a las que no puede ir se apagan.",
+          "Soltarla en Listo para entregar la saca del tablero. Devolverla a una etapa anterior es de owner o admin, con motivo.",
+          "El botón de cada tarjeta también la pasa a la siguiente etapa.",
           "Quién tiene qué: lo asignado a cada persona o taller, y lo que nadie tiene todavía.",
           "Talleres con fecha estimada vencida aparecen como atrasados.",
         ],

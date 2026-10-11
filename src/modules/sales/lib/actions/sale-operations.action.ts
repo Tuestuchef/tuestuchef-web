@@ -102,7 +102,7 @@ export async function correctPaymentAction(input: unknown): Promise<Result> {
 
 // Avanza el estado de una o varias líneas (p. ej. "marcar todo entregado").
 export async function setSaleItemsStatusAction(
-  items: { sale_item_id: string; status: string }[]
+  items: { sale_item_id: string; status: string; note?: string }[]
 ): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
   const auth = await authorizeAction(ROLE_GROUPS.ALL)
   if (!auth.ok) return { ok: false, error: auth.error }

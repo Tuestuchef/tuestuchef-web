@@ -126,6 +126,8 @@ export type ProductionCard = {
   pieces: number
   stage: ProductionStage
   nextStage: ProductionStage | null
+  // Estados por los que pasa la línea (para saber a qué columnas se puede arrastrar).
+  stages: ProductionStage[]
   promisedDate: string
   orderLate: boolean
   assignee: (Assignee & { expectedDate: string | null; isLate: boolean }) | null

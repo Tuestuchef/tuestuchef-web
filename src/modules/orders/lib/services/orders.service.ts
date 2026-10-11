@@ -7,6 +7,7 @@ import { getSaleFormData } from "@/modules/sales/lib/services/sales.service"
 import { OPEN_ORDER_STATUSES, type OrderStatus, type ProductionStage } from "../constants/orders.constants"
 import type { CancelOrderInput, CreateOrderInput, OrderSettingsInput } from "../schemas/orders.schema"
 import type { Assignee, OrderDetail, OrderFormData, OrderListItem, OrderSettings } from "../types/orders.types"
+import { lineStages } from "../utils/line-stages.util"
 import { getCustomizationOptions } from "./order-settings.service"
 import { variantLabel } from "@/modules/products/lib/utils/variant-label.util"
 
@@ -15,19 +16,6 @@ const fullName = (c: { first_name: string; last_name: string | null } | null) =>
 
 const today = () => toCaracasDate()
 
-// Etapas que aplican a una línea de pedido (igual que line_stage_applies en la base).
-const lineStages = (source: string, toMake: number, customized: boolean): ProductionStage[] =>
-  source === "combo"
-    ? []
-    : [
-        "to_produce",
-        ...(source === "made_to_order" && toMake > 0 ? (["cutting", "sewing"] as const) : []),
-        ...(customized ? (["customization"] as const) : []),
-        "quality_check",
-        "packing",
-        "ready",
-        "delivered",
-      ]
 
 export async function getOrderSettings(): Promise<OrderSettings> {
   const supabase = await createSupabaseServerClient()

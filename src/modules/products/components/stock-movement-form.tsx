@@ -1,7 +1,7 @@
 "use client"
 
 import { CalendarIcon, CheckIcon, ChevronsUpDownIcon } from "lucide-react"
-import { useState } from "react"
+import { useDeferredValue, useMemo, useState } from "react"
 
 import ChoiceChips from "@/common/components/choice-chips"
 import DateField from "@/common/components/date-field"
@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/common/components/ui/
 import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
 import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
 import { cn } from "@/common/lib/utils"
+import { normalizeSearch, searchList } from "@/common/lib/utils/search.util"
 
 import { createStockMovementAction } from "../lib/actions/create-stock-movement.action"
 import { MOVEMENT_TYPE_LABELS, type StockMovementType } from "../lib/constants/products.constants"
@@ -32,6 +33,9 @@ type StockMovementFormProps = {
   allowedTypes: readonly StockMovementType[]
   today: string
 }
+
+// En pantalla, como máximo (el resto se encuentra escribiendo más).
+const MAX_RESULTS = 40
 
 const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3 })
 
@@ -47,6 +51,8 @@ const StockMovementForm = ({ variants, allowedTypes, today }: StockMovementFormP
   const [type, setType] = useState<StockMovementType>(allowedTypes[0])
   const [direction, setDirection] = useState<"in" | "out">("in")
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  const deferredQuery = useDeferredValue(query)
   const [showDate, setShowDate] = useState(false)
   const [formKey, setFormKey] = useState(0)
 
@@ -61,8 +67,16 @@ const StockMovementForm = ({ variants, allowedTypes, today }: StockMovementFormP
   const errors = state.fieldErrors ?? {}
   const isAdjustment = type === "adjustment"
   // Producción: solo productos terminados (la materia prima se compra).
-  const options = isAdjustment ? variants : variants.filter((v) => !v.isRawMaterial)
-  const selected = options.find((v) => v.id === variantId)
+  const options = useMemo(
+    () =>
+      (isAdjustment ? variants : variants.filter((v) => !v.isRawMaterial)).map((v) => ({
+        item: v,
+        haystack: normalizeSearch(`${v.label} ${v.sku}`),
+      })),
+    [isAdjustment, variants]
+  )
+  const { matches, total } = useMemo(() => searchList(options, deferredQuery, MAX_RESULTS), [options, deferredQuery])
+  const selected = options.find((o) => o.item.id === variantId)?.item
   const needsCost = !isAdjustment && selected !== undefined && !selected.hasRecipe
 
   return (
@@ -105,15 +119,16 @@ const StockMovementForm = ({ variants, allowedTypes, today }: StockMovementFormP
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Nombre, color, talla o SKU" />
+            {/* Filtro propio: con miles de variantes, el de cmdk se frena. */}
+            <Command shouldFilter={false}>
+              <CommandInput placeholder="Nombre, color, talla o SKU" value={query} onValueChange={setQuery} />
               <CommandList>
                 <CommandEmpty>No hay coincidencias.</CommandEmpty>
                 <CommandGroup>
-                  {options.map((variant) => (
+                  {matches.map((variant) => (
                     <CommandItem
                       key={variant.id}
-                      value={`${variant.label} ${variant.sku}`}
+                      value={variant.id}
                       onSelect={() => {
                         setVariantId(variant.id)
                         setPickerOpen(false)
@@ -130,6 +145,9 @@ const StockMovementForm = ({ variants, allowedTypes, today }: StockMovementFormP
                     </CommandItem>
                   ))}
                 </CommandGroup>
+                {total > matches.length && (
+                  <p className="px-3 py-2 text-xs text-muted-foreground">{total - matches.length} más: escribe para afinar la búsqueda.</p>
+                )}
               </CommandList>
             </Command>
           </PopoverContent>

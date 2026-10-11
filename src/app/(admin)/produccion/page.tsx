@@ -6,6 +6,6 @@ import ProductionBoardScreen from "@/modules/orders/screens/production-board-scr
 export const metadata: Metadata = { title: "Tablero de producción" }
 
 export default async function ProductionPage() {
-  await requireSessionUser()
-  return <ProductionBoardScreen />
+  const user = await requireSessionUser()
+  return <ProductionBoardScreen user={user} />
 }

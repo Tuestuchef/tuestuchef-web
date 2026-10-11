@@ -26,6 +26,7 @@
     "create-first-owner:demo": "node --env-file=.env.staging.local scripts/create-first-owner.mjs"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.1.0",
     "@react-pdf/renderer": "^4.9.0",
