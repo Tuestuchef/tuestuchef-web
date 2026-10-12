@@ -33,6 +33,7 @@ const PurchaseList = ({ purchases, today }: { purchases: PurchaseListItem[]; tod
                   <NoteButton note={p.notes} title={`${formatPurchaseNumber(p.number)} · ${p.supplierName}`} />
                   <PurchaseStatusBadge status={p.status} overdue={overdue} />
                   {p.isBackdated && <StatusBadge tone="info">Retroactiva</StatusBadge>}
+                  {p.receiving && <StatusBadge tone={p.receiving.late ? "warning" : "info"}>{p.receiving.late ? "Entrega atrasada" : "Por recibir"}</StatusBadge>}
                 </span>
                 <span className="truncate text-sm text-muted-foreground">{p.itemsSummary}</span>
                 <span className="text-xs text-muted-foreground">

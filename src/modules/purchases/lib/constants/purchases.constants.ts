@@ -27,6 +27,7 @@ export const PURCHASE_MESSAGES = {
   CREATED: "Compra registrada.",
   PAYMENT_SAVED: "Pago registrado.",
   VOIDED: "Compra anulada.",
+  RECEIVED: "Recepción registrada: entró al inventario.",
   SUPPLIER_SAVED: "Proveedor guardado.",
   EMPTY: "Agrega al menos una línea.",
   STAFF_MUST_PAY: "Staff registra solo compras pagadas completas en el momento.",

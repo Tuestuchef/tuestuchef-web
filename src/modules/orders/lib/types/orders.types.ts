@@ -165,3 +165,18 @@ export type BusinessRule = {
   sortOrder: number
   updatedAt: string
 }
+
+// Una línea de compra por recibir: lo que un taller o proveedor tiene por entregar (para el stock).
+export type PendingReceipt = {
+  purchaseItemId: string
+  purchaseId: string
+  number: number
+  supplierId: string
+  supplierName: string
+  productName: string
+  variantLabel: string
+  pending: number
+  quantity: number
+  expectedDate: string | null
+  isLate: boolean
+}

@@ -12,11 +12,12 @@ import { isRoleIn, ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { isStorageEnabled } from "@/common/lib/services/storage.service"
 import type { SessionUser } from "@/common/lib/types/session.types"
-import { formatDate, formatTime, toCaracasDate } from "@/common/lib/utils/format-date.util"
+import { caracasNoonIso, formatDate, formatTime, toCaracasDate } from "@/common/lib/utils/format-date.util"
 import { formatMoney, formatRate, formatUsdt } from "@/common/lib/utils/format-money.util"
 
 import AddPurchasePaymentDialog from "../components/add-purchase-payment-dialog"
 import PurchaseStatusBadge from "../components/purchase-status-badge"
+import ReceivePurchaseDialog from "../components/receive-purchase-dialog"
 import VoidPurchaseDialog from "../components/void-purchase-dialog"
 import { formatPurchaseNumber, SUPPLIER_RATE_LABELS } from "../lib/constants/purchases.constants"
 import { getPurchaseDetail, getPurchaseFormData } from "../lib/services/purchases.service"
@@ -31,6 +32,12 @@ const PurchaseDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
 
   const label = formatPurchaseNumber(purchase.number)
   const isVoided = Boolean(purchase.void)
+  // Compra por recibir: lo que el proveedor aún no entrega.
+  const receivable = purchase.toReceive && !isVoided
+    ? purchase.items
+        .filter((i) => i.lineType === "inventory" && i.quantity - i.receivedQuantity > 0)
+        .map((i) => ({ id: i.id, label: i.label, pending: i.quantity - i.receivedQuantity }))
+    : []
   const hasBalance = !isVoided && purchase.balanceUsd > 0.01
   const overdue = hasBalance && purchase.dueDate !== null && purchase.dueDate < toCaracasDate()
 
@@ -70,6 +77,16 @@ const PurchaseDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
         </StatusAlert>
       )}
 
+      {receivable.length > 0 && (
+        <StatusAlert tone="info" title="Por recibir">
+          {purchase.expectedDate ? `Entrega estimada: ${formatDate(caracasNoonIso(purchase.expectedDate))}. ` : ""}
+          Lo pendiente entra al inventario al recibirlo. Mientras tanto aparece en Quién tiene qué.
+          <div className="mt-2">
+            <ReceivePurchaseDialog purchaseId={purchase.id} lines={receivable} />
+          </div>
+        </StatusAlert>
+      )}
+
       {canManage && formData && !isVoided && (
         <div className="flex flex-wrap gap-2">
           {hasBalance && (
@@ -99,6 +116,7 @@ const PurchaseDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
                     {item.sku && <code className="font-mono">{item.sku} · </code>}
                     {usd(item.unitCostUsd)} c/u · {item.categoryName}
                     {item.lineType === "concept" && " · sin stock"}
+                    {purchase.toReceive && item.lineType === "inventory" && ` · recibido ${quantityFormat.format(item.receivedQuantity)} de ${quantityFormat.format(item.quantity)}`}
                   </span>
                 </div>
                 <span className="text-sm tabular-nums">{usd(item.lineTotalUsd)}</span>

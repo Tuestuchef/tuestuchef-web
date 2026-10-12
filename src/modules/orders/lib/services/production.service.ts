@@ -5,7 +5,7 @@ import { toCaracasDate } from "@/common/lib/utils/format-date.util"
 
 import type { ProductionStage } from "../constants/orders.constants"
 import type { PieceRateInput } from "../schemas/orders.schema"
-import type { MaterialRequirement, PieceRate, ProductionCard } from "../types/orders.types"
+import type { MaterialRequirement, PendingReceipt, PieceRate, ProductionCard } from "../types/orders.types"
 import { lineStages } from "../utils/line-stages.util"
 import { variantLabel } from "@/modules/products/lib/utils/variant-label.util"
 
@@ -169,5 +169,38 @@ export async function registerPieceworkPayment(input: {
     p_amount: input.amount,
     p_piecework_ids: input.pieceworkIds,
     p_settle_advance_ids: input.advanceIds.length ? input.advanceIds : undefined,
+  })
+}
+
+// Lo que un taller o proveedor tiene por entregar de compras por recibir (encargos para el stock).
+export async function listPendingReceipts(): Promise<PendingReceipt[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.from("pending_purchase_receipts").select("*").order("expected_date", { nullsFirst: false })
+  if (error) throw error
+  if (!data.length) return []
+  const [suppliers, variants] = await Promise.all([
+    supabase.from("suppliers").select("id, name").in("id", [...new Set(data.map((r) => r.supplier_id!))]),
+    supabase
+      .from("product_variants")
+      .select("id, gender, color:colors(name), size:sizes(name), product:products(name)")
+      .in("id", [...new Set(data.map((r) => r.variant_id!))]),
+  ])
+  const supplierById = new Map((suppliers.data ?? []).map((s) => [s.id, s.name]))
+  const variantById = new Map((variants.data ?? []).map((v) => [v.id, v]))
+  return data.map((r) => {
+    const variant = variantById.get(r.variant_id!)
+    return {
+      purchaseItemId: r.purchase_item_id!,
+      purchaseId: r.purchase_id!,
+      number: r.number!,
+      supplierId: r.supplier_id!,
+      supplierName: supplierById.get(r.supplier_id!) ?? "—",
+      productName: variant?.product?.name ?? "—",
+      variantLabel: variantLabel(variant ?? null),
+      pending: Number(r.pending),
+      quantity: Number(r.quantity),
+      expectedDate: r.expected_date,
+      isLate: Boolean(r.is_late),
+    }
   })
 }

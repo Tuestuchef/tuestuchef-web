@@ -13,10 +13,11 @@ import {
   type AddPurchasePaymentField,
   addPurchasePaymentSchema,
   createPurchaseSchema,
+  receivePurchaseSchema,
   type VoidPurchaseField,
   voidPurchaseSchema,
 } from "../schemas/purchases.schema"
-import { addPurchasePayment, createPurchase, voidPurchase } from "../services/purchases.service"
+import { addPurchasePayment, createPurchase, receivePurchase, voidPurchase } from "../services/purchases.service"
 
 // La compra llega como objeto; Zod la valida entera y la base vuelve a validar todo
 // (incluido que staff solo registre compras pagadas en el momento).
@@ -69,4 +70,19 @@ export async function voidPurchaseAction(
 
   refresh()
   return { status: "success", message: PURCHASE_MESSAGES.VOIDED, submissionId: crypto.randomUUID() }
+}
+
+// Lo que entregó el proveedor de una compra por recibir (cualquiera del equipo).
+export async function receivePurchaseAction(input: unknown): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  const auth = await authorizeAction(ROLE_GROUPS.ALL)
+  if (!auth.ok) return { ok: false, error: auth.error }
+
+  const parsed = receivePurchaseSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Revisa lo recibido." }
+
+  const { error } = await receivePurchase(parsed.data)
+  if (error) return { ok: false, error: toUserError(error, "No se pudo registrar la recepción.") }
+
+  refresh()
+  return { ok: true, message: PURCHASE_MESSAGES.RECEIVED }
 }

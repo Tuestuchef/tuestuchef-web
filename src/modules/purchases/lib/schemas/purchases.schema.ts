@@ -92,7 +92,19 @@ export const createPurchaseSchema = z.object({
   notes: z.string().trim().max(500).nullable().default(null),
   receipt_path: z.string().max(300).nullable().default(null),
   date: pastOrTodayDateSchema,
+  // Por recibir: el proveedor la entrega después (entra al stock al recibirla).
+  to_receive: z.boolean().default(false),
+  expected_date: z.iso.date().nullable().default(null),
 })
+
+// Lo que entregó el proveedor de una compra por recibir (por línea, hasta lo pendiente).
+export const receivePurchaseSchema = z.object({
+  purchase_id: z.uuid(),
+  items: z.array(z.object({ item_id: z.uuid(), quantity: z.number().min(0).max(1_000_000) })).min(1).max(100),
+  note: z.string().trim().max(200).nullable().default(null),
+})
+
+export type ReceivePurchaseInput = z.infer<typeof receivePurchaseSchema>
 
 export const addPurchasePaymentSchema = z.object({
   purchase_id: z.uuid(),

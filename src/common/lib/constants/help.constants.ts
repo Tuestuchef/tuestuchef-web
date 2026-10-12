@@ -672,6 +672,7 @@ export const HELP_TOPICS = {
         items: [
           "Elige el proveedor (o créalo con el botón +).",
           "Agrega materia prima o mercancía: entra al inventario con su costo.",
+          "Por recibir: si se encargó (p. ej. filipinas a un taller) y la entregan después, actívalo con la fecha estimada. Entra al inventario cuando tocas Recibir en la compra, todo o por partes, y mientras tanto sale en Quién tiene qué.",
           "Agrega conceptos sin stock: alquiler, maquila, reparaciones, servicios.",
           "Cada línea lleva su categoría (costo, gasto operativo, reinversión…): así se calcula bien la utilidad.",
           "Indica cómo se pagó y toca Registrar compra.",

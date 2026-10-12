@@ -12,7 +12,7 @@ import { listAccounts } from "@/modules/treasury/lib/services/accounts.service"
 import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.service"
 
 import { PURCHASE_CATEGORY_TYPES, type PurchaseStatus } from "../constants/purchases.constants"
-import type { AddPurchasePaymentInput, CreatePurchaseInput } from "../schemas/purchases.schema"
+import type { AddPurchasePaymentInput, CreatePurchaseInput, ReceivePurchaseInput } from "../schemas/purchases.schema"
 import type {
   PayableItem,
   PurchaseDetail,
@@ -97,6 +97,17 @@ export async function createPurchase(input: CreatePurchaseInput) {
     p_notes: input.notes ?? undefined,
     p_receipt_path: input.receipt_path ?? undefined,
     p_occurred_at: occurredAt(input.date),
+    p_to_receive: input.to_receive,
+    p_expected_date: input.to_receive ? (input.expected_date ?? undefined) : undefined,
+  })
+}
+
+export async function receivePurchase(input: ReceivePurchaseInput) {
+  const supabase = await createSupabaseServerClient()
+  return supabase.rpc("receive_purchase", {
+    p_purchase_id: input.purchase_id,
+    p_items: input.items.filter((i) => i.quantity > 0),
+    p_note: input.note ?? undefined,
   })
 }
 
@@ -146,6 +157,15 @@ export async function listPurchases(filters: PurchaseFilters | { supplierId: str
     )
   if (summaryError) throw summaryError
   const summary = new Map((summaries ?? []).map((s) => [s.purchase_id, s]))
+  // Compras por recibir con algo pendiente (y si ya pasó su fecha de entrega).
+  const { data: receipts } = await supabase
+    .from("pending_purchase_receipts")
+    .select("purchase_id, is_late")
+    .in(
+      "purchase_id",
+      data.map((p) => p.id)
+    )
+  const receiving = new Map((receipts ?? []).map((r) => [r.purchase_id, Boolean(r.is_late)]))
 
   const rows = data.map((p) => {
     const s = summary.get(p.id)
@@ -161,6 +181,7 @@ export async function listPurchases(filters: PurchaseFilters | { supplierId: str
       dueDate: p.due_date,
       status: (s?.payment_status ?? "pending") as PurchaseStatus,
       notes: p.notes,
+      receiving: receiving.has(p.id) ? { late: receiving.get(p.id)! } : null,
       itemsSummary: p.items
         .map((i) =>
           i.line_type === "concept" ? i.description : `${Number(i.quantity)} × ${i.variant?.product?.name ?? i.variant?.sku ?? "—"}`
@@ -217,7 +238,8 @@ export async function getPurchaseDetail(id: string): Promise<PurchaseDetail | nu
       .select(
         `id, line_type, description, quantity, unit_cost_usd, line_total_usd,
          category:movement_categories(name),
-         variant:product_variants(sku, gender, color:colors(name), size:sizes(name), product:products(name))`
+         variant:product_variants(sku, gender, color:colors(name), size:sizes(name), product:products(name)),
+         moves:stock_movements(quantity, movement_type)`
       )
       .eq("purchase_id", id)
       .order("created_at"),
@@ -251,6 +273,8 @@ export async function getPurchaseDetail(id: string): Promise<PurchaseDetail | nu
     balanceUsd: Number(summary.data?.balance_usd ?? purchase.total_usd),
     status: (summary.data?.payment_status ?? "pending") as PurchaseStatus,
     dueDate: purchase.due_date,
+    toReceive: purchase.to_receive,
+    expectedDate: purchase.expected_date,
     notes: purchase.notes,
     hasReceipt: Boolean(purchase.receipt_path),
     authorName: purchase.author?.full_name ?? null,
@@ -271,6 +295,8 @@ export async function getPurchaseDetail(id: string): Promise<PurchaseDetail | nu
       quantity: Number(i.quantity),
       unitCostUsd: Number(i.unit_cost_usd),
       lineTotalUsd: Number(i.line_total_usd),
+      // Lo que entró al stock por esta línea (en una compra por recibir, lo recibido hasta ahora).
+      receivedQuantity: i.moves.filter((m) => m.movement_type === "purchase").reduce((sum, m) => sum + Number(m.quantity), 0),
     })),
     payments: payments.data.map((p) => ({
       id: p.id,

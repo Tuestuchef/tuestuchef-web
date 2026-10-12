@@ -410,3 +410,56 @@ describe("materia prima y cuentas por cobrar", () => {
     expect(row.rows[0]).toMatchObject({ customer_name: "Ana", balance_usd: "14.000000", days_outstanding: 0 })
   })
 })
+
+describe("compras por recibir", () => {
+  const order = (as: ReturnType<typeof asUser>, quantity: number, expected: string | null = null) =>
+    as<{ id: string }>(
+      `select public.create_purchase(
+         p_supplier_id => $1, p_items => $2::jsonb, p_due_date => public.caracas_today() + 30,
+         p_to_receive => true, p_expected_date => $3::date
+       ) as id`,
+      [
+        ids.supplier,
+        JSON.stringify([{ line_type: "inventory", variant_id: ids.apron, quantity, unit_cost_usd: 5, category_id: ids.cost }]),
+        expected,
+      ]
+    ).then((r) => r.rows[0].id)
+
+  const pending = (purchase: string) =>
+    owner<{ purchase_item_id: string; pending: string; received: string; is_late: boolean }>(
+      "select * from public.pending_purchase_receipts where purchase_id = $1",
+      [purchase]
+    ).then((r) => r.rows)
+
+  it("no entra al stock hasta recibir; se recibe por partes y deja de estar pendiente", async () => {
+    const before = await stock("apron")
+    const id = await order(owner, 20, "2099-01-01")
+    expect(await stock("apron")).toBe(before)
+    const [line] = await pending(id)
+    expect(line).toMatchObject({ pending: "20.000", is_late: false })
+
+    await staff("select public.receive_purchase($1, $2::jsonb)", [id, JSON.stringify([{ item_id: line.purchase_item_id, quantity: 8 }])])
+    expect(await stock("apron")).toBe(before + 8)
+    expect((await pending(id))[0]).toMatchObject({ pending: "12.000", received: "8.000" })
+
+    await expect(
+      owner("select public.receive_purchase($1, $2::jsonb)", [id, JSON.stringify([{ item_id: line.purchase_item_id, quantity: 13 }])])
+    ).rejects.toThrow(/hasta 12/)
+    await owner("select public.receive_purchase($1, $2::jsonb)", [id, JSON.stringify([{ item_id: line.purchase_item_id, quantity: 12 }])])
+    expect(await stock("apron")).toBe(before + 20)
+    expect(await pending(id)).toHaveLength(0)
+  })
+
+  it("anular saca solo lo que entró; una compra normal no se recibe", async () => {
+    const before = await stock("apron")
+    const id = await order(owner, 10)
+    const [line] = await pending(id)
+    await owner("select public.receive_purchase($1, $2::jsonb)", [id, JSON.stringify([{ item_id: line.purchase_item_id, quantity: 4 }])])
+    await owner("select public.void_purchase($1, 'se canceló')", [id])
+    expect(await stock("apron")).toBe(before)
+    expect(await pending(id)).toHaveLength(0)
+
+    const normal = await buy(owner, [{ variant: "apron", quantity: 1, cost: 5 }], { payments: [{ account: "cash", amount: 5 }] })
+    await expect(owner("select public.receive_purchase($1, '[]'::jsonb)", [normal])).rejects.toThrow(/ya entró/)
+  })
+})

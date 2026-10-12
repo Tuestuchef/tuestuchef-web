@@ -50,6 +50,8 @@ export type PurchaseListItem = {
   status: PurchaseStatus
   itemsSummary: string
   notes: string | null
+  // Por recibir: el proveedor aún no entrega todo (late: pasó la fecha estimada).
+  receiving: { late: boolean } | null
 }
 
 export type PurchaseDetail = {
@@ -64,6 +66,9 @@ export type PurchaseDetail = {
   balanceUsd: number
   status: PurchaseStatus
   dueDate: string | null
+  // Por recibir: la mercancía entra al stock cuando el proveedor la entrega.
+  toReceive: boolean
+  expectedDate: string | null
   notes: string | null
   hasReceipt: boolean
   authorName: string | null
@@ -77,6 +82,7 @@ export type PurchaseDetail = {
     quantity: number
     unitCostUsd: number
     lineTotalUsd: number
+    receivedQuantity: number
   }[]
   payments: {
     id: string

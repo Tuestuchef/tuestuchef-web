@@ -21,6 +21,7 @@ import {
 } from "@/common/components/ui/command"
 import { Input } from "@/common/components/ui/input"
 import { Label } from "@/common/components/ui/label"
+import { Switch } from "@/common/components/ui/switch"
 import { Popover, PopoverContent, PopoverTrigger } from "@/common/components/ui/popover"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
@@ -81,6 +82,9 @@ const PurchaseForm = ({
   const [paymentRows, setPaymentRows] = useState<PaymentRow[]>([])
   const [dueDate, setDueDate] = useState("")
   const [notes, setNotes] = useState("")
+  // Por recibir: se encargó (p. ej. a un taller) y entra al stock cuando lo entregan.
+  const [toReceive, setToReceive] = useState(false)
+  const [expectedDate, setExpectedDate] = useState("")
   const [date, setDate] = useState(today)
   const [dateRates, setDateRates] = useState<SaleRatesForDate | "today">("today")
   const isBackdated = date !== today
@@ -144,6 +148,7 @@ const PurchaseForm = ({
   )
   const balance = Math.max(Math.round((total - paidUsd) * 100) / 100, 0)
 
+  const hasInventory = lines.some((l) => l.type === "inventory")
   const invalidLine = lines.some((l, i) => lineTotals[i] === 0 || (l.type === "concept" && !l.description.trim()))
   const paysInBs = payments.some((p) => accountById.get(p.accountId)?.currency === "VES")
   const blockers = [
@@ -210,6 +215,8 @@ const PurchaseForm = ({
         payments: payments.map((p) => ({ account_id: p.accountId, amount: p.amount, rate_kind: p.rateKind })),
         due_date: mode !== "full" && dueDate ? dueDate : null,
         notes: notes.trim() || null,
+        to_receive: hasInventory && toReceive,
+        expected_date: hasInventory && toReceive && expectedDate ? expectedDate : null,
         receipt_path: receiptPath,
         date: isBackdated ? date : undefined,
       })
@@ -509,6 +516,25 @@ const PurchaseForm = ({
         <FormField label="Vence" htmlFor="purchase-due" optional hint="Fecha límite para pagar el saldo.">
           <DateField id="purchase-due" min={date} value={dueDate} onChange={setDueDate} clearable className="max-w-80" />
         </FormField>
+      )}
+
+      {hasInventory && (
+        <div className="grid gap-3 rounded-lg border p-3">
+          <label className="flex items-center justify-between gap-3 text-sm">
+            <span>
+              Por recibir
+              <span className="block text-xs text-muted-foreground">
+                Se encargó y lo entregan después (p. ej. a un taller). Entra al inventario al recibirlo, todo o por partes.
+              </span>
+            </span>
+            <Switch checked={toReceive} onCheckedChange={setToReceive} />
+          </label>
+          {toReceive && (
+            <FormField label="Entrega estimada" htmlFor="purchase-expected" optional>
+              <DateField id="purchase-expected" min={date} value={expectedDate} onChange={setExpectedDate} clearable className="max-w-80" />
+            </FormField>
+          )}
+        </div>
       )}
 
       {/* Fecha, comprobante y notas */}

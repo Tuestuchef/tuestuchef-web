@@ -1654,6 +1654,7 @@ export type Database = {
           created_at: string
           created_by: string
           due_date: string | null
+          expected_date: string | null
           id: string
           is_backdated: boolean
           notes: string | null
@@ -1662,6 +1663,7 @@ export type Database = {
           receipt_path: string | null
           supplier_id: string
           total_usd: number
+          to_receive: boolean
           usd_usdt_rate: number
         }
         Insert: {
@@ -1671,6 +1673,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           due_date?: string | null
+          expected_date?: string | null
           id?: string
           is_backdated?: boolean
           notes?: string | null
@@ -1679,6 +1682,7 @@ export type Database = {
           receipt_path?: string | null
           supplier_id: string
           total_usd: number
+          to_receive: boolean
           usd_usdt_rate: number
         }
         Update: {
@@ -1688,6 +1692,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           due_date?: string | null
+          expected_date?: string | null
           id?: string
           is_backdated?: boolean
           notes?: string | null
@@ -1696,6 +1701,7 @@ export type Database = {
           receipt_path?: string | null
           supplier_id?: string
           total_usd?: number
+          to_receive?: boolean
           usd_usdt_rate?: number
         }
         Relationships: [
@@ -4444,6 +4450,22 @@ export type Database = {
       }
     }
     Views: {
+      pending_purchase_receipts: {
+        Row: {
+          expected_date: string | null
+          is_late: boolean | null
+          number: number | null
+          occurred_at: string | null
+          pending: number | null
+          purchase_id: string | null
+          purchase_item_id: string | null
+          quantity: number | null
+          received: number | null
+          supplier_id: string | null
+          variant_id: string | null
+        }
+        Relationships: []
+      }
       sale_payments: {
         Row: {
           is_backdated: boolean | null
@@ -5002,6 +5024,7 @@ export type Database = {
         }
         Returns: string
       }
+      receive_purchase: { Args: { p_purchase_id: string; p_items: Json; p_note?: string }; Returns: undefined }
       create_purchase: {
         Args: {
           p_due_date?: string
@@ -5010,6 +5033,8 @@ export type Database = {
           p_occurred_at?: string
           p_payments?: Json
           p_receipt_path?: string
+          p_to_receive?: boolean
+          p_expected_date?: string
           p_supplier_id: string
         }
         Returns: string

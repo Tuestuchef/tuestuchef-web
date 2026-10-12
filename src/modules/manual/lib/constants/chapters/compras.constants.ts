@@ -94,6 +94,7 @@ export const PURCHASES_CHAPTER: ManualChapter = {
             { title: "Agrega las líneas", body: "Material o mercancía con cantidad y costo en dólares, o conceptos sin stock." },
             { title: "Indica cómo se pagó", body: "Pagada completa, a crédito, o un abono (crédito y abono: owner y admin)." },
             { title: "Adjunta la factura", body: "Foto o PDF, si la hay. Se guarda privada." },
+            { title: "¿Lo entregan después?", body: "Activa **Por recibir** (con la entrega estimada) si se le encargó a un taller o proveedor. No entra al inventario hasta que tocas **Recibir** en la compra; puedes recibir por partes. Mientras tanto aparece en **Quién tiene qué** bajo ese taller, y como atrasada si pasa la fecha." },
           ],
         },
       ],
