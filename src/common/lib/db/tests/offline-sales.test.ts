@@ -116,3 +116,17 @@ describe("ventas sin conexión", () => {
     expect((await owner("select * from public.offline_sale_rejections")).rows.length).toBe(own.rows.length)
   })
 })
+
+describe("una venta no se registra dos veces", () => {
+  it("con el mismo identificador, el segundo envío (en línea o desde la cola) devuelve la misma venta", async () => {
+    const ref = randomUUID()
+    const body = payload(1)
+    const first = await one(staff<{ id: string }>("select public.create_sale_once($1, $2::jsonb) as id", [ref, JSON.stringify(body)]))
+    const again = await one(staff<{ id: string }>("select public.create_sale_once($1, $2::jsonb) as id", [ref, JSON.stringify(body)]))
+    expect(again.id).toBe(first.id)
+    const queued = await sync(staff, ref, body)
+    expect(queued).toMatchObject({ status: "duplicate", sale_id: first.id })
+    const count = await one(owner<{ n: string }>("select count(*) as n from public.offline_sale_refs where client_ref = $1", [ref]))
+    expect(Number(count.n)).toBe(1)
+  })
+})

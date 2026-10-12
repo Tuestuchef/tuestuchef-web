@@ -7,7 +7,8 @@ import type { CreateSaleInput } from "../schemas/sales.schema"
 type SyncData = { status: "created" | "duplicate" | "rejected"; sale_id?: string; error?: string }
 
 // Mismos campos que create_sale, con la hora real de la venta.
-const toPayload = (sale: CreateSaleInput, occurredAt: string) => ({
+// Los campos de la venta como los leen sync_offline_sale y create_sale_once.
+export const toPayload = (sale: CreateSaleInput, occurredAt: string | undefined) => ({
   channel: sale.channel,
   price_method_id: sale.price_method_id,
   delivery_method: sale.delivery_method,
@@ -25,7 +26,7 @@ const toPayload = (sale: CreateSaleInput, occurredAt: string) => ({
 
 export async function syncOfflineSale(clientRef: string, occurredAt: string, sale: CreateSaleInput) {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.rpc("sync_offline_sale", { p_client_ref: clientRef, p_payload: toPayload(sale, occurredAt) })
+  const { data, error } = await supabase.rpc("sync_offline_sale_locked", { p_client_ref: clientRef, p_payload: toPayload(sale, occurredAt) })
   return { data: data as SyncData | null, error }
 }
 

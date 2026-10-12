@@ -35,10 +35,11 @@ const NoteButton = ({ note, title }: NoteButtonProps) => {
         type="button"
         aria-label="Ver nota"
         title="Ver nota"
-        className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+        className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-foreground px-2 text-xs font-medium text-background hover:bg-foreground/80"
         onClick={() => setOpen(true)}
       >
-        <StickyNoteIcon className="size-4" aria-hidden />
+        <StickyNoteIcon className="size-3.5" aria-hidden />
+        Nota
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

@@ -68,6 +68,8 @@ export const createSaleSchema = z
     delivered: z.boolean().default(false),
     // Delivery o envío nacional: cuándo se va a enviar (opcional).
     ship_date: z.iso.date().nullable().default(null),
+    // Identificador del intento: si la venta llega dos veces (señal caída), no se duplica.
+    client_ref: z.uuid().optional(),
     // Vacío = hoy. La base valida el límite de staff y exige tasas de esa fecha.
     date: pastOrTodayDateSchema,
   })

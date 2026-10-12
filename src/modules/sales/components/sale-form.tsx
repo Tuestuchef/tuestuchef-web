@@ -9,7 +9,7 @@ import {
   Trash2Icon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import ChoiceChips from "@/common/components/choice-chips"
@@ -286,16 +286,21 @@ const SaleForm = ({
   }
 
   // Sin conexión: la venta se guarda en el teléfono y se envía sola al volver la señal.
-  const saveOffline = async (sale: Record<string, unknown>) => {
+  // Identificador de esta venta, igual en el envío en línea y en la cola sin conexión: si la venta
+  // llegó al servidor pero la respuesta se perdió, al reenviarla no se duplica. Uno nuevo por venta.
+  const clientRef = useRef<string | null>(null)
+
+  const saveOffline = async (sale: Record<string, unknown>, ref: string) => {
     const occurredAt = isBackdated ? new Date(`${date}T12:00:00-04:00`).toISOString() : new Date().toISOString()
     await queueSale({
-      clientRef: crypto.randomUUID(),
+      clientRef: ref,
       payload: { sale, occurredAt },
       label: lines.map((l) => `${l.quantity} × ${l.variant.productName}`).join(", "),
       totalUsd: total,
       queuedAt: new Date().toISOString(),
     })
     toast.success("Sin conexión: la venta quedó guardada en este teléfono y se enviará sola.")
+    clientRef.current = null
     setCart([])
     setPaymentRows([])
     setPaymentMode("full")
@@ -310,8 +315,11 @@ const SaleForm = ({
 
   const submit = () => {
     setError(null)
+    clientRef.current ??= crypto.randomUUID()
+    const ref = clientRef.current
     startTransition(async () => {
       const sale = {
+        client_ref: ref,
         channel,
         price_method_id: priceMethodId,
         delivery_method: deliveryMethod,
@@ -351,14 +359,14 @@ const SaleForm = ({
         date: isBackdated ? date : undefined,
       }
       if (!navigator.onLine) {
-        await saveOffline(sale)
+        await saveOffline(sale, ref)
         return
       }
       let result: Awaited<ReturnType<typeof createSaleAction>>
       try {
         result = await createSaleAction(sale)
       } catch (cause) {
-        if (isNetworkError(cause)) await saveOffline(sale)
+        if (isNetworkError(cause)) await saveOffline(sale, ref)
         else setError("No se pudo registrar la venta.")
         return
       }
@@ -366,6 +374,7 @@ const SaleForm = ({
         setError(result.error)
         return
       }
+      clientRef.current = null
       toast.success(SALES_MESSAGES.CREATED)
       router.push(ROUTES.SALE(result.saleId))
     })

@@ -5048,6 +5048,8 @@ export type Database = {
         Args: { p_sale_id: string; p_ship_date: string | null; p_tracking_number: string | null }
         Returns: undefined
       }
+      create_sale_once: { Args: { p_client_ref: string; p_payload: Json }; Returns: string }
+      sync_offline_sale_locked: { Args: { p_client_ref: string; p_payload: Json }; Returns: Json }
       create_sale: {
         Args: {
           p_channel: Database["public"]["Enums"]["sale_channel"]

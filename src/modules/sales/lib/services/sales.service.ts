@@ -11,6 +11,7 @@ import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.se
 import type { PaymentStatus, SaleItemStatus } from "../constants/sales.constants"
 import type { AddPaymentInput, CorrectPaymentInput, CreateSaleInput, EditSaleInput } from "../schemas/sales.schema"
 import { round } from "../utils/sale-math.util"
+import { toPayload } from "./offline-sales.service"
 import type {
   ReceivableGroup,
   SaleDetail,
@@ -155,6 +156,10 @@ export async function getSaleFormData(): Promise<SaleFormData> {
 export async function createSale(input: CreateSaleInput) {
   await ensureRatesForDate(input.date)
   const supabase = await createSupabaseServerClient()
+  // Con identificador: si la misma venta llega otra vez (señal caída, cola sin conexión), devuelve la que ya existe.
+  if (input.client_ref) {
+    return supabase.rpc("create_sale_once", { p_client_ref: input.client_ref, p_payload: toPayload(input, occurredAt(input.date)) })
+  }
   return supabase.rpc("create_sale", {
     p_channel: input.channel,
     p_price_method_id: input.price_method_id,
