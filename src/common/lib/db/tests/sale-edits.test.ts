@@ -195,3 +195,25 @@ describe("corregir un pago", () => {
     ).rejects.toThrow()
   })
 })
+
+describe("envío", () => {
+  it("cualquiera anota fecha de envío y guía; queda en el historial; retirar no lleva envío", async () => {
+    const shipped = await one(
+      owner<{ id: string }>(`select public.create_sale('whatsapp', $1, 'national_shipping', $2::jsonb) as id`, [
+        ids.cashMethod,
+        JSON.stringify([{ variant_id: ids.variant, quantity: 1, source: "stock" }]),
+      ])
+    ).then((r) => r.id)
+    await staff("select public.set_sale_shipping($1, public.caracas_today() + 2, null)", [shipped])
+    await staff("select public.set_sale_shipping($1, public.caracas_today() + 2, ' MRW 123 ')", [shipped])
+    const row = await one(owner<{ tracking_number: string; ship_date: Date }>("select tracking_number, ship_date from public.sales where id = $1", [shipped]))
+    expect(row.tracking_number).toBe("MRW 123")
+    const edits = await history(shipped)
+    expect(edits.map((e) => e.changes[0].field)).toEqual(["ship_date", "tracking_number"])
+    expect(edits[1].created_by).toBe(STAFF)
+
+    const pickup = await sell()
+    await expect(staff("select public.set_sale_shipping($1, public.caracas_today(), null)", [pickup])).rejects.toThrow(/retirar/)
+    await expect(staff("update public.sales set tracking_number = 'x' where id = $1", [shipped])).rejects.toThrow()
+  })
+})

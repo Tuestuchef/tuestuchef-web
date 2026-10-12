@@ -71,7 +71,10 @@ export type SaleListItem = {
   balanceUsd: number
   paymentStatus: PaymentStatus
   itemsSummary: string
+  notes: string | null
   pendingProduction: boolean
+  // Delivery o envío nacional: cuándo se envía, la guía y si falta entregarlo. null si retira.
+  shipping: { date: string | null; trackingNumber: string | null; pending: boolean } | null
   isBackdated: boolean
   createdAt: string
 }
@@ -132,6 +135,8 @@ export type SaleDetail = {
   volumeDiscount: { percent: number; usd: number } | null
   discount: { type: DiscountType; value: number; usd: number; reason: string; byName: string | null } | null
   deliveryFeeUsd: number
+  shipDate: string | null
+  trackingNumber: string | null
   isOrder: boolean
   isCancelledOrder: boolean
   // IVA sobre el total (después de descuentos); null si la venta no lleva IVA.
@@ -156,7 +161,7 @@ export type SaleDetail = {
 export type PaymentSnapshot = { method: string; currency: Currency; amount: number }
 
 export type SaleEditChange =
-  | { field: "customer" | "channel" | "delivery_method" | "notes"; from: string | null; to: string | null }
+  | { field: "customer" | "channel" | "delivery_method" | "notes" | "ship_date" | "tracking_number"; from: string | null; to: string | null }
   // to nulo: el pago se quitó.
   | { field: "payment"; from: PaymentSnapshot; to: PaymentSnapshot | null }
 
@@ -235,3 +240,5 @@ export type PriceCalculatorData = {
   rates: { bcvUsd: number; bcvEur: number; usdUsdt: number; isCurrent: boolean } | null
   volumeTiers: VolumeTier[]
 }
+
+export type PendingShipment = { id: string; number: number; shipDate: string; customerName: string | null }

@@ -1,7 +1,7 @@
 import { HistoryIcon } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/common/components/ui/card"
-import { formatDate, formatTime } from "@/common/lib/utils/format-date.util"
+import { caracasNoonIso, formatDate, formatTime } from "@/common/lib/utils/format-date.util"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 
 import { CHANNEL_LABELS, DELIVERY_LABELS, type DeliveryMethod, type SaleChannel } from "../lib/constants/sales.constants"
@@ -13,6 +13,8 @@ const FIELD_LABELS: Record<SaleEditChange["field"], string> = {
   delivery_method: "Entrega",
   notes: "Notas",
   payment: "Pago",
+  ship_date: "Fecha de envío",
+  tracking_number: "Número de guía",
 }
 
 const payment = (p: PaymentSnapshot) => `${p.method} ${formatMoney(p.amount, p.currency)}`
@@ -27,6 +29,7 @@ const describe = (change: SaleEditChange, side: "from" | "to") => {
   if (!value) return change.field === "customer" ? "sin cliente" : "—"
   if (change.field === "channel") return CHANNEL_LABELS[value as SaleChannel] ?? value
   if (change.field === "delivery_method") return DELIVERY_LABELS[value as DeliveryMethod] ?? value
+  if (change.field === "ship_date") return formatDate(caracasNoonIso(value))
   return value
 }
 

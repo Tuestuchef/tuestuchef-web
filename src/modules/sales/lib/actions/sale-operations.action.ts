@@ -15,6 +15,7 @@ import {
   addPaymentSchema,
   correctPaymentSchema,
   editSaleSchema,
+  saleShippingSchema,
   itemStatusSchema,
   salesSettingsSchema,
   type VoidSaleField,
@@ -24,6 +25,7 @@ import {
   addSalePayment,
   correctSalePayment,
   editSaleDetails,
+  setSaleShipping,
   setSaleItemStatus,
   updateSalesSettings,
   voidSale,
@@ -98,6 +100,25 @@ export async function correctPaymentAction(input: unknown): Promise<Result> {
 
   refresh()
   return { ok: true, message: parsed.data.payment_method_id ? SALES_MESSAGES.PAYMENT_CORRECTED : SALES_MESSAGES.PAYMENT_REMOVED }
+}
+
+// Fecha de envío y guía; si ya se envió, las líneas pendientes pasan a entregadas.
+export async function saveSaleShippingAction(input: unknown): Promise<Result> {
+  const auth = await authorizeAction(ROLE_GROUPS.ALL)
+  if (!auth.ok) return { ok: false, error: auth.error }
+
+  const parsed = saleShippingSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Revisa los datos." }
+
+  const { error } = await setSaleShipping(parsed.data.sale_id, parsed.data.ship_date, parsed.data.tracking_number || null)
+  if (error) return { ok: false, error: toUserError(error, "No se pudo guardar el envío.") }
+  for (const itemId of parsed.data.deliver_item_ids) {
+    const { error: statusError } = await setSaleItemStatus(itemId, "delivered")
+    if (statusError) return { ok: false, error: toUserError(statusError, "Se guardó el envío, pero no se pudo marcar entregado.") }
+  }
+
+  refresh()
+  return { ok: true, message: parsed.data.deliver_item_ids.length ? SALES_MESSAGES.SHIPPED : SALES_MESSAGES.SHIPPING_SAVED }
 }
 
 // Avanza el estado de una o varias líneas (p. ej. "marcar todo entregado").

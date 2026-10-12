@@ -66,6 +66,8 @@ export const createSaleSchema = z
     discount_reason: z.string().trim().max(200).nullable().default(null),
     notes: z.string().trim().max(500).nullable().default(null),
     delivered: z.boolean().default(false),
+    // Delivery o envío nacional: cuándo se va a enviar (opcional).
+    ship_date: z.iso.date().nullable().default(null),
     // Vacío = hoy. La base valida el límite de staff y exige tasas de esa fecha.
     date: pastOrTodayDateSchema,
   })
@@ -118,6 +120,16 @@ export const correctPaymentSchema = z
   .refine((v) => v.payment_method_id === null || v.amount !== null, { error: "Indica el monto.", path: ["amount"] })
 
 export type CorrectPaymentInput = z.infer<typeof correctPaymentSchema>
+
+// Fecha de envío y número de guía (cualquiera del equipo). Marcar enviada = líneas entregadas.
+export const saleShippingSchema = z.object({
+  sale_id: z.uuid(),
+  ship_date: z.iso.date().nullable(),
+  tracking_number: z.string().trim().max(60, { error: "La guía va hasta 60 caracteres." }).nullable(),
+  deliver_item_ids: z.array(z.uuid()).max(200).default([]),
+})
+
+export type SaleShippingInput = z.infer<typeof saleShippingSchema>
 
 export const itemStatusSchema = z.object({
   sale_item_id: z.uuid(),

@@ -1,3 +1,4 @@
+import { caracasNoonIso, formatDate } from "@/common/lib/utils/format-date.util"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 
 import { SHIPPING_FEE_LABELS } from "../constants/sales.constants"
@@ -28,5 +29,8 @@ export function buildSaleDetailText(sale: SaleDetail): string {
   lines.push(`*Total: ${usd(sale.totalUsd)}*`)
   if (sale.paidUsd > 0) lines.push(`Pagado: ${usd(sale.paidUsd)}`)
   if (sale.balanceUsd > 0.01) lines.push(`*Pendiente: ${usd(sale.balanceUsd)}*`)
+  if (sale.shipDate || sale.trackingNumber) lines.push("")
+  if (sale.shipDate) lines.push(`Envío: ${formatDate(caracasNoonIso(sale.shipDate))}`)
+  if (sale.trackingNumber) lines.push(`Número de guía: ${sale.trackingNumber}`)
   return lines.join("\n")
 }

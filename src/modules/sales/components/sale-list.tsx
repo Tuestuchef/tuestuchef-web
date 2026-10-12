@@ -1,9 +1,10 @@
 import { ChevronRightIcon } from "lucide-react"
 import Link from "next/link"
 
+import NoteButton from "@/common/components/note-button"
 import StatusBadge from "@/common/components/status-badge"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
-import { formatDate, formatDayHeading, formatTime, toCaracasDate } from "@/common/lib/utils/format-date.util"
+import { caracasNoonIso, formatDate, formatDayHeading, formatTime, toCaracasDate } from "@/common/lib/utils/format-date.util"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 
 import { CHANNEL_LABELS, formatSaleNumber } from "../lib/constants/sales.constants"
@@ -16,6 +17,13 @@ type SaleListProps = {
   groupByDay?: boolean
 }
 
+// Falta enviarla: con su fecha, o atrasada si ya pasó.
+const ShippingBadge = ({ shipping }: { shipping: SaleListItem["shipping"] }) => {
+  if (!shipping?.pending || !shipping.date) return null
+  if (shipping.date < toCaracasDate()) return <StatusBadge tone="warning">Envío atrasado</StatusBadge>
+  return <StatusBadge tone="info">Envía el {formatDate(caracasNoonIso(shipping.date))}</StatusBadge>
+}
+
 const SaleRow = ({ sale }: { sale: SaleListItem }) => (
   <li>
     <Link
@@ -25,8 +33,10 @@ const SaleRow = ({ sale }: { sale: SaleListItem }) => (
       <div className="grid min-w-0 flex-1 gap-0.5">
         <span className="flex flex-wrap items-center gap-1.5">
           <span className="font-medium">{sale.customerName ?? "Venta rápida"}</span>
+          <NoteButton note={sale.notes} title={`${formatSaleNumber(sale.number)} · ${sale.customerName ?? "Venta rápida"}`} />
           <PaymentStatusBadge status={sale.paymentStatus} />
           {sale.pendingProduction && <StatusBadge tone="info">Por encargo</StatusBadge>}
+          <ShippingBadge shipping={sale.shipping} />
           {sale.isBackdated && <StatusBadge tone="info">Retroactiva</StatusBadge>}
         </span>
         <span className="truncate text-sm text-muted-foreground">{sale.itemsSummary}</span>

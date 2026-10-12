@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import ChoiceChips from "@/common/components/choice-chips"
+import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
@@ -120,6 +121,7 @@ const SaleForm = ({
   const [channel, setChannel] = useState<SaleChannel>("in_person")
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("pickup")
   const [deliveryFee, setDeliveryFee] = useState("")
+  const [shipDate, setShipDate] = useState("")
   const [showDiscount, setShowDiscount] = useState(false)
   const [discountType, setDiscountType] = useState<DiscountType>("percent")
   const [discountValue, setDiscountValue] = useState("")
@@ -303,6 +305,7 @@ const SaleForm = ({
     setCustomer(null)
     setNotes("")
     setDeliveryFee("")
+    setShipDate("")
   }
 
   const submit = () => {
@@ -344,6 +347,7 @@ const SaleForm = ({
         discount_reason: showDiscount && discount > 0 ? discountReason : null,
         notes: notes.trim() || null,
         delivered,
+        ship_date: chargesShipping(deliveryMethod) && shipDate ? shipDate : null,
         date: isBackdated ? date : undefined,
       }
       if (!navigator.onLine) {
@@ -581,6 +585,11 @@ const SaleForm = ({
             placeholder="0"
             className="h-11 md:h-9"
           />
+        </FormField>
+      )}
+      {chargesShipping(deliveryMethod) && (
+        <FormField label="Fecha de envío" htmlFor="sale-ship-date" optional hint="Si se envía otro día. La guía se anota luego, desde la venta.">
+          <DateField id="sale-ship-date" value={shipDate} onChange={setShipDate} min={today} clearable placeholder="Sin fecha" />
         </FormField>
       )}
 

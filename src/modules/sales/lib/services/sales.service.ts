@@ -16,6 +16,7 @@ import type {
   SaleDetail,
   SaleEditChange,
   SaleFormData,
+  PendingShipment,
   SaleListItem,
   SalesFilters,
   SellableVariant,
@@ -205,6 +206,11 @@ export async function correctSalePayment(input: CorrectPaymentInput) {
   })
 }
 
+export async function setSaleShipping(saleId: string, shipDate: string | null, trackingNumber: string | null) {
+  const supabase = await createSupabaseServerClient()
+  return supabase.rpc("set_sale_shipping", { p_sale_id: saleId, p_ship_date: shipDate, p_tracking_number: trackingNumber })
+}
+
 export async function voidSale(saleId: string, reason: string) {
   const supabase = await createSupabaseServerClient()
   return supabase.rpc("void_sale", { p_sale_id: saleId, p_reason: reason })
@@ -251,7 +257,7 @@ async function getItemStatuses(itemIds: string[]): Promise<Map<string, SaleItemS
   return new Map(data.flatMap((row) => (row.sale_item_id && row.status ? [[row.sale_item_id, row.status]] : [])))
 }
 
-const SALE_LIST_COLUMNS = `id, number, occurred_at, channel, total_usd, is_backdated, created_at,
+const SALE_LIST_COLUMNS = `id, number, occurred_at, channel, total_usd, is_backdated, created_at, notes, delivery_method, ship_date, tracking_number,
   customer:customers(first_name, last_name),
   items:sale_items(id, quantity, source, parent_item_id, variant:product_variants(sku, product:products(name)))`
 
@@ -274,10 +280,13 @@ export async function listSales(
   if (!data.length) return []
 
   const ids = data.map((s) => s.id)
-  const madeToOrderIds = data.flatMap((s) => s.items.filter((i) => i.source === "made_to_order").map((i) => i.id))
+  // Estados: de lo que va por encargo y de todo lo que se envía (para saber si falta enviarlo).
+  const statusIds = data.flatMap((s) =>
+    s.items.filter((i) => i.source === "made_to_order" || (s.delivery_method !== "pickup" && i.source !== "combo")).map((i) => i.id)
+  )
   const [{ data: summaries, error: summaryError }, statuses] = await Promise.all([
     supabase.from("sales_summary").select("sale_id, balance_usd, payment_status").in("sale_id", ids),
-    getItemStatuses(madeToOrderIds),
+    getItemStatuses(statusIds),
   ])
   if (summaryError) throw summaryError
 
@@ -303,11 +312,20 @@ export async function listSales(
       balanceUsd: Number(s?.balance_usd ?? 0),
       paymentStatus: (s?.payment_status ?? "pending") as PaymentStatus,
       // Los componentes de un combo no se repiten: el combo ya los resume.
+      notes: sale.notes,
       itemsSummary: sale.items
         .filter((i) => !i.parent_item_id)
         .map((i) => `${Number(i.quantity)} × ${i.variant?.product?.name ?? i.variant?.sku ?? "—"}`)
         .join(", "),
       pendingProduction: inProduction.has(sale.id),
+      shipping:
+        sale.delivery_method === "pickup"
+          ? null
+          : {
+              date: sale.ship_date,
+              trackingNumber: sale.tracking_number,
+              pending: sale.items.some((i) => i.source !== "combo" && statuses.get(i.id) !== "delivered"),
+            },
       isBackdated: sale.is_backdated,
       createdAt: sale.created_at,
     }
@@ -420,6 +438,8 @@ export async function getSaleDetail(id: string): Promise<SaleDetail | null> {
           }
         : null,
     deliveryFeeUsd: Number(sale.delivery_fee_usd),
+    shipDate: sale.ship_date,
+    trackingNumber: sale.tracking_number,
     isOrder: Boolean(orderResult.data),
     isCancelledOrder: Boolean(cancellationResult.data),
     vat: Number(sale.vat_usd) > 0 ? { percent: Number(sale.vat_percent), usd: Number(sale.vat_usd) } : null,
@@ -524,4 +544,23 @@ export async function listReceivables(): Promise<ReceivableGroup[]> {
   }
   // Primero quien debe hace más tiempo.
   return [...groups.values()].sort((a, b) => b.oldestDays - a.oldestDays || b.balanceUsd - a.balanceUsd)
+}
+
+// Ventas por enviar hoy o atrasadas: con fecha de envío y algo sin entregar (no anuladas).
+export async function listPendingShipments(): Promise<PendingShipment[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("sales")
+    .select("id, number, ship_date, customer:customers(first_name, last_name), items:sale_items(id, source), void:sale_voids(sale_id)")
+    .not("ship_date", "is", null)
+    .lte("ship_date", toCaracasDate())
+    .order("ship_date")
+    .limit(100)
+  if (error) throw error
+  // La anulación llega como objeto o lista según cómo la tipe la API: se aceptan las dos.
+  const open = data.filter((s) => (Array.isArray(s.void) ? s.void.length === 0 : !s.void))
+  const statuses = await getItemStatuses(open.flatMap((s) => s.items.filter((i) => i.source !== "combo").map((i) => i.id)))
+  return open
+    .filter((s) => s.items.some((i) => i.source !== "combo" && statuses.get(i.id) !== "delivered"))
+    .map((s) => ({ id: s.id, number: s.number, shipDate: s.ship_date!, customerName: fullName(s.customer) }))
 }

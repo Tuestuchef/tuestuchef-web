@@ -79,6 +79,8 @@ export const SALES_MESSAGES = {
   PAYMENT_SAVED: "Pago registrado.",
   VOIDED: "Venta anulada.",
   EDITED: "Venta actualizada.",
+  SHIPPING_SAVED: "Datos del envío guardados.",
+  SHIPPED: "Venta marcada como enviada.",
   PAYMENT_CORRECTED: "Pago corregido.",
   PAYMENT_REMOVED: "Pago quitado: la venta queda por cobrar.",
   STATUS_SAVED: "Estado actualizado.",

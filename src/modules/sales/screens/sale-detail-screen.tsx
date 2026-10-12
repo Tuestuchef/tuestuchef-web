@@ -1,4 +1,4 @@
-import { ChevronLeftIcon, PrinterIcon } from "lucide-react"
+import { ChevronLeftIcon, PrinterIcon, TruckIcon } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
@@ -13,7 +13,7 @@ import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { isStorageEnabled } from "@/common/lib/services/storage.service"
 import { cn } from "@/common/lib/utils"
 import type { SessionUser } from "@/common/lib/types/session.types"
-import { formatDate, formatTime } from "@/common/lib/utils/format-date.util"
+import { caracasNoonIso, formatDate, formatTime, toCaracasDate } from "@/common/lib/utils/format-date.util"
 import { formatMoney, formatRate, formatUsdt } from "@/common/lib/utils/format-money.util"
 import MessageActions from "@/modules/messages/components/message-actions"
 import MessageHistory from "@/modules/messages/components/message-history"
@@ -24,6 +24,7 @@ import EditSaleDialog from "../components/edit-sale-dialog"
 import { DeliverReadyButton, ItemStatusSelect } from "../components/item-status-controls"
 import PaymentStatusBadge from "../components/payment-status-badge"
 import SaleEditHistory from "../components/sale-edit-history"
+import ShippingDialog from "../components/shipping-dialog"
 import VoidSaleDialog from "../components/void-sale-dialog"
 import {
   CHANNEL_LABELS,
@@ -119,8 +120,29 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
             hasDeliveryFee={sale.deliveryFeeUsd > 0}
           />
         )}
+        {!isVoided && sale.deliveryMethod !== "pickup" && (
+          <ShippingDialog
+            saleId={sale.id}
+            shipDate={sale.shipDate}
+            trackingNumber={sale.trackingNumber}
+            pendingItemIds={sale.isOrder ? [] : sale.items.filter((i) => i.source !== "combo" && i.status !== "delivered").map((i) => i.id)}
+            minDate={toCaracasDate(sale.occurredAt)}
+          />
+        )}
         {canManage && !isVoided && <VoidSaleDialog saleId={sale.id} label={label} />}
       </div>
+
+      {(sale.shipDate || sale.trackingNumber) && (
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+          <TruckIcon className="size-4 text-muted-foreground" aria-hidden />
+          {sale.shipDate && <span>Envío: {formatDate(caracasNoonIso(sale.shipDate))}</span>}
+          {sale.trackingNumber && (
+            <span>
+              Guía: <span className="font-mono">{sale.trackingNumber}</span>
+            </span>
+          )}
+        </p>
+      )}
 
       <Card>
         <CardHeader>

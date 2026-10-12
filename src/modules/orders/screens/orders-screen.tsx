@@ -2,6 +2,7 @@ import { PlusIcon } from "lucide-react"
 import Link from "next/link"
 
 import PageHeader from "@/common/components/page-header"
+import NoteButton from "@/common/components/note-button"
 import StatusBadge from "@/common/components/status-badge"
 import { Button } from "@/common/components/ui/button"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
@@ -76,6 +77,7 @@ const OrdersScreen = async ({ filter }: { filter: OrdersFilter }) => {
                 <div className="grid min-w-0 flex-1 gap-1">
                   <span className="flex flex-wrap items-center gap-1.5 text-sm font-medium">
                     {formatSaleNumber(o.number)} · {o.customerName ?? "—"}
+                    <NoteButton note={o.notes} title={`Pedido ${formatSaleNumber(o.number)} · ${o.customerName ?? "—"}`} />
                     <StatusBadge tone={STATUS_TONE[o.status]}>{ORDER_STATUS_LABELS[o.status]}</StatusBadge>
                     {o.isLate && <StatusBadge tone="error">Atrasado</StatusBadge>}
                     {o.status === "waiting" && !o.canStart && <StatusBadge tone="warning">Falta abono</StatusBadge>}

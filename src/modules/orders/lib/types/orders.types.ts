@@ -54,6 +54,7 @@ export type OrderListItem = {
   balanceUsd: number
   canStart: boolean
   itemsSummary: string
+  notes: string | null
 }
 
 export type Assignee = { kind: "member" | "workshop"; id: string; name: string }

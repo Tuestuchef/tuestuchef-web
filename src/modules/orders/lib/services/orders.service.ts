@@ -89,7 +89,7 @@ export async function listOrders(filters: { status?: OrderStatus | "late" | "ope
   const ids = data.map((o) => o.sale_id!)
   const { data: sales, error: salesError } = await supabase
     .from("sales")
-    .select("id, customer:customers(first_name, last_name), items:sale_items(quantity, parent_item_id, variant:product_variants(product:products(name)))")
+    .select("id, notes, customer:customers(first_name, last_name), items:sale_items(quantity, parent_item_id, variant:product_variants(product:products(name)))")
     .in("id", ids)
   if (salesError) throw salesError
   const byId = new Map(sales.map((s) => [s.id, s]))
@@ -107,6 +107,7 @@ export async function listOrders(filters: { status?: OrderStatus | "late" | "ope
       totalUsd: Number(o.total_usd),
       balanceUsd: Number(o.balance_usd),
       canStart: Boolean(o.can_start),
+      notes: sale?.notes ?? null,
       itemsSummary: (sale?.items ?? [])
         .filter((i) => !i.parent_item_id)
         .map((i) => `${Number(i.quantity)} × ${i.variant?.product?.name ?? "—"}`)

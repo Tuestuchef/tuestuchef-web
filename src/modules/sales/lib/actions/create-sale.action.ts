@@ -7,7 +7,7 @@ import { authorizeAction } from "@/common/lib/services/session.service"
 import { toUserError } from "@/common/lib/utils/to-user-error.util"
 
 import { createSaleSchema } from "../schemas/sales.schema"
-import { createSale } from "../services/sales.service"
+import { createSale, setSaleShipping } from "../services/sales.service"
 
 type Result = { ok: true; saleId: string } | { ok: false; error: string }
 
@@ -21,6 +21,8 @@ export async function createSaleAction(input: unknown): Promise<Result> {
 
   const { data, error } = await createSale(parsed.data)
   if (error || !data) return { ok: false, error: toUserError(error, "No se pudo registrar la venta.") }
+  // La fecha de envío se guarda aparte (la venta ya quedó registrada aunque esto falle).
+  if (parsed.data.ship_date) await setSaleShipping(data, parsed.data.ship_date, null)
 
   refresh()
   return { ok: true, saleId: data }

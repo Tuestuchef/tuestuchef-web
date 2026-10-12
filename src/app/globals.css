@@ -207,3 +207,30 @@
     @apply font-heading;
   }
 }
+
+/* Imprimir (nota de entrega y documentos): solo el contenido, sin el marco del panel ni los
+   encabezados del navegador (URL y fecha), en una hoja limpia. */
+@media print {
+  @page {
+    margin: 0;
+  }
+  [data-slot="sidebar"],
+  [data-slot="sidebar-gap"],
+  [data-slot="sidebar-container"],
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+  [data-slot="sidebar-wrapper"],
+  [data-slot="sidebar-inset"] {
+    display: block !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  main {
+    padding: 14mm !important;
+  }
+}

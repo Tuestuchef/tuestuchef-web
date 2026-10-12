@@ -1,6 +1,7 @@
 import { ChevronRightIcon } from "lucide-react"
 import Link from "next/link"
 
+import NoteButton from "@/common/components/note-button"
 import StatusBadge from "@/common/components/status-badge"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatDate } from "@/common/lib/utils/format-date.util"
@@ -29,6 +30,7 @@ const PurchaseList = ({ purchases, today }: { purchases: PurchaseListItem[]; tod
               <div className="grid min-w-0 flex-1 gap-0.5">
                 <span className="flex flex-wrap items-center gap-1.5">
                   <span className="font-medium">{p.supplierName}</span>
+                  <NoteButton note={p.notes} title={`${formatPurchaseNumber(p.number)} · ${p.supplierName}`} />
                   <PurchaseStatusBadge status={p.status} overdue={overdue} />
                   {p.isBackdated && <StatusBadge tone="info">Retroactiva</StatusBadge>}
                 </span>

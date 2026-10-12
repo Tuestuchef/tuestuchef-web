@@ -118,7 +118,7 @@ export async function voidPurchase(purchaseId: string, reason: string) {
   return supabase.rpc("void_purchase", { p_purchase_id: purchaseId, p_reason: reason })
 }
 
-const LIST_COLUMNS = `id, number, occurred_at, created_at, is_backdated, total_usd, due_date,
+const LIST_COLUMNS = `id, number, occurred_at, created_at, is_backdated, total_usd, due_date, notes,
   supplier:suppliers(name),
   items:purchase_items(quantity, line_type, description, variant:product_variants(sku, product:products(name)))`
 
@@ -160,6 +160,7 @@ export async function listPurchases(filters: PurchaseFilters | { supplierId: str
       balanceUsd: Number(s?.balance_usd ?? 0),
       dueDate: p.due_date,
       status: (s?.payment_status ?? "pending") as PurchaseStatus,
+      notes: p.notes,
       itemsSummary: p.items
         .map((i) =>
           i.line_type === "concept" ? i.description : `${Number(i.quantity)} × ${i.variant?.product?.name ?? i.variant?.sku ?? "—"}`

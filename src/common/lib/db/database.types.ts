@@ -1141,8 +1141,10 @@ export type Database = {
           number: number
           occurred_at: string
           price_method_id: string
+          ship_date: string | null
           subtotal_usd: number
           total_usd: number
+          tracking_number: string | null
           usd_usdt_rate: number
         }
         Insert: {
@@ -1170,8 +1172,10 @@ export type Database = {
           number?: number
           occurred_at?: string
           price_method_id: string
+          ship_date: string | null
           subtotal_usd: number
           total_usd: number
+          tracking_number: string | null
           usd_usdt_rate: number
         }
         Update: {
@@ -1199,8 +1203,10 @@ export type Database = {
           number?: number
           occurred_at?: string
           price_method_id?: string
+          ship_date?: string | null
           subtotal_usd?: number
           total_usd?: number
+          tracking_number?: string | null
           usd_usdt_rate?: number
         }
         Relationships: [
@@ -5037,6 +5043,10 @@ export type Database = {
           p_sale_id: string
         }
         Returns: string
+      }
+      set_sale_shipping: {
+        Args: { p_sale_id: string; p_ship_date: string | null; p_tracking_number: string | null }
+        Returns: undefined
       }
       create_sale: {
         Args: {

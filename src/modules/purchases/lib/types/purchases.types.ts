@@ -49,6 +49,7 @@ export type PurchaseListItem = {
   dueDate: string | null
   status: PurchaseStatus
   itemsSummary: string
+  notes: string | null
 }
 
 export type PurchaseDetail = {
