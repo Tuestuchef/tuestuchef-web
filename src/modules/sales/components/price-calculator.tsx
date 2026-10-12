@@ -15,6 +15,7 @@ import { PRICE_CALCULATOR_MESSAGES, PRICE_CALCULATOR_STORAGE_KEY } from "../lib/
 import type { CalculatorProduct, PriceCalculatorData } from "../lib/types/sales.types"
 import { type CalculatorLine, calculatorTotals, calculatorWhatsappText, lineExtraUsd, sizeSurchargesFor } from "../lib/utils/price-calculator.util"
 import { unitsPerUsd } from "../lib/utils/sale-math.util"
+import { calculatorProductsFor } from "../lib/utils/agreement-pricing.util"
 
 const ALL = "all"
 
@@ -50,7 +51,19 @@ const priceFrom = (product: CalculatorProduct) => {
 
 // Para responder rápido "¿cuánto cuesta…?": se tocan productos y abajo sale el total por método de pago.
 // No guarda nada en la base; la lista vive solo en este navegador.
-const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: PriceCalculatorData) => {
+// Sin cliente: precios normales.
+const GENERAL = "general"
+
+const PriceCalculator = ({ products: allProducts, categories, methods, rates, volumeTiers: baseVolumeTiers, agreements }: PriceCalculatorData) => {
+  // Precios de un cliente con acuerdo (sus exclusivos, sus precios y sin descuento al mayor).
+  const [customerId, setCustomerId] = useState(GENERAL)
+  const agreement = agreements.find((a) => a.customerId === customerId) ?? null
+  const methodIds = methods.map((m) => m.id).join(",")
+  const products = useMemo(
+    () => calculatorProductsFor(allProducts, agreement?.customerId ?? null, agreement, methodIds ? methodIds.split(",") : []),
+    [allProducts, agreement, methodIds]
+  )
+  const volumeTiers = agreement ? [] : baseVolumeTiers
   const [lines, setLines] = useState<CalculatorLine[]>([])
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState(ALL)
@@ -157,6 +170,14 @@ const PriceCalculator = ({ products, categories, methods, rates, volumeTiers }: 
             className="h-11 pl-9 md:h-9"
           />
         </div>
+        {agreements.length > 0 && (
+          <ChoiceChips
+            label="Precios de"
+            value={customerId}
+            onChange={setCustomerId}
+            options={[{ value: GENERAL, label: "Cliente general" }, ...agreements.map((a) => ({ value: a.customerId, label: a.customerName }))]}
+          />
+        )}
         {categories.length > 1 && (
           <ChoiceChips
             label="Categoría"

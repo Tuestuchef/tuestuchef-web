@@ -24,6 +24,7 @@ export async function getQuoteFormData(): Promise<QuoteFormData> {
     rates: order.rates,
     staffMaxDiscountPercent: order.staffMaxDiscountPercent,
     volumeTiers: order.volumeTiers,
+    agreements: order.agreements,
     today: order.today,
     customizationTypes: order.customizationTypes,
     customizationTiers: order.customizationTiers,

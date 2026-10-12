@@ -1,5 +1,7 @@
 import "server-only"
 
+import { listAgreements } from "@/modules/customers/lib/services/agreements.service"
+
 import type { Currency } from "@/common/lib/constants/currency.constants"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 import { resolveImageUrl } from "@/modules/products/lib/services/product-images.service"
@@ -13,11 +15,11 @@ import { comboSurcharges } from "../utils/combo.util"
 // Lo que necesita la calculadora: los mismos precios, métodos, tasa y tramos al mayor que Nueva venta.
 export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
   const supabase = await createSupabaseServerClient()
-  const [productsResult, pricesResult, componentsResult, methodsResult, tiersResult, rateStatus, surchargesResult, colorSurchargesResult] = await Promise.all([
+  const [productsResult, pricesResult, componentsResult, methodsResult, tiersResult, rateStatus, surchargesResult, colorSurchargesResult, agreements] = await Promise.all([
     supabase
       .from("products")
       .select(
-        `id, name, kind, genders, category:product_categories(id, name),
+        `id, name, kind, genders, exclusive_customer_id, category:product_categories(id, name),
          variants:product_variants(is_active, color:colors(name)),
          images:product_images(path, is_primary)`
       )
@@ -36,6 +38,7 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
     getRateStatus(),
     supabase.from("size_surcharges").select("product_id, gender, amount_usd, target_id:size_id, target:sizes(name, sort_order)"),
     supabase.from("color_surcharges").select("product_id, amount_usd, target_id:color_id, target:colors(name, sort_order)"),
+    listAgreements(),
   ])
   if (productsResult.error) throw productsResult.error
   if (methodsResult.error) throw methodsResult.error
@@ -105,6 +108,7 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
           colors,
           imageUrl: primary ? await resolveImageUrl(primary.path) : null,
           pricesUsd: prices.get(p.id) ?? {},
+          exclusiveCustomerId: p.exclusive_customer_id,
           piecesPerUnit: p.kind === "combo" ? (comboPieces.get(p.id) ?? 1) : 1,
           sizeSurcharges: p.genders.length && p.kind !== "combo" ? [] : sizeSurchargesOf(p.id),
           colorSurcharges: colorSurchargesOf(p.id),
@@ -132,5 +136,6 @@ export async function getPriceCalculatorData(): Promise<PriceCalculatorData> {
       ? { bcvUsd: Number(rate.bcv_usd), bcvEur: Number(rate.bcv_eur), usdUsdt: Number(rate.usd_usdt), isCurrent: rateStatus.hasTodayRate }
       : null,
     volumeTiers: (tiersResult.data ?? []).map((t) => ({ minQuantity: t.min_quantity, percent: Number(t.percent) })),
+    agreements,
   }
 }

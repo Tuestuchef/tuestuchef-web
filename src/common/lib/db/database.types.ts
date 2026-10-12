@@ -12,6 +12,88 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      customer_agreements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          general_discount_percent: number | null
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          general_discount_percent?: number | null
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          general_discount_percent?: number | null
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_agreements_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_agreement_prices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          discount_percent: number | null
+          fixed_price_usd: number | null
+          id: string
+          product_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          discount_percent?: number | null
+          fixed_price_usd?: number | null
+          id?: string
+          product_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          discount_percent?: number | null
+          fixed_price_usd?: number | null
+          id?: string
+          product_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_agreement_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       account_transfers: {
         Row: {
           amount_in: number
@@ -734,6 +816,7 @@ export type Database = {
           id: string
           is_active: boolean
           kind: Database["public"]["Enums"]["product_kind"]
+          exclusive_customer_id: string | null
           name: string
           unit: Database["public"]["Enums"]["product_unit"]
           updated_at: string
@@ -753,6 +836,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           kind?: Database["public"]["Enums"]["product_kind"]
+          exclusive_customer_id?: string | null
           name: string
           unit?: Database["public"]["Enums"]["product_unit"]
           updated_at?: string
@@ -772,6 +856,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           kind?: Database["public"]["Enums"]["product_kind"]
+          exclusive_customer_id?: string | null
           name?: string
           unit?: Database["public"]["Enums"]["product_unit"]
           updated_at?: string

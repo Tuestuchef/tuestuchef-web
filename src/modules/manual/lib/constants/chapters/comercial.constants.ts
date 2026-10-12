@@ -474,6 +474,32 @@ export const CUSTOMERS_CHAPTER: ManualChapter = {
       ],
     },
     {
+      id: "acuerdos",
+      heading: "Clientes fijos: acuerdo y exclusivos",
+      blocks: [
+        {
+          kind: "text",
+          body:
+            "A un cliente fijo (una escuela de cocina, un hotel) se le puede dar un **acuerdo** desde su ficha, en la sección Acuerdo (owner y admin; el resto del equipo lo ve). Al elegir ese cliente en una venta, un pedido o un presupuesto, sus precios se aplican solos y la línea dice **precio acuerdo**. Con acuerdo no lleva descuento al mayor: el acuerdo ya lo contempla.",
+        },
+        {
+          kind: "steps",
+          items: [
+            { title: "Descuento general", body: "Un % para todo lo que no tenga su propio precio en el acuerdo (opcional)." },
+            { title: "Precio por producto o combo", body: "Un % de descuento sobre el precio de cada método, o un precio fijo en dólares que vale con cualquier método. El recargo por talla o color se suma encima." },
+            { title: "Exclusivos", body: "Un producto o combo que solo se le hace a ese cliente: en su ficha del Catálogo, **Editar → Exclusivo de**. No aparece en el buscador con otros clientes ni se le puede vender a nadie más; con ese cliente elegido sale primero." },
+            { title: "Calculadora", body: "Arriba, **Precios de** permite ver los precios de un cliente con acuerdo." },
+          ],
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "Lo ya vendido no cambia",
+          body: "Cada venta y presupuesto guarda el precio que tenía. Cambiar o quitar el acuerdo solo afecta lo que se registre después.",
+        },
+      ],
+    },
+    {
       id: "ficha",
       heading: "Qué tiene la ficha",
       blocks: [

@@ -53,6 +53,8 @@ export const productSchema = z.object({
   // Géneros que ofrece (Dama, Caballero, Unisex); vacío = no aplica (gorros, estuches…).
   genders: z.array(z.enum(E.product_gender)).max(3).default([]),
   closure: optionalEnum(E.product_closure),
+  // Exclusivo de un cliente fijo (solo se le vende a él). Vacío = para todos.
+  exclusive_customer_id: optionalUuid,
   fit: optionalEnum(E.product_fit),
   // Código del modelo para el SKU (ej.: MC = manga corta, MAXI). Opcional; vacío = sin código.
   model_code: z

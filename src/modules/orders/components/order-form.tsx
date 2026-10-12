@@ -20,6 +20,7 @@ import { parseAmount } from "@/common/lib/utils/parse-amount.util"
 import CustomerPicker, { type PickedCustomer } from "@/modules/customers/components/customer-picker"
 import ComboPickerDialog, { type ComboSelection } from "@/modules/sales/components/combo-picker-dialog"
 import ProductPicker from "@/modules/sales/components/product-picker"
+import { useCustomerPricing } from "@/modules/sales/lib/hooks/use-customer-pricing.hook"
 import {
   CHANNEL_LABELS,
   chargesShipping,
@@ -61,7 +62,8 @@ const OrderForm = ({
   variants,
   methods,
   rates,
-  volumeTiers,
+  volumeTiers: baseVolumeTiers,
+  agreements,
   customizationTypes,
   customizationTiers,
   settings,
@@ -87,7 +89,11 @@ const OrderForm = ({
   const [notes, setNotes] = useState("")
   const [vatEnabled, setVatEnabled] = useState(false)
 
-  const variantById = useMemo(() => new Map(variants.map((v) => [v.id, v])), [variants])
+  // Cliente con acuerdo: sus precios, sus exclusivos y sin descuento al mayor.
+  const pricing = useCustomerPricing(variants, baseVolumeTiers, agreements, methods.map((m) => m.id), customer?.id ?? null)
+  const volumeTiers = pricing.tiers
+  const variantById = useMemo(() => new Map(pricing.priced.map((v) => [v.id, v])), [pricing.priced])
+  const exclusiveLine = lines.find((l) => pricing.notAllowed(variantById.get(l.variantId)))
   const typeById = useMemo(() => new Map(customizationTypes.map((t) => [t.id, t])), [customizationTypes])
   const methodById = useMemo(() => new Map(methods.map((m) => [m.id, m])), [methods])
   const saleRates = rates ?? { bcvUsd: 0, bcvEur: 0, usdUsdt: 1 }
@@ -137,6 +143,7 @@ const OrderForm = ({
   const blockers = [
     !customer && "Elige el cliente: un pedido necesita cliente.",
     customer?.blockedReason && `Cliente bloqueado: no se le puede vender (${customer.blockedReason}).`,
+    exclusiveLine && `"${variantById.get(exclusiveLine.variantId)?.productName}" es exclusivo de otro cliente: quítalo o elige su cliente.`,
     lines.length === 0 && "Agrega al menos un producto.",
     missingPrice && `"${missingPrice.variant.productName}" no tiene precio para ${methodById.get(priceMethodId)?.name ?? ""}.`,
     belowMinimum[0],
@@ -209,7 +216,7 @@ const OrderForm = ({
       <section className="grid gap-2">
         <Label>Productos</Label>
         <ProductPicker
-          variants={variants}
+          variants={pricing.visible}
           priceMethodId={priceMethodId}
           available={(id) => variantById.get(id)?.stock ?? 0}
           onAdd={addVariant}
@@ -226,7 +233,7 @@ const OrderForm = ({
                       {line.variant.productName} <span className="font-normal text-muted-foreground">· {line.variant.variantLabel}</span>
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {line.price === undefined ? "Sin precio para este método" : `${usd(line.price)} c/u`}
+                      {line.price === undefined ? "Sin precio para este método" : `${usd(line.price)} c/u${line.variant.agreementPrice ? " · precio acuerdo" : ""}`}
                       {!line.components && line.variant.fulfillmentType !== "made_to_order" && ` · hay ${line.variant.stock} en inventario`}
                     </span>
                     {line.components && (
@@ -489,7 +496,7 @@ const OrderForm = ({
 
       <ComboPickerDialog
         combo={comboToPick}
-        variants={variants}
+        variants={pricing.visible}
         available={(id) => variantById.get(id)?.stock ?? 0}
         priceMethodId={priceMethodId}
         onCancel={() => setComboToPick(null)}

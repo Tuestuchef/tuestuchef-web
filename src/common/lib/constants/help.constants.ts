@@ -229,6 +229,10 @@ export const HELP_TOPICS = {
         ],
       },
       {
+        heading: "Exclusivo de un cliente",
+        items: ["En Editar, 'Exclusivo de': solo se le vende, cotiza o hace pedido a ese cliente, y solo aparece en el buscador con él elegido."],
+      },
+      {
         heading: "Precios",
         items: [
           "Un precio en dólares por método de pago. Vacío = no se vende con ese método.",
@@ -418,6 +422,14 @@ export const HELP_TOPICS = {
           "Llamar, escribir por WhatsApp o abrir su Instagram.",
           "Editar sus datos. Una empresa muestra también su razón social, RIF y persona de contacto (el RIF lo ve todo el equipo; la cédula de una persona, solo owner y admin).",
           "Desactivarlo (owner y admin). Los clientes no se borran porque tienen ventas.",
+        ],
+      },
+      {
+        heading: "Acuerdo (clientes fijos)",
+        items: [
+          "Descuento general y precios por producto o combo (% o precio fijo en USD). Se aplican solos al venderle, cotizarle o hacerle un pedido, sin descuento al mayor.",
+          "Exclusivos: los productos y combos que solo se le hacen a él (se marcan en el Catálogo con Editar → Exclusivo de).",
+          "Lo editan owner y admin; el resto del equipo lo ve.",
         ],
       },
       {

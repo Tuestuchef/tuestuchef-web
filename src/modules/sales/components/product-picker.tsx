@@ -57,7 +57,12 @@ const ProductPicker = ({ variants, priceMethodId, available, placeholder = "Fili
           .filter(Boolean)
           .join(" ")),
       }))
-      .sort((a, b) => a.productName.localeCompare(b.productName, "es"))
+      // Los exclusivos del cliente elegido primero (los de otros clientes ya vienen filtrados).
+      .sort(
+        (a, b) =>
+          Number(Boolean(b.variants[0].exclusiveCustomerId)) - Number(Boolean(a.variants[0].exclusiveCustomerId)) ||
+          a.productName.localeCompare(b.productName, "es")
+      )
   }, [variants])
 
   const { matches, total } = useMemo(
@@ -111,7 +116,10 @@ const ProductPicker = ({ variants, priceMethodId, available, placeholder = "Fili
                 {matches.map((group) => (
                   <CommandItem key={group.productId} value={group.productId} onSelect={() => pick(group)}>
                     <span className="grid min-w-0 flex-1">
-                      <span className="truncate">{group.productName}</span>
+                      <span className="truncate">
+                        {group.productName}
+                        {group.variants[0].exclusiveCustomerId && <span className="text-muted-foreground"> · exclusivo</span>}
+                      </span>
                       <span className="truncate text-xs text-muted-foreground tabular-nums">{summary(group)}</span>
                     </span>
                   </CommandItem>

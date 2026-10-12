@@ -111,9 +111,14 @@ const ProductDetailScreen = async ({ user, id }: { user: SessionUser; id: string
                   : FULFILLMENT_LABELS[product.fulfillment_type]}
             </span>
             {!product.is_active && <StatusBadge tone="info">Inactivo</StatusBadge>}
+            {detail.exclusiveCustomer && (
+              <Link href={ROUTES.CUSTOMER(detail.exclusiveCustomer.id)} className="underline-offset-4 hover:underline">
+                <StatusBadge tone="info">Exclusivo · {detail.exclusiveCustomer.name}</StatusBadge>
+              </Link>
+            )}
           </span>
         }
-        actions={canManage && <ProductFormDialog categories={categories} product={product} />}
+        actions={canManage && <ProductFormDialog categories={categories} product={product} exclusiveCustomer={detail.exclusiveCustomer} />}
       />
       {product.description && <p className="text-sm">{product.description}</p>}
 

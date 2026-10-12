@@ -9,10 +9,12 @@ export const metadata: Metadata = { title: "Productos" }
 const filtersSchema = z.object({
   q: z.string().trim().max(80).optional().catch(undefined),
   categoria: z.uuid().optional().catch(undefined),
+  // Exclusivos de un cliente: "si" solo esos, "no" sin ellos.
+  exclusivos: z.enum(["si", "no"]).optional().catch(undefined),
 })
 
 export default async function ProductsPage({ searchParams }: PageProps<"/productos">) {
   const user = await requireSessionUser()
   const params = filtersSchema.parse(await searchParams)
-  return <ProductsScreen user={user} filters={{ search: params.q || undefined, categoryId: params.categoria }} />
+  return <ProductsScreen user={user} filters={{ search: params.q || undefined, categoryId: params.categoria, exclusive: params.exclusivos }} />
 }

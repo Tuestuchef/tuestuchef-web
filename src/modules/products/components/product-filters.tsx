@@ -17,7 +17,8 @@ import type { CatalogItem } from "../lib/types/products.types"
 
 const ALL = "all"
 
-const ProductFilters = ({ categories }: { categories: CatalogItem[] }) => {
+// withExclusive: el filtro de exclusivos de clientes (no aplica a materia prima).
+const ProductFilters = ({ categories, withExclusive = false }: { categories: CatalogItem[]; withExclusive?: boolean }) => {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -40,7 +41,7 @@ const ProductFilters = ({ categories }: { categories: CatalogItem[] }) => {
   }, [search])
 
   return (
-    <div className="grid gap-2 sm:grid-cols-[1fr_14rem]">
+    <div className={withExclusive ? "grid gap-2 sm:grid-cols-[1fr_14rem_12rem]" : "grid gap-2 sm:grid-cols-[1fr_14rem]"}>
       <div className="relative">
         <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input
@@ -65,6 +66,18 @@ const ProductFilters = ({ categories }: { categories: CatalogItem[] }) => {
           ))}
         </SelectContent>
       </Select>
+      {withExclusive && (
+        <Select value={searchParams.get("exclusivos") ?? ALL} onValueChange={(value) => setParam("exclusivos", value)}>
+          <SelectTrigger aria-label="Exclusivos de clientes" className="h-11 w-full md:h-9">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Todos</SelectItem>
+            <SelectItem value="no">Para todos los clientes</SelectItem>
+            <SelectItem value="si">Exclusivos de un cliente</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
     </div>
   )
 }

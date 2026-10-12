@@ -30,6 +30,8 @@ import CustomerBlockDialog from "../components/customer-block-dialog"
 import CustomerFormDialog from "../components/customer-form-dialog"
 import { getCustomer, listCustomerBlockEvents } from "../lib/services/customers.service"
 import { formatPhone, formatTaxId, whatsappUrl } from "../lib/utils/normalize-contact.util"
+import AgreementCard from "../components/agreement-card"
+import { getCustomerAgreement, listAgreementProductOptions } from "../lib/services/agreements.service"
 
 const Row = ({ icon: Icon, label, children }: { icon: typeof PhoneIcon; label: string; children: React.ReactNode }) => (
   <div className="flex items-start gap-3 py-2.5">
@@ -43,9 +45,11 @@ const Row = ({ icon: Icon, label, children }: { icon: typeof PhoneIcon; label: s
 
 const CustomerDetailScreen = async ({ user, id }: { user: SessionUser; id: string }) => {
   const canManage = isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)
-  const [customer, sales] = await Promise.all([
+  const [customer, sales, agreement, agreementProducts] = await Promise.all([
     getCustomer(id, { withIdDocument: canManage }),
     listSales({ customerId: id }),
+    getCustomerAgreement(id),
+    canManage ? listAgreementProductOptions() : Promise.resolve([]),
   ])
   if (!customer) notFound()
   const blockEvents = await listCustomerBlockEvents(id)
@@ -168,6 +172,8 @@ const CustomerDetailScreen = async ({ user, id }: { user: SessionUser; id: strin
           {customer.notes && <p className="py-2.5 text-sm whitespace-pre-line">{customer.notes}</p>}
         </CardContent>
       </Card>
+
+      <AgreementCard customerId={customer.id} agreement={agreement} products={agreementProducts} canManage={canManage} />
 
       <Card>
         <CardHeader>

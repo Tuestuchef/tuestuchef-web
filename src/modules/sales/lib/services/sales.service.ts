@@ -10,6 +10,8 @@ import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.se
 
 import type { PaymentStatus, SaleItemStatus } from "../constants/sales.constants"
 import type { AddPaymentInput, CorrectPaymentInput, CreateSaleInput, EditSaleInput } from "../schemas/sales.schema"
+import { listAgreements } from "@/modules/customers/lib/services/agreements.service"
+
 import { round } from "../utils/sale-math.util"
 import { toPayload } from "./offline-sales.service"
 import type {
@@ -40,12 +42,12 @@ const fullName = (c: { first_name: string; last_name: string | null } | null) =>
 // Todo lo que necesita la pantalla de venta, en una sola carga.
 export async function getSaleFormData(): Promise<SaleFormData> {
   const supabase = await createSupabaseServerClient()
-  const [variantsResult, balancesResult, pricesResult, methodsResult, settingsResult, rateStatus, componentsResult, tiersResult, surchargesResult, colorSurchargesResult] = await Promise.all([
+  const [variantsResult, balancesResult, pricesResult, methodsResult, settingsResult, rateStatus, componentsResult, tiersResult, surchargesResult, colorSurchargesResult, agreements] = await Promise.all([
     fetchAll((from, to) =>
     supabase
       .from("product_variants")
       .select(
-        "id, sku, product_id, size_id, color_id, gender, color:colors(name, sort_order), size:sizes(name, sort_order), product:products!inner(name, kind, is_active, fulfillment_type)"
+        "id, sku, product_id, size_id, color_id, gender, color:colors(name, sort_order), size:sizes(name, sort_order), product:products!inner(name, kind, is_active, fulfillment_type, exclusive_customer_id)"
       )
       .eq("is_active", true)
       .eq("product.is_active", true)
@@ -72,6 +74,7 @@ export async function getSaleFormData(): Promise<SaleFormData> {
     supabase.from("volume_discount_tiers").select("min_quantity, percent").eq("scope", "products").order("min_quantity"),
     supabase.from("size_surcharges").select("product_id, size_id, gender, amount_usd"),
     supabase.from("color_surcharges").select("product_id, color_id, amount_usd"),
+    listAgreements(),
   ])
   if (variantsResult.error) throw variantsResult.error
   if (methodsResult.error) throw methodsResult.error
@@ -130,6 +133,7 @@ export async function getSaleFormData(): Promise<SaleFormData> {
         stock: stock.get(v.id) ?? 0,
         pricesUsd: pricesFor(v),
         extraUsd: extraFor(v),
+        exclusiveCustomerId: v.product.exclusive_customer_id,
         ...(v.product.kind === "combo" && { components: components.get(v.product_id) }),
       })),
     methods: methodsResult.data.map((m) => ({
@@ -150,6 +154,7 @@ export async function getSaleFormData(): Promise<SaleFormData> {
     staffMaxBackdateDays: Number(settingsResult.data?.staff_max_backdate_days ?? 7),
     volumeTiers: (tiersResult.data ?? []).map((t) => ({ minQuantity: t.min_quantity, percent: Number(t.percent) })),
     today: rateStatus.today,
+    agreements,
   }
 }
 

@@ -16,7 +16,7 @@ import { listProducts } from "../lib/services/products.service"
 
 type ProductsScreenProps = {
   user: SessionUser
-  filters: { search?: string; categoryId?: string }
+  filters: { search?: string; categoryId?: string; exclusive?: "si" | "no" }
   kind?: ProductKind
 }
 
@@ -51,7 +51,7 @@ const ProductsScreen = async ({ user, filters, kind = "finished_good" }: Product
           </>
         }
       />
-      <ProductFilters categories={categories} />
+      <ProductFilters categories={categories} withExclusive={kind !== "raw_material"} />
       <ProductList products={products} />
     </div>
   )

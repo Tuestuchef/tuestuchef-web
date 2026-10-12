@@ -30,6 +30,7 @@ import CustomizationDialog, { type LineCustomization } from "@/modules/orders/co
 import type { CustomizationOptions } from "@/modules/orders/lib/types/orders.types"
 
 import { createSaleAction } from "../lib/actions/create-sale.action"
+import { useCustomerPricing } from "../lib/hooks/use-customer-pricing.hook"
 import {
   CHANNEL_LABELS,
   chargesShipping,
@@ -102,7 +103,8 @@ const SaleForm = ({
   rates,
   staffMaxDiscountPercent,
   staffMaxBackdateDays,
-  volumeTiers,
+  volumeTiers: baseVolumeTiers,
+  agreements,
   today,
   customizationTypes,
   customizationTiers,
@@ -141,7 +143,11 @@ const SaleForm = ({
     setChannel(readStoredChannel())
   }, [])
 
-  const variantById = useMemo(() => new Map(variants.map((v) => [v.id, v])), [variants])
+  // Cliente con acuerdo: sus precios, sus exclusivos y sin descuento al mayor.
+  const pricing = useCustomerPricing(variants, baseVolumeTiers, agreements, methods.map((m) => m.id), customer?.id ?? null)
+  const volumeTiers = pricing.tiers
+  const variantById = useMemo(() => new Map(pricing.priced.map((v) => [v.id, v])), [pricing.priced])
+  const exclusiveLine = cart.find((l) => pricing.notAllowed(variantById.get(l.variantId)))
   const methodById = useMemo(() => new Map(methods.map((m) => [m.id, m])), [methods])
   const priceMethod = methodById.get(priceMethodId)
 
@@ -230,6 +236,7 @@ const SaleForm = ({
   const blockers = [
     cart.length === 0 && SALES_MESSAGES.EMPTY_CART,
     customer?.blockedReason && `Cliente bloqueado: no se le puede vender (${customer.blockedReason}).`,
+    exclusiveLine && `"${variantById.get(exclusiveLine.variantId)?.productName}" es exclusivo de otro cliente: quítalo o elige su cliente.`,
     missingPrice[0] && SALES_MESSAGES.NO_PRICE(missingPrice[0].variant.productName, priceMethod?.name ?? ""),
     customizationOverLine &&
       `La personalización de "${variantById.get(customizationOverLine.variantId)?.productName}" tiene más piezas que la línea.`,
@@ -390,7 +397,7 @@ const SaleForm = ({
       <section className="grid gap-2">
         <Label>Productos</Label>
         <ProductPicker
-          variants={variants}
+          variants={pricing.visible}
           priceMethodId={priceMethodId}
           available={availableFor}
           placeholder="Filipina 3/4 dama negra…"
@@ -414,6 +421,7 @@ const SaleForm = ({
                       ) : (
                         <>
                           {usd(line.price)} c/u
+                          {line.variant.agreementPrice && " · precio acuerdo"}
                           {line.source === "stock" && ` · hay ${quantityFormat.format(line.variant.stock)}`}
                         </>
                       )}
@@ -539,7 +547,7 @@ const SaleForm = ({
         }}
       />
 
-      <ComboPickerDialog combo={comboToPick} variants={variants} available={availableFor} priceMethodId={priceMethodId} onCancel={() => setComboToPick(null)} onConfirm={addCombo} />
+      <ComboPickerDialog combo={comboToPick} variants={pricing.visible} available={availableFor} priceMethodId={priceMethodId} onCancel={() => setComboToPick(null)} onConfirm={addCombo} />
 
       {/* 2. Método de pago (lista de precios) */}
       <FormField label="Método de pago" htmlFor="sale-method" hint="Define el precio de cada producto.">

@@ -22,6 +22,8 @@ import { Textarea } from "@/common/components/ui/textarea"
 import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
 import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
 
+import CustomerPicker, { type PickedCustomer } from "@/modules/customers/components/customer-picker"
+
 import { saveProductAction } from "../lib/actions/save-product.action"
 import {
   CLOSURE_LABELS,
@@ -39,6 +41,8 @@ type ProductFormDialogProps = {
   product?: Product
   // Al crear: producto terminado o materia prima (al editar manda el del producto).
   kind?: ProductKind
+  // Cliente del que es exclusivo (al editar).
+  exclusiveCustomer?: PickedCustomer | null
 }
 
 const NONE = "none"
@@ -74,7 +78,8 @@ const OptionalSelect = ({
   </FormField>
 )
 
-const ProductFormDialog = ({ categories, product, kind = "finished_good" }: ProductFormDialogProps) => {
+const ProductFormDialog = ({ categories, product, kind = "finished_good", exclusiveCustomer = null }: ProductFormDialogProps) => {
+  const [exclusive, setExclusive] = useState<PickedCustomer | null>(exclusiveCustomer)
   const isRaw = (product?.kind ?? kind) === "raw_material"
   // Un combo solo lleva nombre, categoría y descripción: lo demás es de sus componentes.
   const isCombo = (product?.kind ?? kind) === "combo"
@@ -252,6 +257,18 @@ const ProductFormDialog = ({ categories, product, kind = "finished_good" }: Prod
                 placeholder="0"
                 className="h-11 md:h-9"
               />
+            </FormField>
+          )}
+
+          {!isRaw && (
+            <FormField
+              label="Exclusivo de"
+              htmlFor="product-exclusive"
+              optional
+              hint="Un cliente fijo: solo se le vende, cotiza o hace pedido a él, y no aparece en el buscador con otros clientes."
+            >
+              <CustomerPicker value={exclusive} onChange={setExclusive} canManage emptyLabel="Para todos los clientes" />
+              <input type="hidden" name="exclusive_customer_id" value={exclusive?.id ?? ""} />
             </FormField>
           )}
 

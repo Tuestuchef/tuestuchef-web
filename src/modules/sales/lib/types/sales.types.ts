@@ -1,4 +1,5 @@
 import type { Currency } from "@/common/lib/constants/currency.constants"
+import type { CustomerAgreement } from "@/modules/customers/lib/types/agreements.types"
 import type { ProductGender } from "@/modules/products/lib/constants/products.constants"
 
 import type {
@@ -37,6 +38,10 @@ export type SellableVariant = {
   extraUsd: number
   // Solo en combos: qué lleva cada combo (el producto, la talla y el color se eligen al vender).
   components?: ComboComponentOption[]
+  // Exclusivo de un cliente: solo se le vende a él.
+  exclusiveCustomerId: string | null
+  // Los precios ya traen el acuerdo del cliente elegido.
+  agreementPrice?: boolean
 }
 
 // Un componente del combo: cuántas piezas lleva cada combo y de qué productos se elige.
@@ -59,6 +64,8 @@ export type SaleFormData = {
   staffMaxBackdateDays: number
   volumeTiers: VolumeTier[]
   today: string
+  // Acuerdos de clientes fijos (precios especiales y sin descuento al mayor).
+  agreements: CustomerAgreement[]
 }
 
 export type SaleListItem = {
@@ -228,6 +235,8 @@ export type CalculatorProduct = {
   // si no tiene, los de todos). Con géneros, la talla se elige después del género.
   genders: ProductGender[]
   genderSizeSurcharges: Partial<Record<ProductGender, CalculatorSurcharge[]>>
+  // Exclusivo de un cliente: solo aparece con ese cliente elegido.
+  exclusiveCustomerId: string | null
 }
 
 // Una talla o un color que cobra extra en un producto.
@@ -239,6 +248,7 @@ export type PriceCalculatorData = {
   methods: SalePaymentMethod[]
   rates: { bcvUsd: number; bcvEur: number; usdUsdt: number; isCurrent: boolean } | null
   volumeTiers: VolumeTier[]
+  agreements: CustomerAgreement[]
 }
 
 export type PendingShipment = { id: string; number: number; shipDate: string; customerName: string | null }

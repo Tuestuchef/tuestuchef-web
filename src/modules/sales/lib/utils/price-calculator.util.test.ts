@@ -14,6 +14,7 @@ const product = (over: Partial<CalculatorProduct>): CalculatorProduct => ({
   id: "x",
   name: "Producto",
   isCombo: false,
+  exclusiveCustomerId: null,
   categoryId: null,
   categoryName: "—",
   colors: [],

@@ -52,6 +52,7 @@ const ProductList = ({ products }: { products: ProductListItem[] }) => {
                   </StatusBadge>
                 )}
                 {!product.isActive && <StatusBadge tone="info">Inactivo</StatusBadge>}
+                {product.exclusiveCustomerName && <StatusBadge tone="info">Exclusivo · {product.exclusiveCustomerName}</StatusBadge>}
               </div>
             </div>
           </Link>

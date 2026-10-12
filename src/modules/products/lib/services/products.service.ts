@@ -10,13 +10,13 @@ import { listProductImages, resolveImageUrl } from "./product-images.service"
 import { assignGenderToUnsetVariants, genderInUse } from "./variants.service"
 
 export async function listProducts(
-  filters: { search?: string; categoryId?: string; kind?: ProductKind } = {}
+  filters: { search?: string; categoryId?: string; kind?: ProductKind; exclusive?: "si" | "no" } = {}
 ): Promise<ProductListItem[]> {
   const supabase = await createSupabaseServerClient()
   let query = supabase
     .from("products")
     .select(
-      `id, kind, name, fulfillment_type, is_active,
+      `id, kind, name, fulfillment_type, is_active, exclusive_customer_id,
        category:product_categories(name),
        variants:product_variants(id, is_active),
        prices:product_prices(amount_usd),
@@ -27,6 +27,8 @@ export async function listProducts(
     .order("name")
   if (filters.search) query = query.ilike("name", `%${filters.search}%`)
   if (filters.categoryId) query = query.eq("category_id", filters.categoryId)
+  if (filters.exclusive === "si") query = query.not("exclusive_customer_id", "is", null)
+  if (filters.exclusive === "no") query = query.is("exclusive_customer_id", null)
 
   const [{ data: products, error }, { data: balances, error: balancesError }] = await Promise.all([
     query,
@@ -34,6 +36,14 @@ export async function listProducts(
   ])
   if (error) throw error
   if (balancesError) throw balancesError
+  // Nombres de los clientes de los exclusivos.
+  const exclusiveIds = [...new Set(products.flatMap((p) => (p.exclusive_customer_id ? [p.exclusive_customer_id] : [])))]
+  const { data: exclusiveCustomers } = exclusiveIds.length
+    ? await supabase.from("customers").select("id, first_name, last_name, legal_name").in("id", exclusiveIds)
+    : { data: [] }
+  const customerName = new Map(
+    (exclusiveCustomers ?? []).map((c) => [c.id, c.legal_name || [c.first_name, c.last_name].filter(Boolean).join(" ")])
+  )
 
   return Promise.all(
     products.map(async (product) => {
@@ -52,6 +62,7 @@ export async function listProducts(
         totalStock: own.reduce((sum, b) => sum + Number(b.quantity ?? 0), 0),
         lowStockCount: own.filter((b) => b.is_low).length,
         priceFromUsd: prices.length ? Math.min(...prices) : null,
+        exclusiveCustomerName: product.exclusive_customer_id ? (customerName.get(product.exclusive_customer_id) ?? "un cliente") : null,
       }
     }),
   )
@@ -80,6 +91,9 @@ export async function getProductDetail(id: string): Promise<ProductDetail | null
     listProductImages(id),
   ])
   if (error) throw error
+  const { data: exclusive } = product.exclusive_customer_id
+    ? await supabase.from("customers").select("id, first_name, last_name, legal_name").eq("id", product.exclusive_customer_id).maybeSingle()
+    : { data: null }
 
   const withMovements = new Set((moved ?? []).map((m) => m.variant_id))
   // Orden: género (Dama, Caballero, Unisex), color (orden, nombre) y luego talla.
@@ -119,6 +133,9 @@ export async function getProductDetail(id: string): Promise<ProductDetail | null
     variants: rows,
     prices: Object.fromEntries((prices ?? []).map((p) => [p.payment_method_id, Number(p.amount_usd)])),
     images,
+    exclusiveCustomer: exclusive
+      ? { id: exclusive.id, name: exclusive.legal_name || [exclusive.first_name, exclusive.last_name].filter(Boolean).join(" ") }
+      : null,
   }
 }
 
@@ -136,6 +153,7 @@ export async function saveProduct(input: ProductInput) {
     model_code: input.model_code,
     labor_cost_usdt: input.labor_cost_usdt,
     is_active: input.is_active,
+    exclusive_customer_id: input.kind === "raw_material" ? null : (input.exclusive_customer_id ?? null),
   }
   if (input.id) {
     // Un género con variantes no se quita (se desactivan sus variantes).

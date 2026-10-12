@@ -43,7 +43,7 @@ export type QuoteSettingsField =
   | "default_terms"
 
 // Datos del formulario: catálogo de ventas + personalización + configuración de presupuestos.
-export type QuoteFormData = Pick<SaleFormData, "variants" | "rates" | "staffMaxDiscountPercent" | "volumeTiers" | "today"> & {
+export type QuoteFormData = Pick<SaleFormData, "variants" | "rates" | "staffMaxDiscountPercent" | "volumeTiers" | "today" | "agreements"> & {
   priceLists: PriceListOption[]
   customizationTypes: CustomizationType[]
   customizationTiers: { minQuantity: number; percent: number }[]

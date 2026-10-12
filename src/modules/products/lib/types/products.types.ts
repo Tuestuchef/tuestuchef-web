@@ -44,6 +44,8 @@ export type ProductListItem = {
   totalStock: number
   lowStockCount: number
   priceFromUsd: number | null
+  // Exclusivo de un cliente (su nombre), o null si es para todos.
+  exclusiveCustomerName: string | null
 }
 
 export type VariantWithStock = {
@@ -67,6 +69,8 @@ export type ProductDetail = {
   variants: VariantWithStock[]
   prices: Record<string, number>
   images: ProductImage[]
+  // Exclusivo de un cliente: solo se le vende a él.
+  exclusiveCustomer: { id: string; name: string } | null
 }
 
 // Componente de un combo: cuántas piezas lleva cada combo y qué productos acepta (se elige uno al vender).

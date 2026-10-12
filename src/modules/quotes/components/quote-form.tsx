@@ -25,6 +25,7 @@ import { formatPhone, formatTaxId } from "@/modules/customers/lib/utils/normaliz
 import CustomizationDialog, { type LineCustomization } from "@/modules/orders/components/customization-dialog"
 import ComboPickerDialog, { type ComboSelection } from "@/modules/sales/components/combo-picker-dialog"
 import ProductPicker from "@/modules/sales/components/product-picker"
+import { useCustomerPricing } from "@/modules/sales/lib/hooks/use-customer-pricing.hook"
 import type { SellableVariant } from "@/modules/sales/lib/types/sales.types"
 
 import { saveQuoteDraftAction } from "../lib/actions/quotes.action"
@@ -126,7 +127,8 @@ const QuoteForm = ({
   variants,
   rates,
   staffMaxDiscountPercent,
-  volumeTiers,
+  volumeTiers: baseVolumeTiers,
+  agreements,
   today,
   customizationTypes,
   customizationTiers,
@@ -186,7 +188,11 @@ const QuoteForm = ({
     }))
   )
 
-  const variantById = useMemo(() => new Map(variants.map((v) => [v.id, v])), [variants])
+  // Cliente con acuerdo: sus precios, sus exclusivos y sin descuento al mayor.
+  const pricing = useCustomerPricing(variants, baseVolumeTiers, agreements, priceLists.map((l) => l.id), customer?.id ?? null)
+  const volumeTiers = pricing.tiers
+  const variantById = useMemo(() => new Map(pricing.priced.map((v) => [v.id, v])), [pricing.priced])
+  const exclusiveLine = lines.find((l) => pricing.notAllowed(variantById.get(l.variantId)))
   const typeById = useMemo(() => new Map(customizationTypes.map((t) => [t.id, t])), [customizationTypes])
   const usdLists = priceLists.filter((l) => l.currency === "USD")
   const vesLists = priceLists.filter((l) => l.currency === "VES")
@@ -258,6 +264,7 @@ const QuoteForm = ({
   const blockers = [
     !customer && !draft.name.trim() && "Elige un cliente o escribe su nombre.",
     customer?.blockedReason && `Cliente bloqueado: no puede recibir presupuestos (${customer.blockedReason}).`,
+    exclusiveLine && `"${variantById.get(exclusiveLine.variantId)?.productName}" es exclusivo de otro cliente: quítalo o elige su cliente.`,
     lines.length === 0 && "Agrega al menos un producto.",
     useUsd && !usdList && "Elige la lista de precios en USD.",
     useVes && !vesList && "Elige la lista de precios en Bs.",
@@ -423,7 +430,7 @@ const QuoteForm = ({
       <section className="grid gap-2">
         <Label>Productos</Label>
         {/* En un presupuesto no se aparta inventario: sin stock. Precio de la lista en USD (o en Bs). */}
-        <ProductPicker variants={variants} priceMethodId={usdList?.id ?? vesList?.id} onAdd={addVariant} onCombo={setComboToPick} />
+        <ProductPicker variants={pricing.visible} priceMethodId={usdList?.id ?? vesList?.id} onAdd={addVariant} onCombo={setComboToPick} />
 
         {lines.length > 0 && (
           <ul className="divide-y rounded-lg border">
@@ -646,7 +653,7 @@ const QuoteForm = ({
 
       <ComboPickerDialog
         combo={comboToPick}
-        variants={variants}
+        variants={pricing.visible}
         // En un presupuesto no se aparta inventario: no hay límite de piezas.
         available={() => Number.MAX_SAFE_INTEGER}
         onCancel={() => setComboToPick(null)}
