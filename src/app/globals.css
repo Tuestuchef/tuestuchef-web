@@ -78,6 +78,8 @@
 }
 
 :root {
+  /* Alto de las pestañas de abajo (modo simple en el celular); 0 si no hay. */
+  --bottom-nav-h: 0px;
   --radius: 0.625rem;
 
   /* Marca: solo logo y documentos, nunca para estados ni dinero. */

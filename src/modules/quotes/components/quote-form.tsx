@@ -601,7 +601,7 @@ const QuoteForm = ({
       </FormField>
 
       {/* Resumen */}
-      <div className="sticky bottom-0 -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
+      <div className="sticky bottom-(--bottom-nav-h) -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
         {[
           usdTotals && { label: "USD", totals: usdTotals, fmt: usd },
           vesTotals && { label: "Bs", totals: vesTotals, fmt: (v: number) => bs(v * bcv) },

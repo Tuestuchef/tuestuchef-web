@@ -281,7 +281,7 @@ const LedgerEntryForm = ({
         {errors.receipt_path && <StatusAlert tone="error" title={errors.receipt_path[0]} />}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur md:static md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+      <div className="fixed inset-x-0 bottom-(--bottom-nav-h) z-20 border-t bg-background/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur md:static md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
         <SubmitButton pending={pending} disabled={uploading} className="h-12 w-full text-base md:h-10">
           {direction === "expense" ? "Registrar gasto" : "Registrar ingreso"}
         </SubmitButton>

@@ -107,6 +107,11 @@ describe("nadie se cambia a sí mismo", () => {
     expect(affectedRows).toBe(1)
   })
 
+  it("cada quien elige su modo simple o completo, pero no el de otros", async () => {
+    expect((await staff(`update public.profiles set simple_mode = false where id = '${STAFF}'`)).affectedRows).toBe(1)
+    expect((await staff(`update public.profiles set simple_mode = true where id = '${STAFF_2}'`)).affectedRows).toBe(0)
+  })
+
   it("staff no toca a otros", async () => {
     const { affectedRows } = await staff(`update public.profiles set is_active = false where id = '${STAFF_2}'`)
     expect(affectedRows).toBe(0)

@@ -42,6 +42,8 @@ import { type NavBadgeValues, useNavBadges } from "@/common/lib/hooks/use-nav-ba
 
 type AdminShellNavProps = {
   role: AppRole
+  // Modo simple: solo lo de todos los días (los ítems marcados simple).
+  simple: boolean
 }
 
 const matches = (pathname: string, url: string) =>
@@ -54,11 +56,11 @@ const activeUrl = (pathname: string, links: readonly NavLink[]) =>
     .sort((a, b) => b.url.length - a.url.length)[0]?.url
 
 // Solo lo que el rol puede ver; un submenú con un solo hijo va directo y un área vacía desaparece.
-const visibleSections = (role: AppRole): NavSection[] =>
+const visibleSections = (role: AppRole, simple: boolean): NavSection[] =>
   NAV_SECTIONS.map((section) => ({
     ...section,
     items: section.items.flatMap((item): NavItem[] => {
-      if (!item.roles.includes(role)) return []
+      if (!item.roles.includes(role) || (simple && !item.simple)) return []
       if (!item.children) return [item]
       const children = item.children.filter((child) => child.roles.includes(role))
       if (children.length === 0) return []
@@ -98,14 +100,14 @@ const NavBadge = ({ badge, values }: { badge: NavBadgeKey; values: NavBadgeValue
   )
 }
 
-const AdminShellNav = ({ role }: AdminShellNavProps) => {
+const AdminShellNav = ({ role, simple }: AdminShellNavProps) => {
   const badges = useNavBadges({ watchNavigation: true })
   const pathname = usePathname()
   const { isMobile, setOpenMobile, state } = useSidebar()
   const collapsed = state === "collapsed" && !isMobile
   const closeMobile = () => isMobile && setOpenMobile(false)
 
-  const sections = visibleSections(role)
+  const sections = visibleSections(role, simple)
   const current = activeUrl(
     pathname,
     sections.flatMap((section) => section.items.flatMap((item) => item.children ?? [item]))

@@ -761,7 +761,7 @@ const SaleForm = ({
       </details>
 
       {/* Resumen y registrar */}
-      <div className="sticky bottom-0 -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
+      <div className="sticky bottom-(--bottom-nav-h) -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
         <dl className="grid gap-1 text-sm tabular-nums">
           {(volume > 0 || discount > 0 || fee > 0 || customizationTotal > 0) && (
             <div className="flex justify-between text-muted-foreground">

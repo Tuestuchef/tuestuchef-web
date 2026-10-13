@@ -41,7 +41,7 @@ const AdminShellSidebar = ({ user }: AdminShellSidebarProps) => {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <AdminShellNav role={user.role} />
+        <AdminShellNav role={user.role} simple={user.simpleMode} />
       </SidebarContent>
       <SidebarFooter>
         <AdminShellUser user={user} />

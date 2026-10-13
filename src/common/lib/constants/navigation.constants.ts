@@ -46,6 +46,8 @@ export type NavLink = {
   soon?: boolean
   // Contador o aviso al lado del enlace (ver NAV_BADGES).
   badge?: NavBadgeKey
+  // Se ve también en el modo simple (lo de todos los días).
+  simple?: true
 }
 
 // Lo que se cuenta en el menú. La API /api/nav-badges devuelve cada valor según el rol.
@@ -89,32 +91,32 @@ export type NavSection = {
 // Un ítem o un área sin nada visible para el rol no se muestra.
 export const NAV_SECTIONS: readonly NavSection[] = [
   {
-    items: [{ title: "Inicio", url: ROUTES.HOME, icon: HouseIcon, roles: ROLE_GROUPS.ALL }],
+    items: [{ title: "Inicio", url: ROUTES.HOME, icon: HouseIcon, roles: ROLE_GROUPS.ALL, simple: true }],
   },
   {
     label: "Comercial",
     items: [
-      { title: "Ventas", url: ROUTES.SALES, icon: ShoppingBagIcon, roles: ROLE_GROUPS.ALL },
-      { title: "Presupuestos", url: ROUTES.QUOTES, icon: FileTextIcon, roles: ROLE_GROUPS.ALL },
-      { title: "Calculadora", url: ROUTES.PRICE_CALCULATOR, icon: CalculatorIcon, roles: ROLE_GROUPS.ALL },
-      { title: "Clientes", url: ROUTES.CUSTOMERS, icon: ContactRoundIcon, roles: ROLE_GROUPS.ALL },
-      { title: "Por cobrar", url: ROUTES.RECEIVABLES, icon: HandCoinsIcon, roles: ROLE_GROUPS.MANAGEMENT, badge: "receivables" },
-      { title: "Ventas pendientes", url: ROUTES.OFFLINE_SALES, icon: CloudOffIcon, roles: ROLE_GROUPS.ALL, badge: "offlineSales" },
+      { title: "Ventas", url: ROUTES.SALES, icon: ShoppingBagIcon, roles: ROLE_GROUPS.ALL, simple: true },
+      { title: "Presupuestos", url: ROUTES.QUOTES, icon: FileTextIcon, roles: ROLE_GROUPS.ALL, simple: true },
+      { title: "Calculadora", url: ROUTES.PRICE_CALCULATOR, icon: CalculatorIcon, roles: ROLE_GROUPS.ALL, simple: true },
+      { title: "Clientes", url: ROUTES.CUSTOMERS, icon: ContactRoundIcon, roles: ROLE_GROUPS.ALL, simple: true },
+      { title: "Por cobrar", url: ROUTES.RECEIVABLES, icon: HandCoinsIcon, roles: ROLE_GROUPS.MANAGEMENT, badge: "receivables", simple: true },
+      { title: "Ventas pendientes", url: ROUTES.OFFLINE_SALES, icon: CloudOffIcon, roles: ROLE_GROUPS.ALL, badge: "offlineSales", simple: true },
     ],
   },
   {
     label: "Inventario",
     items: [
-      { title: "Catálogo", url: ROUTES.PRODUCTS, icon: ShirtIcon, roles: ROLE_GROUPS.ALL },
+      { title: "Catálogo", url: ROUTES.PRODUCTS, icon: ShirtIcon, roles: ROLE_GROUPS.ALL, simple: true },
       { title: "Combos", url: ROUTES.COMBOS, icon: PackageOpenIcon, roles: ROLE_GROUPS.ALL },
-      { title: "Stock", url: ROUTES.STOCK, icon: PackageIcon, roles: ROLE_GROUPS.ALL },
+      { title: "Stock", url: ROUTES.STOCK, icon: PackageIcon, roles: ROLE_GROUPS.ALL, simple: true },
       { title: "Materia prima", url: ROUTES.RAW_MATERIALS, icon: ScissorsIcon, roles: ROLE_GROUPS.ALL },
     ],
   },
   {
     label: "Producción",
     items: [
-      { title: "Pedidos", url: ROUTES.ORDERS, icon: ClipboardListIcon, roles: ROLE_GROUPS.ALL, badge: "openOrders" },
+      { title: "Pedidos", url: ROUTES.ORDERS, icon: ClipboardListIcon, roles: ROLE_GROUPS.ALL, badge: "openOrders", simple: true },
       { title: "Tablero", url: ROUTES.PRODUCTION, icon: KanbanIcon, roles: ROLE_GROUPS.ALL },
       { title: "Quién tiene qué", url: ROUTES.PRODUCTION_ASSIGNMENTS, icon: UsersIcon, roles: ROLE_GROUPS.ALL },
       { title: "Material necesario", url: ROUTES.PRODUCTION_MATERIALS, icon: RulerIcon, roles: ROLE_GROUPS.ALL, badge: "materialShortages" },

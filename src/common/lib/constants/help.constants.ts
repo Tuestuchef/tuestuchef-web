@@ -28,6 +28,15 @@ export const HELP_TOPICS = {
         ],
       },
       {
+        heading: "Modo simple",
+        items: [
+          "Para el día a día: en el celular, pestañas abajo como una app (Inicio, Ventas, + para registrar, Pedidos y Más); en la computadora, un menú lateral corto.",
+          "El botón + abre una venta; manteniéndolo presionado eliges pedido o presupuesto.",
+          "Se cambia en el menú de tu usuario (Modo simple) o en Más → Cambiar a modo completo. Cada quien elige el suyo; staff empieza en simple.",
+          "No cambia permisos: solo qué se ve en el menú.",
+        ],
+      },
+      {
         heading: "Los números del menú",
         items: [
           "Por cobrar y Por pagar: ventas y compras con saldo (owner y admin).",

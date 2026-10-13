@@ -1120,6 +1120,7 @@ export type Database = {
           invited_by: string | null
           is_active: boolean
           role: Database["public"]["Enums"]["app_role"]
+          simple_mode: boolean | null
           updated_at: string
         }
         Insert: {
@@ -1130,6 +1131,7 @@ export type Database = {
           invited_by?: string | null
           is_active?: boolean
           role?: Database["public"]["Enums"]["app_role"]
+          simple_mode?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -1140,6 +1142,7 @@ export type Database = {
           invited_by?: string | null
           is_active?: boolean
           role?: Database["public"]["Enums"]["app_role"]
+          simple_mode?: boolean | null
           updated_at?: string
         }
         Relationships: [

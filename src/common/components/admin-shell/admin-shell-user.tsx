@@ -1,11 +1,14 @@
 "use client"
 
 import { ChevronsUpDownIcon, LogOutIcon } from "lucide-react"
+import { useTransition } from "react"
+import { toast } from "sonner"
 
 import ThemeToggle from "@/common/components/theme-toggle"
 import { Avatar, AvatarFallback } from "@/common/components/ui/avatar"
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -22,6 +25,7 @@ import { ROLE_LABELS } from "@/common/lib/constants/roles.constants"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
 import type { SessionUser } from "@/common/lib/types/session.types"
 import { getInitials } from "@/common/lib/utils/get-initials.util"
+import { setSimpleModeAction } from "@/modules/auth/lib/actions/ui-mode.action"
 
 type AdminShellUserProps = {
   user: SessionUser
@@ -29,6 +33,7 @@ type AdminShellUserProps = {
 
 const AdminShellUser = ({ user }: AdminShellUserProps) => {
   const { isMobile } = useSidebar()
+  const [pending, startTransition] = useTransition()
   const displayName = user.fullName || user.email
   const initials = getInitials(displayName)
 
@@ -76,6 +81,18 @@ const AdminShellUser = ({ user }: AdminShellUserProps) => {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <ThemeToggle />
+            <DropdownMenuCheckboxItem
+              checked={user.simpleMode}
+              disabled={pending}
+              onCheckedChange={(checked) =>
+                startTransition(async () => {
+                  const result = await setSimpleModeAction(checked)
+                  if (!result.ok) toast.error(result.error)
+                })
+              }
+            >
+              Modo simple
+            </DropdownMenuCheckboxItem>
             <DropdownMenuSeparator />
             <form
               action={ROUTES.SIGN_OUT}

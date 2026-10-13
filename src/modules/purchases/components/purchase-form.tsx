@@ -560,7 +560,7 @@ const PurchaseForm = ({
       />
 
       {/* Resumen */}
-      <div className="sticky bottom-0 -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
+      <div className="sticky bottom-(--bottom-nav-h) -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
         <dl className="grid gap-1 text-sm tabular-nums">
           <div className="flex items-baseline justify-between text-base font-semibold">
             <dt>Total</dt>

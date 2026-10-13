@@ -31,7 +31,7 @@ export const getSessionState = cache(async (): Promise<SessionState> => {
   // Su propio perfil siempre es visible (incluso con aal1), para decidir a dónde va.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, role, is_active")
+    .select("full_name, role, is_active, simple_mode")
     .eq("id", claims.sub)
     .maybeSingle()
 
@@ -58,6 +58,8 @@ export const getSessionState = cache(async (): Promise<SessionState> => {
     email: typeof claims.email === "string" ? claims.email : "",
     fullName: profile.full_name,
     role: profile.role,
+    // Sin elegir: staff empieza en simple; owner y admin en completo.
+    simpleMode: profile.simple_mode ?? profile.role === "staff",
   }
 
   if (gate === "mfa_verify") return { status: "mfa_verify", user, factorId: verifiedTotpId! }

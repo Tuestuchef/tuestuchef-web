@@ -115,3 +115,9 @@ export async function setUserActive(profileId: string, isActive: boolean): Promi
   if (!data.length) return { ok: false, error: USER_MESSAGES.NOT_FOUND }
   return { ok: true }
 }
+
+// Modo simple o completo del propio usuario (la política solo deja cambiar el propio perfil).
+export async function setOwnSimpleMode(userId: string, simple: boolean) {
+  const supabase = await createSupabaseServerClient()
+  return supabase.from("profiles").update({ simple_mode: simple }).eq("id", userId)
+}

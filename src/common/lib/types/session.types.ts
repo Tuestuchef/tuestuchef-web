@@ -5,4 +5,6 @@ export type SessionUser = {
   email: string
   fullName: string
   role: AppRole
+  // Menú simple (solo lo de todos los días) o completo.
+  simpleMode: boolean
 }
