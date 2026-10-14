@@ -6,6 +6,7 @@ import type { Currency } from "@/common/lib/constants/currency.constants"
 import { fetchAll } from "@/common/lib/db/fetch-all.util"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 import { caracasMonthRange, caracasNoonIso, toCaracasDate } from "@/common/lib/utils/format-date.util"
+import { matchesTerms, normalizeSearch, searchTerms } from "@/common/lib/utils/search.util"
 import { getRateStatus } from "@/modules/treasury/lib/services/exchange-rates.service"
 
 import type { PaymentStatus, SaleItemStatus } from "../constants/sales.constants"
@@ -271,6 +272,26 @@ const SALE_LIST_COLUMNS = `id, number, occurred_at, channel, total_usd, is_backd
   customer:customers(first_name, last_name),
   items:sale_items(id, quantity, source, parent_item_id, variant:product_variants(sku, product:products(name)))`
 
+// Clientes cuyo nombre (o razón social, contacto o teléfono) tiene todas las palabras buscadas,
+// sin acentos ni mayúsculas. Tope de ids para no armar una consulta enorme con búsquedas muy cortas.
+const MAX_SEARCH_CUSTOMERS = 300
+
+async function findCustomerIds(query: string): Promise<string[]> {
+  const terms = searchTerms(query)
+  if (!terms.length) return []
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await fetchAll((from, to) =>
+    supabase.from("customers").select("id, first_name, last_name, legal_name, contact_person, phone").order("id").range(from, to)
+  )
+  if (error) throw error
+  return data
+    .filter((c) =>
+      matchesTerms(normalizeSearch([c.first_name, c.last_name, c.legal_name, c.contact_person, c.phone].filter(Boolean).join(" ")), terms)
+    )
+    .slice(0, MAX_SEARCH_CUSTOMERS)
+    .map((c) => c.id)
+}
+
 export async function listSales(
   filters: SalesFilters | { customerId: string }
 ): Promise<SaleListItem[]> {
@@ -279,6 +300,12 @@ export async function listSales(
 
   if ("customerId" in filters) {
     query = query.eq("customer_id", filters.customerId)
+  } else if (filters.q) {
+    // Buscar por cliente: en todos los meses (el mes no aplica).
+    const customerIds = await findCustomerIds(filters.q)
+    if (!customerIds.length) return []
+    query = query.in("customer_id", customerIds)
+    if (filters.channel) query = query.eq("channel", filters.channel)
   } else {
     const { from, to } = caracasMonthRange(filters.month)
     query = query.gte("occurred_at", from).lt("occurred_at", to)

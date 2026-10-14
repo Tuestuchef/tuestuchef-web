@@ -19,7 +19,8 @@ const SalesScreen = async ({ user, filters }: { user: SessionUser; filters: Sale
   const [sales, totals] = await Promise.all([
     listSales(filters),
     // Staff no ve totales (la vista tampoco se los devuelve).
-    canManage ? getSalesTotals(filters.month) : Promise.resolve(null),
+    // Con búsqueda por cliente no aplican: son del mes.
+    canManage && !filters.q ? getSalesTotals(filters.month) : Promise.resolve(null),
   ])
 
   return (

@@ -196,6 +196,7 @@ export type SalesFilters = {
   month: string
   channel?: SaleChannel
   status?: PaymentStatus
+  q?: string
 }
 
 export type ReceivableGroup = {

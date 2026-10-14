@@ -7,7 +7,7 @@ import { useEffect, useState } from "react"
 import { Input } from "@/common/components/ui/input"
 
 // Búsqueda en la URL (?q=), para que el resultado se pueda compartir y recargar.
-const CustomerSearchInput = () => {
+const CustomerSearchInput = ({ placeholder = "Nombre, teléfono, correo o Instagram" }: { placeholder?: string }) => {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -35,7 +35,7 @@ const CustomerSearchInput = () => {
         type="search"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Nombre, teléfono, correo o Instagram"
+        placeholder={placeholder}
         aria-label="Buscar cliente"
         className="h-11 pl-9 md:h-9"
       />

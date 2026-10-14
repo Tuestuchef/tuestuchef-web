@@ -58,6 +58,7 @@ export const HELP_TOPICS = {
         heading: "Qué puedes hacer",
         items: [
           "Filtrar por mes, canal (tienda, WhatsApp, Instagram) y estado de pago.",
+          "Buscar por cliente (nombre, razón social o teléfono): busca en todos los meses.",
           "Abrir una venta para cobrar un saldo, marcar entregas o compartir la nota.",
           "Ver los totales del mes: vendido, cobrado en valor real y por cobrar (owner y admin).",
         ],

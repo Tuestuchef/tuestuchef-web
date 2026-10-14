@@ -402,7 +402,18 @@ export const SALES_CHAPTER: ManualChapter = {
             },
             {
               question: "Me equivoqué en una venta, ¿la edito?",
-              answer: "No se puede: pide a owner o admin que la anule con el motivo y regístrala de nuevo.",
+              answer:
+                "Owner y admin editan el cliente, el canal, la entrega y las notas, y corrigen pagos. Si el error está en los productos o los precios, la anulan con el motivo y se registra de nuevo.",
+            },
+            {
+              question: "¿Cómo encuentro las ventas de un cliente?",
+              answer:
+                "En Ventas, escribe su nombre (o razón social o teléfono) en **Buscar por cliente**. Busca en todos los meses, no solo en el elegido. También están en la ficha del cliente.",
+            },
+            {
+              question: "Un cliente paga en Bs pero a tasa euro, ¿cómo lo registro?",
+              answer:
+                "Con un método de pago en Bs que use la **Tasa BCV euro** (Configuración → Métodos de pago). Al cobrar con ese método, los Bs se convierten a USD con la tasa euro del día de cada pago.",
             },
             {
               question: "¿Dónde aparece el dinero que cobré?",

@@ -159,6 +159,8 @@ export const salesFiltersSchema = z.object({
     .default(() => toCaracasMonth()),
   channel: z.enum(E.sale_channel).optional().catch(undefined),
   status: z.enum(["pending", "partial", "paid", "voided"]).optional().catch(undefined),
+  // Nombre del cliente: busca en todos los meses.
+  q: z.string().trim().max(80).optional().catch(undefined),
 })
 
 export type CreateSaleInput = z.infer<typeof createSaleSchema>
