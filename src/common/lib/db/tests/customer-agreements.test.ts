@@ -63,6 +63,15 @@ beforeAll(async () => {
     await owner("insert into public.product_prices (product_id, payment_method_id, amount_usd) values ($1, $2, 20), ($1, $3, 22)", [product.id, ids.cash, ids.zelle])
     await owner("insert into public.stock_movements (variant_id, movement_type, quantity, unit_cost_usdt) values ($1, 'initial_count', 100, 5)", [ids[key]])
   }
+  // Crear el producto ya exclusivo (el formulario siempre manda el campo, vacío o no).
+  const created = await one(
+    owner<{ exclusive_customer_id: string }>(
+      "insert into public.products (category_id, name, exclusive_customer_id) values ($1, 'nuevo exclusivo', $2) returning exclusive_customer_id",
+      [category.id, ids.school]
+    )
+  )
+  expect(created.exclusive_customer_id).toBe(ids.school)
+  await owner("insert into public.products (category_id, name, exclusive_customer_id) values ($1, 'nuevo normal', null)", [category.id])
   await owner("update public.products set exclusive_customer_id = $1 where id = $2", [ids.school, ids.exclusiveProduct])
   await owner("insert into public.volume_discount_tiers (scope, min_quantity, percent) values ('products', 10, 10)")
 
