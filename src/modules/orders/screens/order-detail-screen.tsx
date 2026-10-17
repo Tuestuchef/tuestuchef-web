@@ -28,12 +28,14 @@ import {
   CancelOrderDialog,
   DeliverOrderDialog,
   PromisedDateDialog,
+  DepositDialog,
 } from "../components/order-action-dialogs"
 import { AssignStageDialog } from "../components/order-stage-controls"
 import { ASSIGNABLE_STAGES, ORDER_STATUS_LABELS, STOCK_MODE_LABELS, type ProductionStage } from "../lib/constants/orders.constants"
 import { getCancellationQuote, getOrderDetail, listAssignees } from "../lib/services/orders.service"
 
 const usd = (v: number) => formatMoney(v, "USD")
+const percentFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 2 })
 const STAGE_INDEX = (s: ProductionStage | null) => (s ? ASSIGNABLE_STAGES.indexOf(s) : -1)
 
 const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }) => {
@@ -112,8 +114,11 @@ const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }
                 <dd>{usd(order.vat.usd)}</dd>
               </div>
             )}
-            <div className="flex justify-between">
-              <dt>Para empezar a producir</dt>
+            <div className="flex items-center justify-between gap-2">
+              <dt className="flex flex-wrap items-center gap-x-2">
+                Para empezar a producir{order.depositPercent !== null ? ` (${percentFormat.format(order.depositPercent)}%)` : ""}
+                {open && canManage && <DepositDialog saleId={order.saleId} totalUsd={order.totalUsd} currentPercent={order.depositPercent} />}
+              </dt>
               <dd>{usd(order.depositRequiredUsd)}</dd>
             </div>
             <div className="flex justify-between">
@@ -251,6 +256,25 @@ const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }
                 <li key={d.at}>
                   {formatDate(d.previous)} → {formatDate(d.next)}
                   {d.reason && <span className="text-muted-foreground"> · {d.reason}</span>}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {order.depositChanges.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Cambios de inicial</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="grid gap-1 text-sm tabular-nums">
+              {order.depositChanges.map((d) => (
+                <li key={d.at}>
+                  {d.previousPercent !== null ? `${percentFormat.format(d.previousPercent)}% · ` : ""}
+                  {usd(d.previousUsd)} → {percentFormat.format(d.newPercent)}% · {usd(d.newUsd)}
+                  <span className="text-muted-foreground"> · {d.reason}</span>
                 </li>
               ))}
             </ul>

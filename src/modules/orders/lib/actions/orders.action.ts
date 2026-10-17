@@ -19,6 +19,8 @@ import {
   createOrderSchema,
   type DeliverOrderField,
   deliverOrderSchema,
+  type DepositChangeField,
+  depositChangeSchema,
   type OrderSettingsField,
   orderSettingsSchema,
   piecePaymentSchema,
@@ -33,6 +35,7 @@ import { saveBusinessRule } from "../services/business-rules.service"
 import {
   advanceLine,
   allowWithoutDeposit,
+  changeOrderDeposit,
   assignStage,
   cancelOrder,
   changePromisedDate,
@@ -120,6 +123,20 @@ export async function changePromisedDateAction(
   if (error) return { status: "error", message: toUserError(error) }
   refresh()
   return ok(ORDER_MESSAGES.DATE_CHANGED)
+}
+
+export async function changeOrderDepositAction(
+  _prev: ActionState<DepositChangeField>,
+  formData: FormData
+): Promise<ActionState<DepositChangeField>> {
+  const auth = await authorizeAction(ROLE_GROUPS.MANAGEMENT)
+  if (!auth.ok) return { status: "error", message: auth.error }
+  const parsed = depositChangeSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { status: "error", fieldErrors: z.flattenError(parsed.error).fieldErrors }
+  const { error } = await changeOrderDeposit(parsed.data.sale_id, parsed.data.deposit_percent, parsed.data.reason)
+  if (error) return { status: "error", message: toUserError(error) }
+  refresh()
+  return ok(ORDER_MESSAGES.DEPOSIT_CHANGED)
 }
 
 export async function allowWithoutDepositAction(_prev: ActionState<ReasonField>, formData: FormData): Promise<ActionState<ReasonField>> {

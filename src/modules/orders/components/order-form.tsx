@@ -1,6 +1,6 @@
 "use client"
 
-import { Loader2Icon, MinusIcon, PaletteIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
+import { Loader2Icon, MinusIcon, PaletteIcon, PercentIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -91,6 +91,8 @@ const OrderForm = ({
   const [payments, setPayments] = useState<PaymentRow[]>([])
   const [notes, setNotes] = useState("")
   const [vatEnabled, setVatEnabled] = useState(false)
+  // Otra inicial para este pedido (owner y admin). null = la que corresponde.
+  const [depositInput, setDepositInput] = useState<string | null>(null)
   // Pedido de otro día: el pago inicial usa las tasas de ese día.
   const [date, setDate] = useState(today)
   const [dateRates, setDateRates] = useState<SaleRatesForDate | "today">("today")
@@ -136,7 +138,13 @@ const OrderForm = ({
   // IVA sobre lo que queda después de descuentos, sin el delivery (como la base).
   const vat = vatEnabled ? round(((productsSubtotal + customizationTotal - volume) * vatPercent) / 100) : 0
   const total = round(productsSubtotal + customizationTotal - volume + fee + vat)
-  const depositRequired = total >= settings.depositThresholdUsd ? round((total * settings.depositPercent) / 100) : total
+  // Inicial: la que pone owner o admin; si no, desde el umbral la habitual del cliente o la de la regla; debajo, completo.
+  const overThreshold = total >= settings.depositThresholdUsd
+  const defaultDepositPercent = overThreshold ? (pricing.agreement?.depositPercent ?? settings.depositPercent) : 100
+  const customDepositPercent = canManage && depositInput !== null ? parseAmount(depositInput) : null
+  const depositPercentInvalid = customDepositPercent !== null && (customDepositPercent < 0 || customDepositPercent > 100)
+  const depositPercent = customDepositPercent !== null && !depositPercentInvalid ? customDepositPercent : defaultDepositPercent
+  const depositRequired = round((total * depositPercent) / 100)
   const paymentsToSend = payments.flatMap((p) => {
     const amount = parseAmount(p.amount)
     return amount && amount > 0 ? [{ payment_method_id: p.methodId, amount }] : []
@@ -158,6 +166,7 @@ const OrderForm = ({
     belowMinimum[0],
     paidUsd > total + 0.01 && "Los pagos superan el total.",
     promisedDate < today && "La fecha prometida no puede ser pasada.",
+    depositPercentInvalid && "La inicial va de 0 a 100%.",
     backdateWithoutRate && "No hay tasas registradas para esa fecha. Owner o admin debe cargarlas.",
   ].filter(Boolean) as string[]
 
@@ -183,6 +192,7 @@ const OrderForm = ({
         stock_mode: stockMode,
         promised_date: promisedDate,
         date,
+        deposit_percent: customDepositPercent !== null && !depositPercentInvalid ? customDepositPercent : null,
         items: lines.map((l) => ({
           variant_id: l.variantId,
           quantity: l.quantity,
@@ -393,11 +403,37 @@ const OrderForm = ({
       <section className="grid gap-2">
         <Label>Pago inicial</Label>
         <p className="text-xs text-muted-foreground">
-          {total >= settings.depositThresholdUsd
-            ? `Desde ${usd(settings.depositThresholdUsd)}: ${settings.depositPercent}% para empezar (${usd(depositRequired)}) y el resto al entregar.`
-            : `Menos de ${usd(settings.depositThresholdUsd)}: se paga completo para empezar.`}
+          {customDepositPercent !== null
+            ? `Inicial pactada: ${depositPercent}% para empezar (${usd(depositRequired)}) y el resto al entregar.`
+            : overThreshold
+              ? `Desde ${usd(settings.depositThresholdUsd)}: ${depositPercent}%${pricing.agreement?.depositPercent != null ? " (la habitual del cliente)" : ""} para empezar (${usd(depositRequired)}) y el resto al entregar.`
+              : `Menos de ${usd(settings.depositThresholdUsd)}: se paga completo para empezar.`}
           {pricing.eurRate && " Tasa euro: sus pagos en Bs van a la BCV euro (su acuerdo)."}
         </p>
+        {canManage &&
+          (depositInput === null ? (
+            <Button type="button" variant="ghost" size="sm" className="w-fit px-0 text-muted-foreground" onClick={() => setDepositInput(String(depositPercent))}>
+              <PercentIcon aria-hidden />
+              Otra inicial para este pedido
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Label htmlFor="order-deposit" className="text-sm font-normal">
+                Inicial (%)
+              </Label>
+              <Input
+                id="order-deposit"
+                inputMode="decimal"
+                value={depositInput}
+                onChange={(e) => setDepositInput(e.target.value)}
+                className="h-11 w-24 text-right tabular-nums md:h-9"
+              />
+              <Button type="button" variant="ghost" size="icon" className="size-11 md:size-9" onClick={() => setDepositInput(null)}>
+                <XIcon aria-hidden />
+                <span className="sr-only">Volver a la inicial normal</span>
+              </Button>
+            </div>
+          ))}
         {payments.map((row) => {
           const method = methodById.get(row.methodId)!
           return (
@@ -496,7 +532,7 @@ const OrderForm = ({
             <dd>{usd(total)}</dd>
           </div>
           <div className="flex justify-between">
-            <dt>Para empezar a producir</dt>
+            <dt>Para empezar a producir ({depositPercent}%)</dt>
             <dd>{usd(depositRequired)}</dd>
           </div>
           {paidUsd > 0 && (

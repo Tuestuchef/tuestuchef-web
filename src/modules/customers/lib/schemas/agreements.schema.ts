@@ -6,6 +6,7 @@ export const agreementSettingsSchema = z.object({
   customer_id: z.uuid(),
   general_discount_percent: percent.nullable(),
   ves_rate_kind: z.enum(["bcv_usd", "bcv_eur"]).default("bcv_usd"),
+  deposit_percent: z.number().min(0, { error: "La inicial va de 0 a 100." }).max(100, { error: "La inicial va de 0 a 100." }).nullable().default(null),
   notes: z.string().trim().max(500).nullable(),
 })
 

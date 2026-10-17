@@ -439,6 +439,7 @@ export const HELP_TOPICS = {
         items: [
           "Descuento general y precios por producto o combo (% o precio fijo en USD). Se aplican solos al venderle, cotizarle o hacerle un pedido, sin descuento al mayor.",
           "Exclusivos: los productos y combos que solo se le hacen a él (se marcan en el Catálogo con Editar → Exclusivo de).",
+          "Inicial habitual de sus pedidos: el % que paga para empezar en pedidos desde el umbral (vacío = la de la regla). En cada pedido owner o admin la pueden cambiar.",
           "Pagos en Bs a tasa euro: si lo pactó así, todos sus pagos en Bs (ventas, pedidos y abonos) y sus presupuestos en Bs usan la BCV euro con cualquier método. Los pagos ya registrados no cambian.",
           "Lo editan owner y admin; el resto del equipo lo ve.",
         ],
@@ -924,6 +925,8 @@ export const HELP_TOPICS = {
         heading: "Abono",
         items: [
           "Desde 500 USD: 60% para empezar y 40% al entregar. Por debajo: pago completo para empezar.",
+          "Cliente con inicial habitual en su acuerdo: sus pedidos desde 500 USD usan ese % en vez del 60%.",
+          "Owner y admin: 'Otra inicial para este pedido' pone el % que se negoció (ej.: 50%). Después de creado, en el pedido: 'Cambiar inicial', con motivo.",
           "Sin el pago, el pedido queda registrado pero no avanza a producción.",
           "¿Se hizo y se pagó otro día? 'Hoy · cambiar fecha' registra el pedido con esa fecha y el pago inicial usa las tasas de ese día (staff, hasta el límite de días de Reglas de venta).",
         ],

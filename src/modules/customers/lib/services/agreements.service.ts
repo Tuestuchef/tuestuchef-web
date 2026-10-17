@@ -13,7 +13,7 @@ export async function listAgreements(): Promise<CustomerAgreement[]> {
   const [agreements, prices] = await Promise.all([
     supabase
       .from("customer_agreements")
-      .select("customer_id, general_discount_percent, ves_rate_kind, notes, customer:customers(first_name, last_name, legal_name)"),
+      .select("customer_id, general_discount_percent, ves_rate_kind, deposit_percent, notes, customer:customers(first_name, last_name, legal_name)"),
     supabase.from("customer_agreement_prices").select("customer_id, product_id, discount_percent, fixed_price_usd"),
   ])
   if (agreements.error) throw agreements.error
@@ -23,6 +23,7 @@ export async function listAgreements(): Promise<CustomerAgreement[]> {
     customerName: a.customer ? a.customer.legal_name || [a.customer.first_name, a.customer.last_name].filter(Boolean).join(" ") : "—",
     generalDiscountPercent: toNumber(a.general_discount_percent),
     vesRateKind: a.ves_rate_kind === "bcv_eur" ? "bcv_eur" : "bcv_usd",
+    depositPercent: toNumber(a.deposit_percent),
     notes: a.notes,
     rules: prices.data
       .filter((p) => p.customer_id === a.customer_id)
@@ -34,7 +35,7 @@ export async function listAgreements(): Promise<CustomerAgreement[]> {
 export async function getCustomerAgreement(customerId: string) {
   const supabase = await createSupabaseServerClient()
   const [agreement, prices, exclusives] = await Promise.all([
-    supabase.from("customer_agreements").select("general_discount_percent, ves_rate_kind, notes").eq("customer_id", customerId).maybeSingle(),
+    supabase.from("customer_agreements").select("general_discount_percent, ves_rate_kind, deposit_percent, notes").eq("customer_id", customerId).maybeSingle(),
     supabase
       .from("customer_agreement_prices")
       .select("id, product_id, discount_percent, fixed_price_usd, product:products(name, kind)")
@@ -46,6 +47,7 @@ export async function getCustomerAgreement(customerId: string) {
     exists: Boolean(agreement.data),
     generalDiscountPercent: toNumber(agreement.data?.general_discount_percent ?? null),
     vesRateKind: (agreement.data?.ves_rate_kind === "bcv_eur" ? "bcv_eur" : "bcv_usd") as AgreementVesRateKind,
+    depositPercent: toNumber(agreement.data?.deposit_percent ?? null),
     notes: agreement.data?.notes ?? null,
     prices: (prices.data ?? [])
       .map((p) => ({
@@ -70,6 +72,7 @@ export async function saveAgreementSettings(input: AgreementSettingsInput) {
       customer_id: input.customer_id,
       general_discount_percent: input.general_discount_percent,
       ves_rate_kind: input.ves_rate_kind,
+      deposit_percent: input.deposit_percent,
       notes: input.notes,
     },
     { onConflict: "customer_id" }

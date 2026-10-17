@@ -25,6 +25,7 @@ const agreement = {
   customerName: "Escuela",
   generalDiscountPercent: 5,
   vesRateKind: "bcv_usd" as const,
+  depositPercent: null,
   notes: null,
   rules: [
     { productId: "fixed", discountPercent: null, fixedPriceUsd: 12 },

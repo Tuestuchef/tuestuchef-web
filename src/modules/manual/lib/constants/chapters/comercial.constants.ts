@@ -504,6 +504,7 @@ export const CUSTOMERS_CHAPTER: ManualChapter = {
             { title: "Descuento general", body: "Un % para todo lo que no tenga su propio precio en el acuerdo (opcional)." },
             { title: "Precio por producto o combo", body: "Un % de descuento sobre el precio de cada método, o un precio fijo en dólares que vale con cualquier método. El recargo por talla o color se suma encima." },
             { title: "Exclusivos", body: "Un producto o combo que solo se le hace a ese cliente: en su ficha del Catálogo, **Editar → Exclusivo de**. No aparece en el buscador con otros clientes ni se le puede vender a nadie más; con ese cliente elegido sale primero." },
+            { title: "Inicial habitual", body: "El % que paga para empezar sus pedidos desde el umbral (por ejemplo, 50% en vez del 60% de la regla). En cada pedido owner o admin la pueden cambiar." },
             { title: "Pagos en Bs a tasa euro", body: "Si el cliente paga sus Bs a la [[tasa-bcv|BCV euro]], se marca en el acuerdo (**Editar → Pagos en Bs**). Desde ahí, todo pago en Bs de sus ventas, pedidos y abonos se convierte con la tasa euro del día, con el método que sea (Pago Móvil, transferencia…), y sus presupuestos en Bs también. No hace falta crear métodos de pago \"a tasa euro\"." },
             { title: "Calculadora", body: "Arriba, **Precios de** permite ver los precios de un cliente con acuerdo (y sus Bs a tasa euro, si los paga así)." },
           ],

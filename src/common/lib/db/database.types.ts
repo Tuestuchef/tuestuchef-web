@@ -15,6 +15,7 @@ export type Database = {
       customer_agreements: {
         Row: {
           created_at: string
+          deposit_percent: number | null
           created_by: string | null
           customer_id: string
           general_discount_percent: number | null
@@ -25,6 +26,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deposit_percent?: number | null
           created_by?: string | null
           customer_id: string
           general_discount_percent?: number | null
@@ -35,6 +37,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deposit_percent?: number | null
           created_by?: string | null
           customer_id?: string
           general_discount_percent?: number | null
@@ -2744,6 +2747,7 @@ export type Database = {
           created_by: string
           delivered_at: string | null
           deposit_required_usd: number
+          deposit_percent: number | null
           promised_date: string
           sale_id: string
           stock_mode: Database["public"]["Enums"]["order_stock_mode"]
@@ -2755,6 +2759,7 @@ export type Database = {
           created_by?: string
           delivered_at?: string | null
           deposit_required_usd: number
+          deposit_percent?: number | null
           promised_date: string
           sale_id: string
           stock_mode: Database["public"]["Enums"]["order_stock_mode"]
@@ -2766,6 +2771,7 @@ export type Database = {
           created_by?: string
           delivered_at?: string | null
           deposit_required_usd?: number
+          deposit_percent?: number | null
           promised_date?: string
           sale_id?: string
           stock_mode?: Database["public"]["Enums"]["order_stock_mode"]
@@ -2927,6 +2933,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      order_deposit_changes: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          new_percent: number
+          new_usd: number
+          previous_percent: number | null
+          previous_usd: number
+          reason: string
+          sale_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          new_percent: number
+          new_usd: number
+          previous_percent?: number | null
+          previous_usd: number
+          reason: string
+          sale_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          new_percent?: number
+          new_usd?: number
+          previous_percent?: number | null
+          previous_usd?: number
+          reason?: string
+          sale_id?: string
+        }
+        Relationships: []
       }
       purchase_order_links: {
         Row: {
@@ -4978,6 +5020,10 @@ export type Database = {
         Args: { p_sale_id: string; p_reason?: string }
         Returns: undefined
       }
+      change_order_deposit: {
+        Args: { p_sale_id: string; p_percent: number; p_reason: string }
+        Returns: undefined
+      }
       change_order_promised_date: {
         Args: { p_sale_id: string; p_date: string; p_reason?: string }
         Returns: undefined
@@ -4991,7 +5037,7 @@ export type Database = {
         Returns: string
       }
       create_order: {
-        Args: { p_customer_id: string; p_price_method_id: string; p_channel: Database["public"]["Enums"]["sale_channel"]; p_delivery_method: Database["public"]["Enums"]["delivery_method"]; p_items: Json; p_stock_mode: Database["public"]["Enums"]["order_stock_mode"]; p_promised_date?: string; p_payments?: Json; p_delivery_fee_usd?: number; p_discount_type?: Database["public"]["Enums"]["discount_type"]; p_discount_value?: number; p_discount_reason?: string; p_notes?: string; p_occurred_at?: string; p_vat_percent?: number }
+        Args: { p_customer_id: string; p_price_method_id: string; p_channel: Database["public"]["Enums"]["sale_channel"]; p_delivery_method: Database["public"]["Enums"]["delivery_method"]; p_items: Json; p_stock_mode: Database["public"]["Enums"]["order_stock_mode"]; p_promised_date?: string; p_payments?: Json; p_delivery_fee_usd?: number; p_discount_type?: Database["public"]["Enums"]["discount_type"]; p_discount_value?: number; p_discount_reason?: string; p_notes?: string; p_occurred_at?: string; p_vat_percent?: number; p_deposit_percent?: number }
         Returns: string
       }
       variant_price_usd: {

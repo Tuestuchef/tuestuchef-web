@@ -55,6 +55,7 @@ export const ORDER_MESSAGES = {
   DELIVERED: "Pedido entregado.",
   CANCELLED: "Pedido cancelado.",
   DATE_CHANGED: "Fecha prometida actualizada.",
+  DEPOSIT_CHANGED: "Inicial actualizada.",
   OVERRIDE_SAVED: "Autorizado para producir sin el abono completo.",
   RATE_SAVED: "Tarifa guardada.",
   RULE_SAVED: "Regla guardada.",

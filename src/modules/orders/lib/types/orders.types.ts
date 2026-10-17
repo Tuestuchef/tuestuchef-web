@@ -107,6 +107,9 @@ export type OrderDetail = {
   paidUsd: number
   balanceUsd: number
   depositRequiredUsd: number
+  // % de inicial pactado (null en pedidos anteriores a guardarlo).
+  depositPercent: number | null
+  depositChanges: { previousPercent: number | null; newPercent: number; previousUsd: number; newUsd: number; reason: string; at: string }[]
   canStart: boolean
   overrides: { kind: string; reason: string; byName: string | null }[]
   cancellation: { reason: string; deductionUsdt: number; refundedUsdt: number; at: string } | null

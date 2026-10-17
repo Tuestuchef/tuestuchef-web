@@ -438,3 +438,58 @@ describe("material y reglas", () => {
     expect(revisions.rows).toHaveLength(2)
   })
 })
+
+describe("inicial por pedido y habitual del cliente", () => {
+  // 20 filipinas × 25 USD = 500 USD (justo el umbral de la regla: 60%).
+  const create = (as: ReturnType<typeof asUser>, customer: string, quantity: number, depositPercent: number | null = null) =>
+    one(
+      as<{ id: string }>(
+        `select public.create_order(
+           p_customer_id => $1, p_price_method_id => $2, p_channel => 'whatsapp', p_delivery_method => 'pickup',
+           p_items => $3::jsonb, p_stock_mode => 'produce_all', p_deposit_percent => $4
+         ) as id`,
+        [customer, ids.cash, JSON.stringify([{ variant_id: ids.fil, quantity }]), depositPercent]
+      )
+    ).then((r) => r.id)
+  const deposit = (sale: string) =>
+    one(owner<{ deposit_percent: string; deposit_required_usd: string }>("select deposit_percent, deposit_required_usd from public.orders where sale_id = $1", [sale])).then(
+      (r) => ({ percent: Number(r.deposit_percent), usd: Number(r.deposit_required_usd) })
+    )
+
+  beforeAll(async () => {
+    ids.regular = (await one(owner<{ id: string }>("insert into public.customers (first_name, phone) values ('Cliente fijo', '+584144444444') returning id"))).id
+  })
+
+  it("sin nada especial usa la regla: 60% desde el umbral, completo por debajo", async () => {
+    expect(await deposit(await create(staff, ids.customer2, 20))).toEqual({ percent: 60, usd: 300 })
+    expect(await deposit(await create(staff, ids.customer2, 2))).toEqual({ percent: 100, usd: 50 })
+  })
+
+  it("owner o admin ponen otra inicial al crear; staff no", async () => {
+    expect(await deposit(await create(owner, ids.customer2, 20, 50))).toEqual({ percent: 50, usd: 250 })
+    await expect(create(staff, ids.customer2, 20, 50)).rejects.toThrow(/Solo owner o admin/)
+    await expect(create(owner, ids.customer2, 20, 120)).rejects.toThrow(/0 a 100/)
+  })
+
+  it("la inicial habitual del acuerdo aplica desde el umbral", async () => {
+    await owner("insert into public.customer_agreements (customer_id, deposit_percent) values ($1, 40)", [ids.regular])
+    expect(await deposit(await create(staff, ids.regular, 20))).toEqual({ percent: 40, usd: 200 })
+    expect(await deposit(await create(staff, ids.regular, 2))).toEqual({ percent: 100, usd: 50 })
+  })
+
+  it("owner o admin la cambian después con motivo y queda el historial; staff no, ni directo", async () => {
+    const sale = await create(staff, ids.customer2, 20)
+    await expect(staff("select public.change_order_deposit($1, 50, 'lo pactamos así')", [sale])).rejects.toThrow(/Solo owner o admin/)
+    await expect(owner("select public.change_order_deposit($1, 50, '')", [sale])).rejects.toThrow(/motivo/)
+    await owner("select public.change_order_deposit($1, 50, 'lo pactamos así')", [sale])
+    expect(await deposit(sale)).toEqual({ percent: 50, usd: 250 })
+    const change = await one(
+      staff<{ previous_percent: string; new_usd: string; reason: string }>(
+        "select previous_percent, new_usd, reason from public.order_deposit_changes where sale_id = $1",
+        [sale]
+      )
+    )
+    expect(change).toMatchObject({ previous_percent: "60.00", new_usd: "250.00", reason: "lo pactamos así" })
+    await expect(db.query("update public.orders set deposit_required_usd = 1 where sale_id = $1", [sale])).rejects.toThrow(/change_order_deposit/)
+  })
+})

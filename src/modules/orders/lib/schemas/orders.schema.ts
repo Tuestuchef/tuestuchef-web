@@ -90,6 +90,8 @@ export const createOrderSchema = z.object({
   promised_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Indica la fecha prometida." }),
   // Día en que se hizo el pedido y su pago inicial (pasado = con las tasas de ese día).
   date: pastOrTodayDateSchema,
+  // Otra inicial para este pedido (solo owner y admin; la base lo verifica). null = la que corresponde.
+  deposit_percent: z.number().min(0).max(100).nullable().default(null),
   items: z.array(orderItemSchema).min(1, { error: "Agrega al menos un producto." }).max(100),
   payments: z.array(z.object({ payment_method_id: z.uuid(), amount: amountText("el monto del pago") })).max(10).default([]),
   delivery_fee_usd: z.number().min(0).default(0),
@@ -147,6 +149,16 @@ export const promisedDateSchema = z.object({
   reason: optionalTextSchema(300),
 })
 
+// Cambiar la inicial de un pedido (owner y admin): el % viene del formulario como texto ("50" o "33,5").
+export const depositChangeSchema = z.object({
+  sale_id: z.uuid(),
+  deposit_percent: z
+    .string()
+    .transform((v) => parseAmount(v))
+    .pipe(z.number({ error: "Indica el %." }).min(0, { error: "La inicial va de 0 a 100." }).max(100, { error: "La inicial va de 0 a 100." })),
+  reason: z.string().trim().min(3, { error: "Explica el motivo." }).max(300),
+})
+
 export const orderSettingsSchema = z.object({
   deposit_threshold_usd: positiveAmountSchema("el umbral"),
   deposit_percent: positiveAmountSchema("el porcentaje").pipe(z.number().max(100, { error: "Máximo 100%." })),
@@ -198,6 +210,7 @@ export type CancelOrderInput = z.infer<typeof cancelOrderSchema>
 export type CancelOrderField = keyof CancelOrderInput
 export type DeliverOrderField = keyof z.infer<typeof deliverOrderSchema>
 export type PromisedDateField = keyof z.infer<typeof promisedDateSchema>
+export type DepositChangeField = keyof z.infer<typeof depositChangeSchema>
 export type OrderSettingsInput = z.infer<typeof orderSettingsSchema>
 export type OrderSettingsField = keyof OrderSettingsInput
 export type PieceRateInput = z.infer<typeof pieceRateSchema>

@@ -68,6 +68,7 @@ export async function createOrder(input: CreateOrderInput) {
     p_notes: input.notes ?? undefined,
     p_occurred_at: input.date && input.date !== toCaracasDate() ? caracasNoonIso(input.date) : undefined,
     p_vat_percent: Number(vatPercent ?? 0),
+    p_deposit_percent: input.deposit_percent ?? undefined,
   })
 }
 
@@ -125,8 +126,8 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
   const { data: overview } = await supabase.from("orders_overview").select("*").eq("sale_id", saleId).maybeSingle()
   if (!overview) return null
 
-  const [order, sale, items, overrides, cancellation, dateChanges, fromQuote] = await Promise.all([
-    supabase.from("orders").select("stock_mode, delivered_at").eq("sale_id", saleId).single(),
+  const [order, sale, items, overrides, cancellation, dateChanges, fromQuote, depositChanges] = await Promise.all([
+    supabase.from("orders").select("stock_mode, delivered_at, deposit_percent").eq("sale_id", saleId).single(),
     supabase.from("sales").select("vat_percent, vat_usd, customer:customers(id, first_name, last_name, phone)").eq("id", saleId).single(),
     supabase
       .from("sale_items")
@@ -143,6 +144,11 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
     supabase.from("order_cancellations").select("*").eq("sale_id", saleId).maybeSingle(),
     supabase.from("order_date_changes").select("*").eq("sale_id", saleId).order("created_at"),
     supabase.from("quotes").select("id, code").eq("order_sale_id", saleId).maybeSingle(),
+    supabase
+      .from("order_deposit_changes")
+      .select("previous_percent, new_percent, previous_usd, new_usd, reason, created_at")
+      .eq("sale_id", saleId)
+      .order("created_at"),
   ])
   if (items.error) throw items.error
 
@@ -175,6 +181,15 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
     paidUsd: Number(overview.paid_usd),
     balanceUsd: Number(overview.balance_usd),
     depositRequiredUsd: Number(overview.deposit_required_usd),
+    depositPercent: order.data!.deposit_percent === null ? null : Number(order.data!.deposit_percent),
+    depositChanges: (depositChanges.data ?? []).map((d) => ({
+      previousPercent: d.previous_percent === null ? null : Number(d.previous_percent),
+      newPercent: Number(d.new_percent),
+      previousUsd: Number(d.previous_usd),
+      newUsd: Number(d.new_usd),
+      reason: d.reason,
+      at: d.created_at,
+    })),
     canStart: Boolean(overview.can_start),
     overrides: (overrides.data ?? []).map((o) => ({ kind: o.kind, reason: o.reason, byName: o.author?.full_name ?? null })),
     cancellation: cancellation.data
@@ -289,6 +304,11 @@ export async function getCancellationQuote(saleId: string) {
 export async function changePromisedDate(saleId: string, date: string, reason?: string) {
   const supabase = await createSupabaseServerClient()
   return supabase.rpc("change_order_promised_date", { p_sale_id: saleId, p_date: date, p_reason: reason })
+}
+
+export async function changeOrderDeposit(saleId: string, percent: number, reason: string) {
+  const supabase = await createSupabaseServerClient()
+  return supabase.rpc("change_order_deposit", { p_sale_id: saleId, p_percent: percent, p_reason: reason })
 }
 
 export async function allowWithoutDeposit(saleId: string, reason: string) {

@@ -1,6 +1,6 @@
 "use client"
 
-import { CalendarIcon, CircleSlashIcon, PackageCheckIcon, ShieldCheckIcon } from "lucide-react"
+import { CalendarIcon, CircleSlashIcon, PackageCheckIcon, PercentIcon, ShieldCheckIcon } from "lucide-react"
 import { useState } from "react"
 
 import DateField from "@/common/components/date-field"
@@ -15,7 +15,13 @@ import { useActionFeedback } from "@/common/lib/hooks/use-action-feedback.hook"
 import { useFormAction } from "@/common/lib/hooks/use-form-action.hook"
 import { formatMoney, formatUsdt } from "@/common/lib/utils/format-money.util"
 
-import { allowWithoutDepositAction, cancelOrderAction, changePromisedDateAction, deliverOrderAction } from "../lib/actions/orders.action"
+import {
+  allowWithoutDepositAction,
+  cancelOrderAction,
+  changeOrderDepositAction,
+  changePromisedDateAction,
+  deliverOrderAction,
+} from "../lib/actions/orders.action"
 
 const usd = (v: number) => formatMoney(v, "USD")
 
@@ -176,6 +182,50 @@ export const PromisedDateDialog = ({ saleId, current, today }: { saleId: string;
             <Input id="pd-reason" name="reason" className="h-11 md:h-9" />
           </FormField>
           <SubmitButton pending={pending}>Guardar fecha</SubmitButton>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// Otra inicial para un pedido abierto (owner y admin, con motivo).
+export const DepositDialog = ({ saleId, totalUsd, currentPercent }: { saleId: string; totalUsd: number; currentPercent: number | null }) => {
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState(currentPercent !== null ? String(currentPercent).replace(".", ",") : "")
+  const { state, onSubmit, pending } = useFormAction(changeOrderDepositAction)
+  useActionFeedback(state, () => setOpen(false))
+  const errors = state.fieldErrors ?? {}
+  const percent = Number(value.replace(",", "."))
+  const preview = value.trim() && Number.isFinite(percent) && percent >= 0 && percent <= 100 ? Math.round(totalUsd * percent) / 100 : null
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <PercentIcon aria-hidden />
+          Cambiar inicial
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Inicial del pedido</DialogTitle>
+          <DialogDescription>Lo que hay que pagar para empezar a producir. El cambio queda registrado con su motivo.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="grid gap-4" noValidate>
+          <input type="hidden" name="sale_id" value={saleId} />
+          {state.status === "error" && state.message && <StatusAlert tone="error" title={state.message} />}
+          <FormField
+            label="Inicial (%)"
+            htmlFor="dep-percent"
+            error={errors.deposit_percent}
+            hint={preview !== null ? `${usd(preview)} de ${usd(totalUsd)}` : undefined}
+          >
+            <Input id="dep-percent" name="deposit_percent" inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} className="h-11 md:h-9" />
+          </FormField>
+          <FormField label="Motivo" htmlFor="dep-reason" error={errors.reason}>
+            <Textarea id="dep-reason" name="reason" rows={2} placeholder="Ej.: lo acordamos al 50% por el volumen" />
+          </FormField>
+          <SubmitButton pending={pending}>Guardar inicial</SubmitButton>
         </form>
       </DialogContent>
     </Dialog>

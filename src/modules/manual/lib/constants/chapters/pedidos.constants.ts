@@ -113,6 +113,11 @@ export const ORDERS_CHAPTER: ManualChapter = {
         {
           kind: "text",
           body:
+            "La regla es la base, pero la inicial se puede **negociar**. Un cliente fijo puede tener una **inicial habitual** en su acuerdo (por ejemplo, 50%): sus pedidos desde el umbral ya vienen con ese %. Y en cada pedido, owner o admin pueden poner otra con **Otra inicial para este pedido** (staff usa la que corresponde). Si se negocia después de registrado, en el pedido: **Cambiar inicial**, con motivo; queda en **Cambios de inicial**. El pedido muestra el % pactado junto a lo que falta para empezar.",
+        },
+        {
+          kind: "text",
+          body:
             "Si el pedido se hizo y se pagó **otro día** y se registra después, toca **Hoy · cambiar fecha** y elige ese día: el pedido queda con esa fecha y su pago inicial usa las [[tasa-bcv|tasas]] de ese día, así los Bs que pagó cuadran. Los pagos que llegan después se registran desde el pedido con **Registrar pago**, cada uno con su propia fecha.",
         },
       ],
@@ -260,7 +265,7 @@ export const ORDERS_CHAPTER: ManualChapter = {
           kind: "roles",
           items: [
             { role: "staff", can: "Registra pedidos, cobra, avanza y asigna etapas, entrega pedidos pagados y cancela antes del corte." },
-            { role: "admin", can: "Todo lo anterior, más autorizar producir sin abono, entregar con saldo y cancelar después del corte." },
+            { role: "admin", can: "Todo lo anterior, más poner o cambiar la inicial de un pedido, autorizar producir sin abono, entregar con saldo y cancelar después del corte." },
             { role: "owner", can: "Igual que admin." },
           ],
         },

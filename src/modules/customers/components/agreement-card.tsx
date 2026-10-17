@@ -104,6 +104,12 @@ const AgreementCard = ({ customerId, agreement, products, canManage }: Agreement
                   ? "Todos sus pagos en Bs se calculan a la BCV euro, sea cual sea el método."
                   : "Cada método en Bs usa su propia tasa."}
               </span>
+              <span className="mt-2 block">
+                Inicial de sus pedidos:{" "}
+                <span className="font-medium">
+                  {agreement.depositPercent !== null ? `${percentFormat.format(agreement.depositPercent)} %` : "la de la regla"}
+                </span>
+              </span>
             </span>
             {canManage && (
               <Button type="button" variant="outline" size="sm" onClick={() => setSettingsOpen(true)}>
@@ -211,6 +217,7 @@ const AgreementCard = ({ customerId, agreement, products, canManage }: Agreement
           customerId={customerId}
           percent={agreement.generalDiscountPercent}
           vesRateKind={agreement.vesRateKind}
+          depositPercent={agreement.depositPercent}
           notes={agreement.notes}
         />
       )}
@@ -234,6 +241,7 @@ const SettingsDialog = ({
   customerId,
   percent,
   vesRateKind,
+  depositPercent,
   notes,
 }: {
   open: boolean
@@ -241,9 +249,11 @@ const SettingsDialog = ({
   customerId: string
   percent: number | null
   vesRateKind: AgreementVesRateKind
+  depositPercent: number | null
   notes: string | null
 }) => {
   const [rateKind, setRateKind] = useState<AgreementVesRateKind>(vesRateKind)
+  const [deposit, setDeposit] = useState(depositPercent !== null ? String(depositPercent).replace(".", ",") : "")
   const [value, setValue] = useState(percent !== null ? String(percent).replace(".", ",") : "")
   const [text, setText] = useState(notes ?? "")
   const [error, setError] = useState<string | null>(null)
@@ -256,11 +266,17 @@ const SettingsDialog = ({
       setError("El % va de 0 a 100 (o déjalo vacío).")
       return
     }
+    const parsedDeposit = deposit.trim() ? parseAmount(deposit) : null
+    if (deposit.trim() && (parsedDeposit === null || parsedDeposit < 0 || parsedDeposit > 100)) {
+      setError("La inicial va de 0 a 100 (o déjala vacía).")
+      return
+    }
     startTransition(async () => {
       const result = await saveAgreementSettingsAction({
         customer_id: customerId,
         general_discount_percent: parsed,
         ves_rate_kind: rateKind,
+        deposit_percent: parsedDeposit,
         notes: text.trim() || null,
       })
       if (!result.ok) {
@@ -291,6 +307,14 @@ const SettingsDialog = ({
               onChange={(v) => setRateKind(v as AgreementVesRateKind)}
               options={(Object.keys(VES_RATE_LABELS) as AgreementVesRateKind[]).map((k) => ({ value: k, label: VES_RATE_LABELS[k] }))}
             />
+          </FormField>
+          <FormField
+            label="Inicial habitual de sus pedidos (%)"
+            htmlFor="agreement-deposit"
+            optional
+            hint="Para sus pedidos desde el umbral de la regla. Vacío: la de la regla. En cada pedido owner o admin la pueden cambiar."
+          >
+            <Input id="agreement-deposit" inputMode="decimal" value={deposit} onChange={(e) => setDeposit(e.target.value)} placeholder="50" className="h-11 md:h-9" />
           </FormField>
           <FormField label="Notas" htmlFor="agreement-notes" optional>
             <Textarea id="agreement-notes" rows={3} value={text} onChange={(e) => setText(e.target.value)} maxLength={500} placeholder="Ej.: pide cada semestre, paga por transferencia" />

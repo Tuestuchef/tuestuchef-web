@@ -9,6 +9,8 @@ export type CustomerAgreement = {
   customerName: string
   generalDiscountPercent: number | null
   vesRateKind: AgreementVesRateKind
+  // Inicial habitual de sus pedidos desde el umbral (null = la de la regla).
+  depositPercent: number | null
   notes: string | null
   rules: AgreementRule[]
 }
