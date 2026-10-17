@@ -12,6 +12,7 @@ import { isAllowedFor, priceForAgreement, visibleForCustomer } from "../utils/ag
 // · visible: sin los exclusivos de otros clientes (para el buscador).
 // · tiers: sin descuento al mayor si el cliente tiene acuerdo.
 // · notAllowed: si una variante ya agregada es exclusiva de otro cliente.
+// · eurRate: si paga sus Bs a tasa euro (los métodos en Bs se pasan por methodsForCustomer).
 export function useCustomerPricing(
   variants: SellableVariant[],
   volumeTiers: VolumeTier[],
@@ -31,6 +32,7 @@ export function useCustomerPricing(
     priced,
     visible,
     tiers: agreement ? [] : volumeTiers,
+    eurRate: agreement?.vesRateKind === "bcv_eur",
     notAllowed: (variant: SellableVariant | undefined) => Boolean(variant && !isAllowedFor(variant, customerId)),
   }
 }

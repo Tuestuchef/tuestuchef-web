@@ -235,7 +235,8 @@ const QuoteForm = ({
     })
   const usdTotals = useUsd ? totalsFor(usdList?.id) : null
   const vesTotals = useVes ? totalsFor(vesList?.id) : null
-  const bcv = rates?.bcvUsd ?? 0
+  // Tasa de los Bs: la de la lista, o la BCV euro si el cliente paga a tasa euro (como la base).
+  const bcv = (pricing.eurRate || vesList?.eurRate ? rates?.bcvEur : rates?.bcvUsd) ?? 0
 
   const hasLineDiscount = lines.some((l) => (parseAmount(l.discountPercent) ?? 0) > 0)
   const needsReason = (discountType !== null && (discountAmount ?? 0) > 0) || hasLineDiscount

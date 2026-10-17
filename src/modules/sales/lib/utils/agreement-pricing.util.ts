@@ -1,5 +1,6 @@
 import type { CustomerAgreement } from "@/modules/customers/lib/types/agreements.types"
 
+import type { PaymentRateKind } from "../constants/sales.constants"
 import type { CalculatorProduct, SellableVariant } from "../types/sales.types"
 
 const round2 = (value: number) => Math.round(value * 100) / 100
@@ -15,6 +16,13 @@ export function variantsForCustomer(
   methodIds: string[]
 ): SellableVariant[] {
   return priceForAgreement(visibleForCustomer(variants, customerId), agreement, methodIds)
+}
+
+// Cliente que paga sus Bs a tasa euro (su acuerdo): sus métodos en Bs se calculan con la BCV euro,
+// igual que hace la base al registrar el pago. Los demás métodos no cambian.
+export function methodsForCustomer<T extends { rateKind: PaymentRateKind }>(methods: T[], agreement: Pick<CustomerAgreement, "vesRateKind"> | null): T[] {
+  if (agreement?.vesRateKind !== "bcv_eur") return methods
+  return methods.map((m) => (m.rateKind === "none" ? m : { ...m, rateKind: "bcv_eur" }))
 }
 
 // Sin los exclusivos de otros clientes (o de todos, si no hay cliente).

@@ -22,6 +22,7 @@ import BackdateField from "@/modules/sales/components/backdate-field"
 import ComboPickerDialog, { type ComboSelection } from "@/modules/sales/components/combo-picker-dialog"
 import ProductPicker from "@/modules/sales/components/product-picker"
 import { useCustomerPricing } from "@/modules/sales/lib/hooks/use-customer-pricing.hook"
+import { methodsForCustomer } from "@/modules/sales/lib/utils/agreement-pricing.util"
 import {
   CHANNEL_LABELS,
   chargesShipping,
@@ -100,7 +101,9 @@ const OrderForm = ({
   const variantById = useMemo(() => new Map(pricing.priced.map((v) => [v.id, v])), [pricing.priced])
   const exclusiveLine = lines.find((l) => pricing.notAllowed(variantById.get(l.variantId)))
   const typeById = useMemo(() => new Map(customizationTypes.map((t) => [t.id, t])), [customizationTypes])
-  const methodById = useMemo(() => new Map(methods.map((m) => [m.id, m])), [methods])
+  // Cliente que paga sus Bs a tasa euro: sus métodos en Bs se calculan con la BCV euro (como la base).
+  const ratedMethods = useMemo(() => methodsForCustomer(methods, pricing.agreement), [methods, pricing.agreement])
+  const methodById = useMemo(() => new Map(ratedMethods.map((m) => [m.id, m])), [ratedMethods])
   const saleRates = dateRates === "today" ? (rates ?? { bcvUsd: 0, bcvEur: 0, usdUsdt: 1 }) : { bcvUsd: 0, bcvEur: 0, usdUsdt: 1, ...dateRates }
   const backdateWithoutRate = date !== today && dateRates === null
 
@@ -393,6 +396,7 @@ const OrderForm = ({
           {total >= settings.depositThresholdUsd
             ? `Desde ${usd(settings.depositThresholdUsd)}: ${settings.depositPercent}% para empezar (${usd(depositRequired)}) y el resto al entregar.`
             : `Menos de ${usd(settings.depositThresholdUsd)}: se paga completo para empezar.`}
+          {pricing.eurRate && " Tasa euro: sus pagos en Bs van a la BCV euro (su acuerdo)."}
         </p>
         {payments.map((row) => {
           const method = methodById.get(row.methodId)!
@@ -432,7 +436,7 @@ const OrderForm = ({
           className="w-fit"
           disabled={total <= 0}
           onClick={() => {
-            const method = methodById.get(priceMethodId) ?? methods[0]
+            const method = methodById.get(priceMethodId) ?? ratedMethods[0]
             const missing = Math.max(depositRequired - paidUsd, 0)
             setPayments((rows) => [...rows, { key: Date.now(), methodId: method.id, amount: missing > 0 ? String(usdToMethodAmount(missing, method, saleRates)) : "" }])
           }}

@@ -15,7 +15,7 @@ import { PRICE_CALCULATOR_MESSAGES, PRICE_CALCULATOR_STORAGE_KEY } from "../lib/
 import type { CalculatorProduct, PriceCalculatorData } from "../lib/types/sales.types"
 import { type CalculatorLine, calculatorTotals, calculatorWhatsappText, lineExtraUsd, sizeSurchargesFor } from "../lib/utils/price-calculator.util"
 import { unitsPerUsd } from "../lib/utils/sale-math.util"
-import { calculatorProductsFor } from "../lib/utils/agreement-pricing.util"
+import { calculatorProductsFor, methodsForCustomer } from "../lib/utils/agreement-pricing.util"
 
 const ALL = "all"
 
@@ -54,10 +54,13 @@ const priceFrom = (product: CalculatorProduct) => {
 // Sin cliente: precios normales.
 const GENERAL = "general"
 
-const PriceCalculator = ({ products: allProducts, categories, methods, rates, volumeTiers: baseVolumeTiers, agreements }: PriceCalculatorData) => {
+const PriceCalculator = ({ products: allProducts, categories, methods: baseMethods, rates, volumeTiers: baseVolumeTiers, agreements }: PriceCalculatorData) => {
   // Precios de un cliente con acuerdo (sus exclusivos, sus precios y sin descuento al mayor).
   const [customerId, setCustomerId] = useState(GENERAL)
   const agreement = agreements.find((a) => a.customerId === customerId) ?? null
+  // Cliente que paga sus Bs a tasa euro: los Bs van a la BCV euro.
+  const methods = useMemo(() => methodsForCustomer(baseMethods, agreement), [baseMethods, agreement])
+  const eurRate = agreement?.vesRateKind === "bcv_eur"
   const methodIds = methods.map((m) => m.id).join(",")
   const products = useMemo(
     () => calculatorProductsFor(allProducts, agreement?.customerId ?? null, agreement, methodIds ? methodIds.split(",") : []),
@@ -356,8 +359,8 @@ const PriceCalculator = ({ products: allProducts, categories, methods, rates, vo
               <p className={cn("flex items-start gap-1.5 text-xs", rates.isCurrent ? "text-muted-foreground" : "font-medium")}>
                 {!rates.isCurrent && <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />}
                 {rates.isCurrent
-                  ? `Bs a la tasa BCV de hoy (${formatRate(rates.bcvUsd)}).`
-                  : `No hay tasa de hoy: los Bs usan la última registrada (BCV ${formatRate(rates.bcvUsd)}).`}
+                  ? `Bs a la tasa BCV ${eurRate ? "euro " : ""}de hoy (${formatRate(eurRate ? rates.bcvEur : rates.bcvUsd)}).`
+                  : `No hay tasa de hoy: los Bs usan la última registrada (BCV ${eurRate ? "euro " : ""}${formatRate(eurRate ? rates.bcvEur : rates.bcvUsd)}).`}
               </p>
             )}
             <Button className="h-11 md:h-9" onClick={copy} disabled={totals.methods.length === 0}>

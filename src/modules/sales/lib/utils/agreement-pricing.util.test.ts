@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { SellableVariant } from "../types/sales.types"
-import { variantsForCustomer } from "./agreement-pricing.util"
+import { methodsForCustomer, variantsForCustomer } from "./agreement-pricing.util"
 
 const variant = (id: string, productId: string, extra = 0, exclusive: string | null = null): SellableVariant => ({
   id,
@@ -24,6 +24,7 @@ const agreement = {
   customerId: "school",
   customerName: "Escuela",
   generalDiscountPercent: 5,
+  vesRateKind: "bcv_usd" as const,
   notes: null,
   rules: [
     { productId: "fixed", discountPercent: null, fixedPriceUsd: 12 },
@@ -44,5 +45,20 @@ describe("precios del acuerdo en pantalla (igual que la base)", () => {
   it("los exclusivos solo se ven con su cliente; sin acuerdo, precios normales", () => {
     expect(variantsForCustomer(variants, null, null, []).map((v) => v.id)).toEqual(["a", "b", "c"])
     expect(variantsForCustomer(variants, "other", null, [])[1].pricesUsd).toEqual({ cash: 20, zelle: 22 })
+  })
+})
+
+describe("tasa euro del cliente", () => {
+  const methods = [
+    { id: "pm", rateKind: "bcv_usd" as const, currency: "VES" as const },
+    { id: "eur", rateKind: "bcv_eur" as const, currency: "VES" as const },
+    { id: "cash", rateKind: "none" as const, currency: "USD" as const },
+  ]
+  it("con euro, los métodos en Bs pasan a la BCV euro; USD no cambia", () => {
+    expect(methodsForCustomer(methods, { ...agreement, vesRateKind: "bcv_eur" }).map((m) => m.rateKind)).toEqual(["bcv_eur", "bcv_eur", "none"])
+  })
+  it("sin acuerdo o con dólar, todo queda igual", () => {
+    expect(methodsForCustomer(methods, null)).toBe(methods)
+    expect(methodsForCustomer(methods, agreement)).toBe(methods)
   })
 })

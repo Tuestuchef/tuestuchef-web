@@ -147,3 +147,60 @@ describe("acuerdos con clientes", () => {
     expect(Number(catalog.price)).toBe(20)
   })
 })
+
+describe("cliente que paga sus Bs a tasa euro", () => {
+  beforeAll(async () => {
+    // Pago móvil: un método en Bs a tasa BCV dólar (40). La BCV euro de prueba es 44.
+    const bank = await one(owner<{ id: string }>("insert into public.accounts (name, currency, kind) values ('Banco', 'VES', 'bank') returning id"))
+    ids.pagoMovil = (
+      await one(
+        owner<{ id: string }>(
+          "insert into public.payment_methods (name, account_id, price_currency, rate_kind) values ('Pago móvil', $1, 'USD', 'bcv_usd') returning id",
+          [bank.id]
+        )
+      )
+    ).id
+    await owner("insert into public.product_prices (product_id, payment_method_id, amount_usd) values ($1, $2, 20)", [ids.plainProduct, ids.pagoMovil])
+    await owner("update public.customer_agreements set ves_rate_kind = 'bcv_eur' where customer_id = $1", [ids.school])
+  })
+
+  const payment = (sale: string) =>
+    one(
+      owner<{ rate_kind: string; applied_rate: string; usd_amount: string }>(
+        "select rate_kind, applied_rate, usd_amount from public.sale_payments where sale_id = $1",
+        [sale]
+      )
+    ).then((r) => ({ rate_kind: r.rate_kind, applied_rate: Number(r.applied_rate), usd_amount: Number(r.usd_amount) }))
+
+  it("sus pagos en Bs usan la BCV euro aunque el método sea a tasa dólar", async () => {
+    // 20 USD con 5% general = 19 USD × 44 = 836 Bs.
+    const sale = await sell(ids.school, [{ variant: "plain", quantity: 1 }])
+    await staff("select public.add_sale_payment($1, $2, 836)", [sale, ids.pagoMovil])
+    expect(await payment(sale)).toMatchObject({ rate_kind: "bcv_eur", applied_rate: 44, usd_amount: 19 })
+  })
+
+  it("los demás clientes siguen con la tasa de su método", async () => {
+    const sale = await sell(ids.other, [{ variant: "plain", quantity: 1 }])
+    await staff("select public.add_sale_payment($1, $2, 800)", [sale, ids.pagoMovil])
+    expect(await payment(sale)).toMatchObject({ rate_kind: "bcv_usd", applied_rate: 40, usd_amount: 20 })
+  })
+
+  it("su presupuesto en Bs también va a la BCV euro", async () => {
+    const save = (customer: string) =>
+      one(
+        staff<{ id: string }>("select public.save_quote_draft(null, $1::jsonb) as id", [
+          JSON.stringify({ customer_id: customer, currencies: "ves", ves_price_method_id: ids.pagoMovil, items: [{ variant_id: ids.plain, quantity: 1 }] }),
+        ])
+      ).then((r) => r.id)
+    const rate = (quote: string) => one(owner<{ ves_rate: string }>("select ves_rate from public.quotes where id = $1", [quote])).then((r) => Number(r.ves_rate))
+    expect(await rate(await save(ids.school))).toBe(44)
+    expect(await rate(await save(ids.other))).toBe(40)
+  })
+
+  it("staff no cambia la tasa del acuerdo", async () => {
+    await staff("update public.customer_agreements set ves_rate_kind = 'bcv_usd' where customer_id = $1", [ids.school])
+    const row = await one(owner<{ ves_rate_kind: string }>("select ves_rate_kind from public.customer_agreements where customer_id = $1", [ids.school]))
+    expect(row.ves_rate_kind).toBe("bcv_eur")
+    await expect(owner("update public.customer_agreements set ves_rate_kind = 'none' where customer_id = $1", [ids.school])).rejects.toThrow(/ves_rate_kind/)
+  })
+})

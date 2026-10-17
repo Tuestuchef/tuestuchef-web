@@ -103,7 +103,7 @@ export const ItemStatusSelect = ({ itemId, status, options, canGoBack, locked = 
   )
 }
 
-// Marca como entregadas todas las líneas que ya están listas.
+// Marca como entregadas las líneas que se le pasan (en una venta, todas las que faltan).
 export const DeliverReadyButton = ({ itemIds }: { itemIds: string[] }) => {
   const [pending, startTransition] = useTransition()
   const runMany = (items: { sale_item_id: string; status: SaleItemStatus }[]) =>

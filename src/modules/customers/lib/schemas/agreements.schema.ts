@@ -5,6 +5,7 @@ const percent = z.number({ error: "Indica el %." }).gt(0, { error: "El % va de 0
 export const agreementSettingsSchema = z.object({
   customer_id: z.uuid(),
   general_discount_percent: percent.nullable(),
+  ves_rate_kind: z.enum(["bcv_usd", "bcv_eur"]).default("bcv_usd"),
   notes: z.string().trim().max(500).nullable(),
 })
 

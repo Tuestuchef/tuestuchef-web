@@ -21,6 +21,7 @@ export type Database = {
           notes: string | null
           updated_at: string
           updated_by: string | null
+          ves_rate_kind: Database["public"]["Enums"]["payment_rate_kind"]
         }
         Insert: {
           created_at?: string
@@ -30,6 +31,7 @@ export type Database = {
           notes?: string | null
           updated_at?: string
           updated_by?: string | null
+          ves_rate_kind?: Database["public"]["Enums"]["payment_rate_kind"]
         }
         Update: {
           created_at?: string
@@ -39,6 +41,7 @@ export type Database = {
           notes?: string | null
           updated_at?: string
           updated_by?: string | null
+          ves_rate_kind?: Database["public"]["Enums"]["payment_rate_kind"]
         }
         Relationships: [
           {

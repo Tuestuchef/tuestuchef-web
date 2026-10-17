@@ -3,7 +3,7 @@ import "server-only"
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
 
 import type { AgreementPriceInput, AgreementSettingsInput } from "../schemas/agreements.schema"
-import type { CustomerAgreement } from "../types/agreements.types"
+import type { AgreementVesRateKind, CustomerAgreement } from "../types/agreements.types"
 
 const toNumber = (value: number | null) => (value === null ? null : Number(value))
 
@@ -13,7 +13,7 @@ export async function listAgreements(): Promise<CustomerAgreement[]> {
   const [agreements, prices] = await Promise.all([
     supabase
       .from("customer_agreements")
-      .select("customer_id, general_discount_percent, notes, customer:customers(first_name, last_name, legal_name)"),
+      .select("customer_id, general_discount_percent, ves_rate_kind, notes, customer:customers(first_name, last_name, legal_name)"),
     supabase.from("customer_agreement_prices").select("customer_id, product_id, discount_percent, fixed_price_usd"),
   ])
   if (agreements.error) throw agreements.error
@@ -22,6 +22,7 @@ export async function listAgreements(): Promise<CustomerAgreement[]> {
     customerId: a.customer_id,
     customerName: a.customer ? a.customer.legal_name || [a.customer.first_name, a.customer.last_name].filter(Boolean).join(" ") : "—",
     generalDiscountPercent: toNumber(a.general_discount_percent),
+    vesRateKind: a.ves_rate_kind === "bcv_eur" ? "bcv_eur" : "bcv_usd",
     notes: a.notes,
     rules: prices.data
       .filter((p) => p.customer_id === a.customer_id)
@@ -33,7 +34,7 @@ export async function listAgreements(): Promise<CustomerAgreement[]> {
 export async function getCustomerAgreement(customerId: string) {
   const supabase = await createSupabaseServerClient()
   const [agreement, prices, exclusives] = await Promise.all([
-    supabase.from("customer_agreements").select("general_discount_percent, notes").eq("customer_id", customerId).maybeSingle(),
+    supabase.from("customer_agreements").select("general_discount_percent, ves_rate_kind, notes").eq("customer_id", customerId).maybeSingle(),
     supabase
       .from("customer_agreement_prices")
       .select("id, product_id, discount_percent, fixed_price_usd, product:products(name, kind)")
@@ -44,6 +45,7 @@ export async function getCustomerAgreement(customerId: string) {
   return {
     exists: Boolean(agreement.data),
     generalDiscountPercent: toNumber(agreement.data?.general_discount_percent ?? null),
+    vesRateKind: (agreement.data?.ves_rate_kind === "bcv_eur" ? "bcv_eur" : "bcv_usd") as AgreementVesRateKind,
     notes: agreement.data?.notes ?? null,
     prices: (prices.data ?? [])
       .map((p) => ({
@@ -64,7 +66,12 @@ export type CustomerAgreementDetail = Awaited<ReturnType<typeof getCustomerAgree
 export async function saveAgreementSettings(input: AgreementSettingsInput) {
   const supabase = await createSupabaseServerClient()
   return supabase.from("customer_agreements").upsert(
-    { customer_id: input.customer_id, general_discount_percent: input.general_discount_percent, notes: input.notes },
+    {
+      customer_id: input.customer_id,
+      general_discount_percent: input.general_discount_percent,
+      ves_rate_kind: input.ves_rate_kind,
+      notes: input.notes,
+    },
     { onConflict: "customer_id" }
   )
 }

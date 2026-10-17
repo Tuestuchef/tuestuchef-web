@@ -26,7 +26,8 @@ export type QuoteSettings = {
 }
 
 // Lista de precios = un método de pago. currency: la moneda que cobra (Bs si tiene tasa BCV).
-export type PriceListOption = { id: string; name: string; currency: "USD" | "VES" }
+// eurRate: la lista en Bs va a la BCV euro (si no, a la BCV dólar).
+export type PriceListOption = { id: string; name: string; currency: "USD" | "VES"; eurRate: boolean }
 
 export type QuoteSettingsField =
   | "number_prefix"

@@ -31,6 +31,7 @@ import type { CustomizationOptions } from "@/modules/orders/lib/types/orders.typ
 
 import { createSaleAction } from "../lib/actions/create-sale.action"
 import { useCustomerPricing } from "../lib/hooks/use-customer-pricing.hook"
+import { methodsForCustomer } from "../lib/utils/agreement-pricing.util"
 import {
   CHANNEL_LABELS,
   chargesShipping,
@@ -148,7 +149,9 @@ const SaleForm = ({
   const volumeTiers = pricing.tiers
   const variantById = useMemo(() => new Map(pricing.priced.map((v) => [v.id, v])), [pricing.priced])
   const exclusiveLine = cart.find((l) => pricing.notAllowed(variantById.get(l.variantId)))
-  const methodById = useMemo(() => new Map(methods.map((m) => [m.id, m])), [methods])
+  // Cliente que paga sus Bs a tasa euro: sus métodos en Bs se calculan con la BCV euro (como la base).
+  const ratedMethods = useMemo(() => methodsForCustomer(methods, pricing.agreement), [methods, pricing.agreement])
+  const methodById = useMemo(() => new Map(ratedMethods.map((m) => [m.id, m])), [ratedMethods])
   const priceMethod = methodById.get(priceMethodId)
 
   // ---- Totales (mismas reglas que la base) ----
@@ -275,7 +278,7 @@ const SaleForm = ({
     setCart((prev) => prev.map((l) => (l.key === key ? { ...l, source: l.source === "stock" ? "made_to_order" : "stock" } : l)))
 
   const addPaymentRow = () => {
-    const method = priceMethod ?? methods[0]
+    const method = priceMethod ?? ratedMethods[0]
     setPaymentRows((rows) => [
       ...rows,
       { key: Date.now(), methodId: method.id, amount: balance > 0 ? String(inMethodCurrency(method, balance)) : "" },
@@ -662,7 +665,7 @@ const SaleForm = ({
       )}
 
       {/* 6. Pago */}
-      <FormField label="Pago" htmlFor="sale-payment">
+      <FormField label="Pago" htmlFor="sale-payment" hint={pricing.eurRate ? "Tasa euro: sus pagos en Bs van a la BCV euro (su acuerdo)." : undefined}>
         <ChoiceChips
           id="sale-payment"
           label="Pago"
@@ -746,7 +749,7 @@ const SaleForm = ({
           <label className="flex items-center justify-between gap-3 text-sm">
             <span>
               Ya se entregó
-              <span className="block text-xs text-muted-foreground">Las líneas de inventario quedan como entregadas.</span>
+              <span className="block text-xs text-muted-foreground">Todas las líneas quedan como entregadas, también las de encargo.</span>
             </span>
             <Switch checked={delivered} onCheckedChange={setDelivered} />
           </label>
@@ -806,7 +809,10 @@ const SaleForm = ({
           </div>
           {priceMethod && priceMethod.rateKind !== "none" && total > 0 && (
             <div className="flex justify-between text-muted-foreground">
-              <dt>En Bs (tasa {formatRate(priceMethod.rateKind === "bcv_eur" ? saleRates.bcvEur : saleRates.bcvUsd)})</dt>
+              <dt>
+                En Bs (tasa {priceMethod.rateKind === "bcv_eur" ? "euro " : ""}
+                {formatRate(priceMethod.rateKind === "bcv_eur" ? saleRates.bcvEur : saleRates.bcvUsd)})
+              </dt>
               <dd>{formatMoney(inMethodCurrency(priceMethod, total), "VES")}</dd>
             </div>
           )}

@@ -36,6 +36,9 @@ import {
   saveAgreementSettingsAction,
 } from "../lib/actions/agreements.action"
 import type { AgreementProductOption, CustomerAgreementDetail } from "../lib/services/agreements.service"
+import type { AgreementVesRateKind } from "../lib/types/agreements.types"
+
+const VES_RATE_LABELS: Record<AgreementVesRateKind, string> = { bcv_usd: "Tasa BCV dólar", bcv_eur: "Tasa BCV euro" }
 
 type AgreementCardProps = {
   customerId: string
@@ -93,6 +96,14 @@ const AgreementCard = ({ customerId, agreement, products, canManage }: Agreement
                 {agreement.generalDiscountPercent !== null ? `${percentFormat.format(agreement.generalDiscountPercent)} %` : "ninguno"}
               </span>
               <span className="block text-xs text-muted-foreground">Para todo lo que no tenga su propio precio abajo.</span>
+              <span className="mt-2 block">
+                Pagos en Bs: <span className="font-medium">{VES_RATE_LABELS[agreement.vesRateKind]}</span>
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                {agreement.vesRateKind === "bcv_eur"
+                  ? "Todos sus pagos en Bs se calculan a la BCV euro, sea cual sea el método."
+                  : "Cada método en Bs usa su propia tasa."}
+              </span>
             </span>
             {canManage && (
               <Button type="button" variant="outline" size="sm" onClick={() => setSettingsOpen(true)}>
@@ -199,6 +210,7 @@ const AgreementCard = ({ customerId, agreement, products, canManage }: Agreement
           onClose={() => setSettingsOpen(false)}
           customerId={customerId}
           percent={agreement.generalDiscountPercent}
+          vesRateKind={agreement.vesRateKind}
           notes={agreement.notes}
         />
       )}
@@ -221,14 +233,17 @@ const SettingsDialog = ({
   onClose,
   customerId,
   percent,
+  vesRateKind,
   notes,
 }: {
   open: boolean
   onClose: () => void
   customerId: string
   percent: number | null
+  vesRateKind: AgreementVesRateKind
   notes: string | null
 }) => {
+  const [rateKind, setRateKind] = useState<AgreementVesRateKind>(vesRateKind)
   const [value, setValue] = useState(percent !== null ? String(percent).replace(".", ",") : "")
   const [text, setText] = useState(notes ?? "")
   const [error, setError] = useState<string | null>(null)
@@ -242,7 +257,12 @@ const SettingsDialog = ({
       return
     }
     startTransition(async () => {
-      const result = await saveAgreementSettingsAction({ customer_id: customerId, general_discount_percent: parsed, notes: text.trim() || null })
+      const result = await saveAgreementSettingsAction({
+        customer_id: customerId,
+        general_discount_percent: parsed,
+        ves_rate_kind: rateKind,
+        notes: text.trim() || null,
+      })
       if (!result.ok) {
         setError(result.error)
         return
@@ -262,6 +282,15 @@ const SettingsDialog = ({
         <form onSubmit={submit} className="grid gap-4" noValidate>
           <FormField label="Descuento general (%)" htmlFor="agreement-percent" optional hint="Vacío: solo los precios por producto.">
             <Input id="agreement-percent" inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} placeholder="10" className="h-11 md:h-9" />
+          </FormField>
+          <FormField label="Pagos en Bs" htmlFor="agreement-ves-rate" hint="Con tasa euro, sus pagos en Bs (ventas, pedidos y abonos) y sus presupuestos en Bs usan la BCV euro con cualquier método.">
+            <ChoiceChips
+              id="agreement-ves-rate"
+              label="Pagos en Bs"
+              value={rateKind}
+              onChange={(v) => setRateKind(v as AgreementVesRateKind)}
+              options={(Object.keys(VES_RATE_LABELS) as AgreementVesRateKind[]).map((k) => ({ value: k, label: VES_RATE_LABELS[k] }))}
+            />
           </FormField>
           <FormField label="Notas" htmlFor="agreement-notes" optional>
             <Textarea id="agreement-notes" rows={3} value={text} onChange={(e) => setText(e.target.value)} maxLength={500} placeholder="Ej.: pide cada semestre, paga por transferencia" />

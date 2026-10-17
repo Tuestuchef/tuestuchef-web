@@ -133,7 +133,7 @@ const AddPaymentDialog = ({
               error={state.fieldErrors?.amount}
               hint={
                 needsRate && method
-                  ? `Tasa ${isBackdated ? "de esa fecha" : "de hoy"}: ${formatRate(unitsPerUsd(method, saleRates))} · saldo completo = ${formatMoney(fullAmount, method.currency)}`
+                  ? `Tasa ${method.rateKind === "bcv_eur" ? "euro " : ""}${isBackdated ? "de esa fecha" : "de hoy"}: ${formatRate(unitsPerUsd(method, saleRates))} · saldo completo = ${formatMoney(fullAmount, method.currency)}`
                   : undefined
               }
             >

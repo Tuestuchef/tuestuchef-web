@@ -406,6 +406,11 @@ export const SALES_CHAPTER: ManualChapter = {
                 "Owner y admin editan el cliente, el canal, la entrega y las notas, y corrigen pagos. Si el error está en los productos o los precios, la anulan con el motivo y se registra de nuevo.",
             },
             {
+              question: "Ya entregué la venta, ¿por qué un producto dice \"Por producir\"?",
+              answer:
+                "Abre la venta y toca **Marcar entregado**: pasa todo a Entregado, también lo que iba por encargo. Si la registras ya entregada, activa **Ya se entregó** al crearla.",
+            },
+            {
               question: "¿Cómo encuentro las ventas de un cliente?",
               answer:
                 "En Ventas, escribe su nombre (o razón social o teléfono) en **Buscar por cliente**. Busca en todos los meses, no solo en el elegido. También están en la ficha del cliente.",
@@ -413,7 +418,7 @@ export const SALES_CHAPTER: ManualChapter = {
             {
               question: "Un cliente paga en Bs pero a tasa euro, ¿cómo lo registro?",
               answer:
-                "Con un método de pago en Bs que use la **Tasa BCV euro** (Configuración → Métodos de pago). Al cobrar con ese método, los Bs se convierten a USD con la tasa euro del día de cada pago.",
+                "Si siempre paga así, márcalo en su acuerdo: en su ficha, **Acuerdo → Editar → Pagos en Bs: Tasa BCV euro**. Desde ahí, todos sus pagos en Bs usan la tasa euro del día de cada pago, con cualquier método. Para un pago suelto a tasa euro de otro cliente sirve un método en Bs con **Tasa BCV euro** (Configuración → Métodos de pago).",
             },
             {
               question: "¿Dónde aparece el dinero que cobré?",
@@ -499,7 +504,8 @@ export const CUSTOMERS_CHAPTER: ManualChapter = {
             { title: "Descuento general", body: "Un % para todo lo que no tenga su propio precio en el acuerdo (opcional)." },
             { title: "Precio por producto o combo", body: "Un % de descuento sobre el precio de cada método, o un precio fijo en dólares que vale con cualquier método. El recargo por talla o color se suma encima." },
             { title: "Exclusivos", body: "Un producto o combo que solo se le hace a ese cliente: en su ficha del Catálogo, **Editar → Exclusivo de**. No aparece en el buscador con otros clientes ni se le puede vender a nadie más; con ese cliente elegido sale primero." },
-            { title: "Calculadora", body: "Arriba, **Precios de** permite ver los precios de un cliente con acuerdo." },
+            { title: "Pagos en Bs a tasa euro", body: "Si el cliente paga sus Bs a la [[tasa-bcv|BCV euro]], se marca en el acuerdo (**Editar → Pagos en Bs**). Desde ahí, todo pago en Bs de sus ventas, pedidos y abonos se convierte con la tasa euro del día, con el método que sea (Pago Móvil, transferencia…), y sus presupuestos en Bs también. No hace falta crear métodos de pago \"a tasa euro\"." },
+            { title: "Calculadora", body: "Arriba, **Precios de** permite ver los precios de un cliente con acuerdo (y sus Bs a tasa euro, si los paga así)." },
           ],
         },
         {

@@ -161,7 +161,7 @@ export const HELP_TOPICS = {
         items: [
           "Registrar pago: para abonos o saldos. En Bs se usa la tasa del día del pago.",
           "Elegir el estado de cada producto en su lista: cualquiera posterior (por producir → confección → listo para entregar → entregado).",
-          "Marcar entregado: pasa a entregado todo lo que está listo.",
+          "Marcar entregado: pasa a entregado todo lo que falta, también lo que iba por encargo (lo fabricado consume su materia prima). Al registrar la venta, 'Ya se entregó' hace lo mismo.",
           "WhatsApp: elige el mensaje (nota de entrega), revísalo y se abre WhatsApp con el texto listo. Queda en Mensajes enviados.",
           "Nota de entrega: para imprimir o guardar como PDF. No es factura fiscal.",
           "Envío (delivery o envío nacional): fecha de envío y número de guía de la empresa de envíos. 'Ya se envió' pasa lo pendiente a Entregado. Con fecha de hoy o pasada aparece en Inicio, en Por enviar.",
@@ -439,6 +439,7 @@ export const HELP_TOPICS = {
         items: [
           "Descuento general y precios por producto o combo (% o precio fijo en USD). Se aplican solos al venderle, cotizarle o hacerle un pedido, sin descuento al mayor.",
           "Exclusivos: los productos y combos que solo se le hacen a él (se marcan en el Catálogo con Editar → Exclusivo de).",
+          "Pagos en Bs a tasa euro: si lo pactó así, todos sus pagos en Bs (ventas, pedidos y abonos) y sus presupuestos en Bs usan la BCV euro con cualquier método. Los pagos ya registrados no cambian.",
           "Lo editan owner y admin; el resto del equipo lo ve.",
         ],
       },

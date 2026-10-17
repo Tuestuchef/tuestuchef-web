@@ -43,7 +43,7 @@ export async function listPriceLists(): Promise<PriceListOption[]> {
     .order("sort_order")
     .order("name")
   if (error) throw error
-  return data.map((m) => ({ id: m.id, name: m.name, currency: m.rate_kind === "none" ? "USD" : "VES" }))
+  return data.map((m) => ({ id: m.id, name: m.name, currency: m.rate_kind === "none" ? "USD" : "VES", eurRate: m.rate_kind === "bcv_eur" }))
 }
 
 export async function updateQuoteSettings(input: QuoteSettingsInput) {

@@ -36,6 +36,7 @@ import {
   SHIPPING_FEE_LABELS,
 } from "../lib/constants/sales.constants"
 import { getSaleDetail, getSaleFormData } from "../lib/services/sales.service"
+import { methodsForCustomer } from "../lib/utils/agreement-pricing.util"
 
 const quantityFormat = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 3 })
 const usd = (value: number) => formatMoney(value, "USD")
@@ -50,7 +51,12 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
   const hasBalance = !isVoided && sale.balanceUsd > 0.01
   // Owner y admin corrigen datos y pagos (no en anuladas ni pedidos cancelados; un mes cerrado lo frena la base).
   const canEdit = canManage && !isVoided && !sale.isCancelledOrder
-  const readyItems = sale.items.filter((i) => i.status === "ready").map((i) => i.id)
+  // Venta: todo lo que falta por entregar (también lo que iba por encargo). Pedido: se entrega desde su pantalla.
+  // Cliente que paga sus Bs a tasa euro: sus pagos se calculan con la BCV euro (como la base).
+  const methods = methodsForCustomer(formData.methods, formData.agreements.find((a) => a.customerId === sale.customer?.id) ?? null)
+  const readyItems = sale.items
+    .filter((i) => i.source !== "combo" && i.status && (sale.isOrder ? i.status === "ready" : i.status !== "delivered"))
+    .map((i) => i.id)
 
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-4">
@@ -93,7 +99,7 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
           <AddPaymentDialog
             saleId={sale.id}
             balanceUsd={sale.balanceUsd}
-            methods={formData.methods}
+            methods={methods}
             rates={formData.rates}
             receiptsEnabled={isStorageEnabled()}
             today={formData.today}
@@ -300,7 +306,7 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
                       = {usd(payment.usdAmount)}
                       {canManage && ` · ${formatUsdt(payment.usdtValue)}`}
                     </span>
-                    {canEdit && <CorrectPaymentDialog payment={payment} methods={formData.methods} />}
+                    {canEdit && <CorrectPaymentDialog payment={payment} methods={methods} />}
                   </div>
                 </li>
               ))}

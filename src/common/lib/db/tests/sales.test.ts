@@ -183,6 +183,30 @@ describe("create_sale: stock y precios", () => {
     expect(status.rows[0].status).toBe("to_produce")
   })
 
+  it("con 'ya se entregó' todas las líneas quedan entregadas, también las de encargo", async () => {
+    const sale = (
+      await staff<{ id: string }>(
+        `select public.create_sale(
+           p_channel => 'in_person', p_price_method_id => $1, p_delivery_method => 'pickup',
+           p_items => $2::jsonb, p_delivered => true
+         ) as id`,
+        [
+          ids.cashUsd,
+          JSON.stringify([
+            { variant_id: ids.gor, quantity: 2, source: "made_to_order" },
+            { variant_id: ids.fil, quantity: 1, source: "stock" },
+          ]),
+        ]
+      )
+    ).rows[0].id
+    const statuses = await owner<{ status: string }>(
+      `select c.status from public.sale_item_current_status c
+       join public.sale_items i on i.id = c.sale_item_id where i.sale_id = $1`,
+      [sale]
+    )
+    expect(statuses.rows.map((r) => r.status)).toEqual(["delivered", "delivered"])
+  })
+
   it("un producto 'both' puede venderse por encargo aunque no haya stock", async () => {
     await expect(sell(staff, [{ variant: "del", quantity: 4, source: "made_to_order" }])).resolves.toBeTruthy()
     expect(await stock("del")).toBe(1)

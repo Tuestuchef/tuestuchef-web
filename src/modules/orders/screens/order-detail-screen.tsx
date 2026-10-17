@@ -21,6 +21,7 @@ import AddPaymentDialog from "@/modules/sales/components/add-payment-dialog"
 import { ItemStatusSelect } from "@/modules/sales/components/item-status-controls"
 import { formatSaleNumber, ITEM_STATUS_LABELS } from "@/modules/sales/lib/constants/sales.constants"
 import { getSaleFormData } from "@/modules/sales/lib/services/sales.service"
+import { methodsForCustomer } from "@/modules/sales/lib/utils/agreement-pricing.util"
 
 import {
   AllowWithoutDepositDialog,
@@ -145,7 +146,7 @@ const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }
           <AddPaymentDialog
             saleId={order.saleId}
             balanceUsd={order.balanceUsd}
-            methods={formData.methods}
+            methods={methodsForCustomer(formData.methods, formData.agreements.find((a) => a.customerId === order.customer?.id) ?? null)}
             rates={formData.rates}
             receiptsEnabled={isStorageEnabled()}
             today={formData.today}
