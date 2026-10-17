@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 import { Constants } from "@/common/lib/db/database.types"
-import {
+import { pastOrTodayDateSchema,
   booleanFieldSchema,
   optionalPositiveAmountSchema,
   optionalTextSchema,
@@ -88,6 +88,8 @@ export const createOrderSchema = z.object({
   delivery_method: z.enum(E.delivery_method),
   stock_mode: z.enum(E.order_stock_mode),
   promised_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Indica la fecha prometida." }),
+  // Día en que se hizo el pedido y su pago inicial (pasado = con las tasas de ese día).
+  date: pastOrTodayDateSchema,
   items: z.array(orderItemSchema).min(1, { error: "Agrega al menos un producto." }).max(100),
   payments: z.array(z.object({ payment_method_id: z.uuid(), amount: amountText("el monto del pago") })).max(10).default([]),
   delivery_fee_usd: z.number().min(0).default(0),

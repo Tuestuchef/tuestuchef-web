@@ -924,6 +924,7 @@ export const HELP_TOPICS = {
         items: [
           "Desde 500 USD: 60% para empezar y 40% al entregar. Por debajo: pago completo para empezar.",
           "Sin el pago, el pedido queda registrado pero no avanza a producción.",
+          "¿Se hizo y se pagó otro día? 'Hoy · cambiar fecha' registra el pedido con esa fecha y el pago inicial usa las tasas de ese día (staff, hasta el límite de días de Reglas de venta).",
         ],
       },
       {

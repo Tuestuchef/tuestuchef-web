@@ -1,7 +1,8 @@
 import "server-only"
 
 import { createSupabaseServerClient } from "@/common/lib/db/supabase-server.client"
-import { toCaracasDate } from "@/common/lib/utils/format-date.util"
+import { caracasNoonIso, toCaracasDate } from "@/common/lib/utils/format-date.util"
+import { ensureRatesForDate } from "@/modules/treasury/lib/services/rate-history.service"
 import { getSaleFormData } from "@/modules/sales/lib/services/sales.service"
 
 import { OPEN_ORDER_STATUSES, type OrderStatus, type ProductionStage } from "../constants/orders.constants"
@@ -51,6 +52,8 @@ export async function getOrderFormData(): Promise<OrderFormData> {
 export async function createOrder(input: CreateOrderInput) {
   const supabase = await createSupabaseServerClient()
   // La tasa de IVA es la de la configuración, nunca la que mande el navegador.
+  // Fecha pasada sin tasas cargadas: se traen del histórico.
+  await ensureRatesForDate(input.date)
   const vatPercent = input.vat_enabled ? (await supabase.from("quote_settings").select("vat_percent").single()).data?.vat_percent : 0
   return supabase.rpc("create_order", {
     p_customer_id: input.customer_id,
@@ -63,6 +66,7 @@ export async function createOrder(input: CreateOrderInput) {
     p_payments: input.payments,
     p_delivery_fee_usd: input.delivery_fee_usd,
     p_notes: input.notes ?? undefined,
+    p_occurred_at: input.date && input.date !== toCaracasDate() ? caracasNoonIso(input.date) : undefined,
     p_vat_percent: Number(vatPercent ?? 0),
   })
 }

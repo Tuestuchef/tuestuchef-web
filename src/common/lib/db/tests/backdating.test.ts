@@ -173,6 +173,38 @@ describe("pagos con fecha pasada", () => {
     expect(Number(row.rows[0].usd_amount)).toBe(10)
   })
 
+  it("un pedido con fecha pasada cobra su pago inicial con las tasas de esa fecha", async () => {
+    const customer = (
+      await owner<{ id: string }>("insert into public.customers (first_name, phone) values ('Cliente', '+584141112233') returning id")
+    ).rows[0].id
+    // 25 USD × BCV 30 (hace 3 días) = 750 Bs: pagado completo.
+    const order = (
+      await staff<{ id: string }>(
+        `select public.create_order(
+           p_customer_id => $1, p_price_method_id => $2, p_channel => 'whatsapp', p_delivery_method => 'pickup',
+           p_items => $3::jsonb, p_stock_mode => 'reserve_and_produce', p_payments => $4::jsonb, p_occurred_at => $5::timestamptz
+         ) as id`,
+        [
+          customer,
+          ids.pagoMovil,
+          JSON.stringify([{ variant_id: ids.variant, quantity: 1 }]),
+          JSON.stringify([{ payment_method_id: ids.pagoMovil, amount: 750 }]),
+          noon(await daysAgo(3)),
+        ]
+      )
+    ).rows[0].id
+    const row = await saleRow(order)
+    expect(Number(row.bcv_usd_rate)).toBe(30)
+    expect(row.is_backdated).toBe(true)
+    const payment = await owner<{ usd_amount: string; applied_rate: string; is_backdated: boolean }>(
+      "select usd_amount, applied_rate, is_backdated from public.sale_payments where sale_id = $1",
+      [order]
+    )
+    expect(Number(payment.rows[0].applied_rate)).toBe(30)
+    expect(Number(payment.rows[0].usd_amount)).toBe(25)
+    expect(payment.rows[0].is_backdated).toBe(true)
+  })
+
   it("un pago no puede ser anterior a la venta", async () => {
     const sale = await sell(owner, noon(await daysAgo(3)))
     await expect(

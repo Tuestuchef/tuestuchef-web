@@ -110,6 +110,11 @@ export const ORDERS_CHAPTER: ManualChapter = {
           conclusion:
             "Sin el abono, el pedido queda registrado pero **no pasa a producción**. Owner o admin pueden autorizar producir sin el abono completo, con motivo.",
         },
+        {
+          kind: "text",
+          body:
+            "Si el pedido se hizo y se pagó **otro día** y se registra después, toca **Hoy · cambiar fecha** y elige ese día: el pedido queda con esa fecha y su pago inicial usa las [[tasa-bcv|tasas]] de ese día, así los Bs que pagó cuadran. Los pagos que llegan después se registran desde el pedido con **Registrar pago**, cada uno con su propia fecha.",
+        },
       ],
     },
     {

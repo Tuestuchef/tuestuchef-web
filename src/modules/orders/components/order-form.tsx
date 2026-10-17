@@ -18,6 +18,7 @@ import { ROUTES } from "@/common/lib/constants/routes.constants"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import { parseAmount } from "@/common/lib/utils/parse-amount.util"
 import CustomerPicker, { type PickedCustomer } from "@/modules/customers/components/customer-picker"
+import BackdateField from "@/modules/sales/components/backdate-field"
 import ComboPickerDialog, { type ComboSelection } from "@/modules/sales/components/combo-picker-dialog"
 import ProductPicker from "@/modules/sales/components/product-picker"
 import { useCustomerPricing } from "@/modules/sales/lib/hooks/use-customer-pricing.hook"
@@ -31,7 +32,7 @@ import {
   type DeliveryMethod,
   type SaleChannel,
 } from "@/modules/sales/lib/constants/sales.constants"
-import type { SellableVariant } from "@/modules/sales/lib/types/sales.types"
+import type { SaleRatesForDate, SellableVariant } from "@/modules/sales/lib/types/sales.types"
 import { comboExtraUsd } from "@/modules/sales/lib/utils/combo.util"
 import { lineTotal, round, usdToMethodAmount, volumePercent } from "@/modules/sales/lib/utils/sale-math.util"
 
@@ -69,6 +70,7 @@ const OrderForm = ({
   settings,
   vatPercent,
   today,
+  staffMaxBackdateDays,
   canManage,
   storageEnabled,
 }: OrderFormData & { canManage: boolean; storageEnabled: boolean }) => {
@@ -88,6 +90,9 @@ const OrderForm = ({
   const [payments, setPayments] = useState<PaymentRow[]>([])
   const [notes, setNotes] = useState("")
   const [vatEnabled, setVatEnabled] = useState(false)
+  // Pedido de otro día: el pago inicial usa las tasas de ese día.
+  const [date, setDate] = useState(today)
+  const [dateRates, setDateRates] = useState<SaleRatesForDate | "today">("today")
 
   // Cliente con acuerdo: sus precios, sus exclusivos y sin descuento al mayor.
   const pricing = useCustomerPricing(variants, baseVolumeTiers, agreements, methods.map((m) => m.id), customer?.id ?? null)
@@ -96,7 +101,8 @@ const OrderForm = ({
   const exclusiveLine = lines.find((l) => pricing.notAllowed(variantById.get(l.variantId)))
   const typeById = useMemo(() => new Map(customizationTypes.map((t) => [t.id, t])), [customizationTypes])
   const methodById = useMemo(() => new Map(methods.map((m) => [m.id, m])), [methods])
-  const saleRates = rates ?? { bcvUsd: 0, bcvEur: 0, usdUsdt: 1 }
+  const saleRates = dateRates === "today" ? (rates ?? { bcvUsd: 0, bcvEur: 0, usdUsdt: 1 }) : { bcvUsd: 0, bcvEur: 0, usdUsdt: 1, ...dateRates }
+  const backdateWithoutRate = date !== today && dateRates === null
 
   // ---- Totales (la base vuelve a calcular todo) ----
   const priced = lines.map((line) => {
@@ -149,6 +155,7 @@ const OrderForm = ({
     belowMinimum[0],
     paidUsd > total + 0.01 && "Los pagos superan el total.",
     promisedDate < today && "La fecha prometida no puede ser pasada.",
+    backdateWithoutRate && "No hay tasas registradas para esa fecha. Owner o admin debe cargarlas.",
   ].filter(Boolean) as string[]
 
   // Una variante elegida (género, color y talla) con su cantidad; si ya está, suma.
@@ -172,6 +179,7 @@ const OrderForm = ({
         delivery_method: deliveryMethod,
         stock_mode: stockMode,
         promised_date: promisedDate,
+        date,
         items: lines.map((l) => ({
           variant_id: l.variantId,
           quantity: l.quantity,
@@ -334,6 +342,16 @@ const OrderForm = ({
         />
         <p className="text-xs text-muted-foreground">{STOCK_MODE_LABELS[stockMode].description}</p>
       </FormField>
+      <BackdateField
+        id="order-occurred-date"
+        today={today}
+        maxDaysBack={canManage ? null : staffMaxBackdateDays}
+        value={date}
+        onChange={(next, nextRates) => {
+          setDate(next)
+          setDateRates(nextRates)
+        }}
+      />
       <FormField label="Fecha prometida" htmlFor="order-date" hint={`Por defecto, ${settings.defaultLeadDays} días.`}>
         <DateField id="order-date" min={today} value={promisedDate} onChange={setPromisedDate} />
       </FormField>
