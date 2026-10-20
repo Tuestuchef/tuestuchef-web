@@ -84,11 +84,24 @@ const QuotePdf = ({ quote, business, image, gallery = [], draft }: QuotePdfProps
     ? groupQuoteItemsBySize(quote.items)
     : quote.items.filter((i) => !i.parentId).map((item) => ({ kind: "line", item }))
   const childrenOf = (id: string) => quote.items.filter((i) => i.parentId === id)
+  // La personalización de una línea y la de las piezas de su combo (con el nombre de la pieza).
+  const customizationsOf = (item: QuoteItem, detail: QuoteItem[]) => [
+    ...item.customizations.map((c) => ({ c, piece: null as string | null })),
+    ...detail.flatMap((p) => p.customizations.map((c) => ({ c, piece: p.productName }))),
+  ]
 
   const priceCells = (usdValue: number, vesValue: number, style: typeof s.colPrice) => (
     <>
       {showUsd && <Text style={style}>{usd(usdValue)}</Text>}
       {showVes && <Text style={style}>{bs(vesValue)}</Text>}
+    </>
+  )
+
+  // Una celda por moneda con el mismo texto (p. ej. "Incluida").
+  const textCells = (text: string, style: typeof s.colPrice) => (
+    <>
+      {showUsd && <Text style={style}>{text}</Text>}
+      {showVes && <Text style={style}>{text}</Text>}
     </>
   )
 
@@ -260,20 +273,21 @@ const QuotePdf = ({ quote, business, image, gallery = [], draft }: QuotePdfProps
                       {priceCells(c.usdLineTotal, c.vesLineTotal, s.colTotal)}
                     </View>
                   ))}
-                {item.customizations.map((c) => (
+                {customizationsOf(item, detail).map(({ c, piece }) => (
                   <View key={c.id} style={[s.row, s.muted]} wrap={false}>
                     <View style={[s.colItem, { paddingLeft: 10 }]}>
                       <Text>
+                        {piece ? `${piece}: ` : ""}
                         {c.typeName}
                         {c.text ? ` · "${c.text}"` : ""}
                         {c.sizeCm ? ` · ${c.sizeCm} cm` : ""}
                         {c.position ? ` · ${c.position}` : ""}
                       </Text>
-                      {c.discountPercent > 0 && <Text style={s.sub}>Precio al mayor {c.discountPercent}%</Text>}
+                      {c.charged && c.discountPercent > 0 && <Text style={s.sub}>Precio al mayor {c.discountPercent}%</Text>}
                     </View>
-                    {priceCells(c.unitPriceUsd, c.unitPriceUsd, s.colPrice)}
+                    {c.charged ? priceCells(c.unitPriceUsd, c.unitPriceUsd, s.colPrice) : textCells("Incluida", s.colPrice)}
                     <Text style={s.colQty}>{quantityFormat.format(c.quantity)}</Text>
-                    {priceCells(c.lineTotalUsd, c.lineTotalUsd, s.colTotal)}
+                    {c.charged ? priceCells(c.lineTotalUsd, c.lineTotalUsd, s.colTotal) : textCells("", s.colTotal)}
                   </View>
                 ))}
               </View>

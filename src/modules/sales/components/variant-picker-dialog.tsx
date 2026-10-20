@@ -1,10 +1,10 @@
 "use client"
 
-import { MinusIcon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 
 import ChoiceChips from "@/common/components/choice-chips"
 import { Button } from "@/common/components/ui/button"
+import QuantityStepper from "@/common/components/quantity-stepper"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/common/components/ui/dialog"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import { GENDER_LABELS, type ProductGender } from "@/modules/products/lib/constants/products.constants"
@@ -116,19 +116,7 @@ const PickerBody = ({
               <span className="text-muted-foreground">Elige para ver el precio</span>
             )}
           </div>
-          <div className="flex items-center rounded-md border">
-            <Button type="button" variant="ghost" size="icon" className="size-10 md:size-8" disabled={quantity <= 1} onClick={() => setQuantity((q) => q - 1)}>
-              <MinusIcon aria-hidden />
-              <span className="sr-only">Uno menos</span>
-            </Button>
-            <span className="w-8 text-center text-sm tabular-nums" aria-live="polite">
-              {quantity}
-            </span>
-            <Button type="button" variant="ghost" size="icon" className="size-10 md:size-8" onClick={() => setQuantity((q) => q + 1)}>
-              <PlusIcon aria-hidden />
-              <span className="sr-only">Uno más</span>
-            </Button>
-          </div>
+          <QuantityStepper value={quantity} onChange={setQuantity} />
         </div>
       </div>
 

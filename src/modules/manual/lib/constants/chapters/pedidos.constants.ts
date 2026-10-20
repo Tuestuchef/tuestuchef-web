@@ -70,7 +70,7 @@ export const ORDERS_CHAPTER: ManualChapter = {
             { title: "Agrega productos y combos", body: "Con su cantidad. En un combo eliges el modelo, la talla y el color de cada pieza; si una cobra recargo, se suma al combo." },
             {
               title: "Personaliza",
-              body: "**Personalizar** en cada línea: nombre bordado (uno para todas o uno por pieza), logo de bolsillo, estampado o de pecho.",
+              body: "**Personalizar** en cada línea: nombre bordado (uno para todas o uno por pieza), logo de bolsillo, estampado o de pecho. En un combo, en cada una de sus piezas.",
             },
             { title: "Elige el inventario", body: "Reservar lo que hay y producir lo que falta, o producir todo desde cero." },
             { title: "Revisa la fecha y el abono", body: "La fecha viene a 5 días (configurable). Registra el pago inicial." },
@@ -138,6 +138,11 @@ export const ORDERS_CHAPTER: ManualChapter = {
           kind: "text",
           body:
             "Cada tipo tiene un **precio por pieza** en USD (igual para todos los métodos de pago), un **mínimo de piezas** por pedido y su propio **descuento al mayor**. Se configuran en Configuración → Pedidos y personalización.",
+        },
+        {
+          kind: "text",
+          body:
+            "**Combos y promos.** En un combo (por ejemplo, el 10x10 de 10 delantales y 10 gorros) la personalización va en **cada pieza**: el logo en los delantales y un nombre en cada gorro. Cada personalización se **cobra aparte** o va **incluida** en el precio de la promo (queda anotada, sin precio). El mínimo de piezas por tipo cuenta las dos. Igual en ventas y presupuestos, y al convertir el presupuesto en pedido pasa tal cual.",
         },
       ],
     },

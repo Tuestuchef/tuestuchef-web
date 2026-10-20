@@ -49,7 +49,7 @@ export const QUOTES_CHAPTER: ManualChapter = {
           items: [
             { title: "Cliente", body: "Elige uno guardado o escribe solo el nombre (el resto es opcional). A un cliente bloqueado no se le hacen presupuestos." },
             { title: "Monedas y listas", body: "USD, Bs o ambas. Cada moneda sale de la **lista de precios** de un método de pago." },
-            { title: "Productos", body: "Con su color y talla, combos y personalización (nombre bordado, logos). En un combo, la pieza con recargo (talla o color) sale aparte como \"Recargo\". Los nombres y el logo se piden después, en el pedido." },
+            { title: "Productos", body: "Con su color y talla, combos y personalización (nombre bordado, logos). En un combo, la pieza con recargo (talla o color) sale aparte como \"Recargo\" y cada pieza se personaliza aparte. La personalización se cobra o va **incluida** (sale como \"Incluida\", sin precio). Los nombres y el logo se piden después, en el pedido." },
             {
               title: "Imágenes (opcional)",
               body: "Hasta 12 fotos con su nombre (\"Filipina manga corta · Vinotinto\"): **Del catálogo** toma las fotos ya subidas de cada producto y color (primero las de los productos del presupuesto) y pone el nombre solo; **Subir foto** agrega cualquier imagen (un bordado, el logo del cliente, una muestra). Se ordenan con las flechas.",

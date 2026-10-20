@@ -197,7 +197,7 @@ const SaleDetailScreen = async ({ user, id }: { user: SessionUser; id: string })
                             {c.position && ` · ${c.position}`}
                             {c.note && ` · ${c.note}`}
                             {c.hasLogo && " · con archivo del logo"}
-                            {!c.charged && " · sin cobrar"}
+                            {!c.charged && " · incluida"}
                           </span>
                         </span>
                         {c.charged && <span className="tabular-nums">{usd(c.lineTotalUsd)}</span>}

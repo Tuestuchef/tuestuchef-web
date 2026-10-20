@@ -69,6 +69,8 @@ export type OrderLineCustomization = {
   sizeCm: number | null
   note: string | null
   hasLogo: boolean
+  // Cobrada aparte o incluida en el precio (solo anotada).
+  charged: boolean
   lineTotalUsd: number
 }
 

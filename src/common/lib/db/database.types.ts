@@ -4449,6 +4449,7 @@ export type Database = {
       }
       quote_item_customizations: {
         Row: {
+          charged: boolean
           customization_type_id: string
           discount_percent: number
           id: string
@@ -4463,6 +4464,7 @@ export type Database = {
           unit_price_usd: number
         }
         Insert: {
+          charged?: boolean
           customization_type_id: string
           discount_percent?: number
           id?: string
@@ -4477,6 +4479,7 @@ export type Database = {
           unit_price_usd: number
         }
         Update: {
+          charged?: boolean
           customization_type_id?: string
           discount_percent?: number
           id?: string

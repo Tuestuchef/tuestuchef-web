@@ -92,7 +92,7 @@ export const SALES_CHAPTER: ManualChapter = {
             },
             {
               title: "¿Lleva personalización?",
-              body: "Toca **Personalizar** en la línea: el tipo (nombre bordado, logo…), cuántas piezas y el nombre o qué logo lleva (el archivo es opcional). **Cobrarla aparte** suma su precio al total; apágalo si ya iba incluida y queda solo anotada. Sale en el detalle y en la nota de entrega.",
+              body: "Toca **Personalizar** en la línea: el tipo (nombre bordado, logo…), cuántas piezas y el nombre o qué logo lleva (el archivo es opcional). En un combo como el 10x10, cada pieza tiene su propio **Personalizar** (logo en los delantales, nombres en los gorros). **Cobrarla aparte** suma su precio al total; apágalo si ya iba incluida (p. ej. en el precio de la promo) y queda solo anotada. Sale en el detalle y en la nota de entrega.",
             },
             {
               title: "Elige el método de pago",

@@ -75,6 +75,8 @@ export type QuoteItemCustomization = {
   unitPriceUsd: number
   discountPercent: number
   lineTotalUsd: number
+  // Cobrada aparte o incluida en el precio (solo anotada).
+  charged: boolean
 }
 
 export type QuoteItem = {

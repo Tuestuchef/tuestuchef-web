@@ -134,7 +134,7 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
       .select(
         `id, parent_item_id, quantity, reserved_quantity, source, unit_price_usd, line_total_usd,
          variant:product_variants(sku, gender, color:colors(name), size:sizes(name), product:products(name)),
-         customizations:sale_item_customizations(id, quantity, text, position, size_cm, note, logo_path, line_total_usd,
+         customizations:sale_item_customizations(id, quantity, text, position, size_cm, note, logo_path, charged, line_total_usd,
            type:customization_types(name), names:sale_item_customization_names(ordinal, name)),
          assignments:production_assignments(stage, expected_date, completed_at, team_member:team_members(id, full_name), supplier:suppliers(id, name))`
       )
@@ -235,6 +235,7 @@ export async function getOrderDetail(saleId: string): Promise<OrderDetail | null
           sizeCm: c.size_cm === null ? null : Number(c.size_cm),
           note: c.note,
           hasLogo: Boolean(c.logo_path),
+          charged: c.charged,
           lineTotalUsd: Number(c.line_total_usd),
         })),
         assignee: assignee

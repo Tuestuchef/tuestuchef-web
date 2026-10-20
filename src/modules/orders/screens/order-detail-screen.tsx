@@ -202,7 +202,7 @@ const OrderDetailScreen = async ({ user, id }: { user: SessionUser; id: string }
                       <span className="font-medium">
                         {c.quantity} × {c.typeName}
                         {c.sizeCm ? ` · ${c.sizeCm} cm` : ""}
-                        {c.position ? ` · ${c.position}` : ""} · {usd(c.lineTotalUsd)}
+                        {c.position ? ` · ${c.position}` : ""} · {c.charged ? usd(c.lineTotalUsd) : "incluida"}
                       </span>
                       {c.text && <span>Texto: “{c.text}”</span>}
                       {c.names.length > 0 && <span>Nombres: {c.names.join(", ")}</span>}

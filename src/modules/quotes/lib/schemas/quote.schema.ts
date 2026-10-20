@@ -50,13 +50,15 @@ const customizationSchema = z.object({
   position: optionalText(60),
   text: optionalText(60),
   note: optionalText(300),
+  // Cobrada aparte (por defecto) o incluida en el precio (solo anotada).
+  charged: z.boolean().default(true),
 })
 
 const itemSchema = z.object({
   variant_id: z.uuid(),
   quantity,
   discount_percent: z.number().min(0).max(100).default(0),
-  components: z.array(z.object({ variant_id: z.uuid(), quantity })).max(50).optional(),
+  components: z.array(z.object({ variant_id: z.uuid(), quantity, customizations: z.array(customizationSchema).max(20).default([]) })).max(50).optional(),
   customizations: z.array(customizationSchema).max(20).default([]),
 })
 

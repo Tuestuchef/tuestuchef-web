@@ -4,7 +4,6 @@ import {
   CheckIcon,
   ChevronDownIcon,
   Loader2Icon,
-  MinusIcon,
   PlusIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -15,6 +14,7 @@ import { toast } from "sonner"
 import ChoiceChips from "@/common/components/choice-chips"
 import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
+import QuantityStepper from "@/common/components/quantity-stepper"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
 import { Button } from "@/common/components/ui/button"
@@ -27,6 +27,8 @@ import { formatMoney, formatRate } from "@/common/lib/utils/format-money.util"
 import { parseAmount } from "@/common/lib/utils/parse-amount.util"
 import CustomerPicker, { type PickedCustomer } from "@/modules/customers/components/customer-picker"
 import CustomizationDialog, { type LineCustomization } from "@/modules/orders/components/customization-dialog"
+import CustomizationList from "@/modules/orders/components/customization-list"
+import { customizationPayload, customizingTarget, lineCustomizations, pieceTarget } from "@/modules/orders/lib/utils/customization.util"
 import type { CustomizationOptions } from "@/modules/orders/lib/types/orders.types"
 
 import { createSaleAction } from "../lib/actions/create-sale.action"
@@ -64,14 +66,17 @@ import { comboExtraUsd } from "../lib/utils/combo.util"
 import ComboPickerDialog, { type ComboSelection } from "./combo-picker-dialog"
 import ProductPicker from "./product-picker"
 
-// Una línea del carrito. Un combo trae la talla y el color de cada pieza (components).
+// Una pieza de un combo, con su personalización.
+type ComboPiece = ComboSelection["components"][number] & { customizations: LineCustomization[] }
+
+// Una línea del carrito. Un combo trae la talla, el color y la personalización de cada pieza (components).
 type CartLine = {
   key: string
   variantId: string
   quantity: number
   source: SaleLineSource
-  components?: ComboSelection["components"]
-  // Nombre bordado, logo…: cobrada aparte o solo anotada (solo en productos sueltos).
+  components?: ComboPiece[]
+  // Nombre bordado, logo…: cobrada aparte o incluida (en un combo, va en cada pieza).
   customizations: LineCustomization[]
 }
 type PaymentMode = "full" | "custom" | "none"
@@ -163,7 +168,27 @@ const SaleForm = ({
     return { ...line, variant, price, total: price === undefined ? 0 : round(lineTotal(price, line.quantity) + extra) }
   })
   const missingPrice = lines.filter((l) => l.price === undefined)
-  const customizingLine = lines.find((l) => l.key === customizing)
+  // Lo que se está personalizando: una línea suelta o una pieza de un combo.
+  const target = customizingTarget(customizing)
+  const customizingLine = lines.find((l) => l.key === target?.lineKey)
+  const customizingPiece = target?.pieceIndex != null ? customizingLine?.components?.[target.pieceIndex] : undefined
+  const customizingPieceVariant = customizingPiece ? variantById.get(customizingPiece.variantId) : undefined
+  const addCustomization = (c: LineCustomization) =>
+    setCart((prev) =>
+      prev.map((l) => {
+        if (l.key !== target?.lineKey) return l
+        if (target.pieceIndex === null) return { ...l, customizations: [...l.customizations, c] }
+        return { ...l, components: l.components?.map((p, i) => (i === target.pieceIndex ? { ...p, customizations: [...p.customizations, c] } : p)) }
+      })
+    )
+  const removeCustomization = (lineKey: string, pieceIndex: number | null, key: string) =>
+    setCart((prev) =>
+      prev.map((l) => {
+        if (l.key !== lineKey) return l
+        if (pieceIndex === null) return { ...l, customizations: l.customizations.filter((x) => x.key !== key) }
+        return { ...l, components: l.components?.map((p, i) => (i === pieceIndex ? { ...p, customizations: p.customizations.filter((x) => x.key !== key) } : p)) }
+      })
+    )
 
   // Stock pedido por variante: líneas sueltas y piezas de combos.
   const stockWanted = new Map<string, number>()
@@ -193,7 +218,7 @@ const SaleForm = ({
   const typeById = new Map(customizationTypes.map((t) => [t.id, t]))
   const chargedPerType = new Map<string, number>()
   for (const line of cart)
-    for (const c of line.customizations) if (c.charged) chargedPerType.set(c.typeId, (chargedPerType.get(c.typeId) ?? 0) + c.quantity)
+    for (const c of lineCustomizations(line)) if (c.charged) chargedPerType.set(c.typeId, (chargedPerType.get(c.typeId) ?? 0) + c.quantity)
   const customizationTotal = round(
     [...chargedPerType].reduce(
       (sum, [typeId, qty]) =>
@@ -269,7 +294,14 @@ const SaleForm = ({
     setComboToPick(null)
     setCart((prev) => [
       ...prev,
-      { key: `${combo.id}-${Date.now()}`, variantId: combo.id, quantity: selection.quantity, source: "combo", components: selection.components, customizations: [] },
+      {
+        key: `${combo.id}-${Date.now()}`,
+        variantId: combo.id,
+        quantity: selection.quantity,
+        source: "combo",
+        components: selection.components.map((c) => ({ ...c, customizations: [] })),
+        customizations: [],
+      },
     ])
   }
   const setQuantity = (key: string, quantity: number) =>
@@ -339,23 +371,18 @@ const SaleForm = ({
             ? {
                 variant_id: l.variantId,
                 quantity: l.quantity,
-                components: l.components.map((c) => ({ variant_id: c.variantId, quantity: c.quantity, source: c.source })),
+                components: l.components.map((c) => ({
+                  variant_id: c.variantId,
+                  quantity: c.quantity,
+                  source: c.source,
+                  customizations: c.customizations.map(customizationPayload),
+                })),
               }
             : {
                 variant_id: l.variantId,
                 quantity: l.quantity,
                 source: l.source,
-                customizations: l.customizations.map((c) => ({
-                  type_id: c.typeId,
-                  quantity: c.quantity,
-                  text: c.text,
-                  names: c.names,
-                  logo_path: c.logoPath,
-                  position: c.position,
-                  size_cm: c.sizeCm,
-                  note: c.note,
-                  charged: Boolean(c.charged),
-                })),
+                customizations: l.customizations.map(customizationPayload),
               }
         ),
         payments: payments.map((p) => ({ payment_method_id: p.methodId, amount: p.amount })),
@@ -431,13 +458,28 @@ const SaleForm = ({
                     </span>
                     {line.components && (
                       <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
-                        {line.components.map((c) => {
+                        {line.components.map((c, index) => {
                           const piece = variantById.get(c.variantId)
                           return (
-                            <li key={c.variantId}>
-                              {quantityFormat.format(c.quantity)} × {piece?.productName} · {piece?.variantLabel}
-                              {c.source === "made_to_order" && " · por encargo"}
-                              {piece && piece.extraUsd > 0 && ` · +${usd(round(piece.extraUsd * c.quantity))}`}
+                            <li key={`${c.variantId}-${index}`} className="grid gap-1">
+                              <span className="flex flex-wrap items-center gap-x-2">
+                                <span>
+                                  {quantityFormat.format(c.quantity)} × {piece?.productName} · {piece?.variantLabel}
+                                  {c.source === "made_to_order" && " · por encargo"}
+                                  {piece && piece.extraUsd > 0 && ` · +${usd(round(piece.extraUsd * c.quantity))}`}
+                                </span>
+                                {customizationTypes.length > 0 && (
+                                  <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setCustomizing(pieceTarget(line.key, index))}>
+                                    <PlusIcon aria-hidden />
+                                    Personalizar
+                                  </Button>
+                                )}
+                              </span>
+                              <CustomizationList
+                                customizations={c.customizations}
+                                typeName={(id) => typeById.get(id)?.name}
+                                onRemove={(key) => removeCustomization(line.key, index, key)}
+                              />
                             </li>
                           )
                         })}
@@ -456,31 +498,7 @@ const SaleForm = ({
                   </div>
                 ) : (
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center rounded-md border">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-10 md:size-8"
-                      onClick={() => setQuantity(line.key, line.quantity - 1)}
-                    >
-                      {line.quantity === 1 ? <Trash2Icon aria-hidden /> : <MinusIcon aria-hidden />}
-                      <span className="sr-only">{line.quantity === 1 ? "Quitar" : "Uno menos"}</span>
-                    </Button>
-                    <span className="w-8 text-center text-sm tabular-nums" aria-live="polite">
-                      {quantityFormat.format(line.quantity)}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-10 md:size-8"
-                      onClick={() => setQuantity(line.key, line.quantity + 1)}
-                    >
-                      <PlusIcon aria-hidden />
-                      <span className="sr-only">Uno más</span>
-                    </Button>
-                  </div>
+                  <QuantityStepper removable value={line.quantity} onChange={(q) => setQuantity(line.key, q)} label={line.variant.productName} />
                   {line.variant.fulfillmentType === "both" ? (
                     <Button type="button" variant="outline" size="sm" onClick={() => toggleSource(line.key)}>
                       {SOURCE_LABELS[line.source]}
@@ -500,35 +518,11 @@ const SaleForm = ({
                   )}
                 </div>
                 )}
-                {line.customizations.length > 0 && (
-                  <ul className="grid gap-1 border-l-2 pl-2 text-xs">
-                    {line.customizations.map((c) => (
-                      <li key={c.key} className="flex items-start justify-between gap-2">
-                        <span className="min-w-0">
-                          {quantityFormat.format(c.quantity)} × {typeById.get(c.typeId)?.name}
-                          {(c.text || c.names) && <>: {c.text ?? c.names?.join(", ")}</>}
-                          {c.logoPath && " · con archivo"}
-                          {c.position && ` · ${c.position}`}
-                          <span className="text-muted-foreground"> · {c.charged ? "se cobra" : "sin cobrar"}</span>
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 shrink-0"
-                          onClick={() =>
-                            setCart((prev) =>
-                              prev.map((l) => (l.key === line.key ? { ...l, customizations: l.customizations.filter((x) => x.key !== c.key) } : l))
-                            )
-                          }
-                        >
-                          <Trash2Icon aria-hidden />
-                          <span className="sr-only">Quitar personalización</span>
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <CustomizationList
+                  customizations={line.customizations}
+                  typeName={(id) => typeById.get(id)?.name}
+                  onRemove={(key) => removeCustomization(line.key, null, key)}
+                />
               </li>
             ))}
           </ul>
@@ -539,13 +533,19 @@ const SaleForm = ({
         key={customizing ?? "none"}
         mode="sale"
         open={Boolean(customizingLine)}
-        lineLabel={customizingLine ? `${customizingLine.quantity} × ${customizingLine.variant.productName} · ${customizingLine.variant.variantLabel}` : ""}
-        lineQuantity={customizingLine?.quantity ?? 1}
+        lineLabel={
+          customizingPiece
+            ? `${customizingPiece.quantity} × ${customizingPieceVariant?.productName} · ${customizingPieceVariant?.variantLabel} (${customizingLine?.variant.productName})`
+            : customizingLine
+              ? `${customizingLine.quantity} × ${customizingLine.variant.productName} · ${customizingLine.variant.variantLabel}`
+              : ""
+        }
+        lineQuantity={customizingPiece?.quantity ?? customizingLine?.quantity ?? 1}
         types={customizationTypes}
         storageEnabled={storageEnabled}
         onClose={() => setCustomizing(null)}
         onSave={(c) => {
-          setCart((prev) => prev.map((l) => (l.key === customizing ? { ...l, customizations: [...l.customizations, c] } : l)))
+          addCustomization(c)
           setCustomizing(null)
         }}
       />

@@ -1,11 +1,12 @@
 "use client"
 
-import { CheckIcon, MinusIcon, PlusIcon } from "lucide-react"
+import { CheckIcon } from "lucide-react"
 import { useMemo, useState } from "react"
 
 import ChoiceChips from "@/common/components/choice-chips"
 import StatusBadge from "@/common/components/status-badge"
 import { Button } from "@/common/components/ui/button"
+import QuantityStepper from "@/common/components/quantity-stepper"
 import {
   Dialog,
   DialogContent,
@@ -41,28 +42,6 @@ type ComboPickerDialogProps = {
 
 const usd = (value: number) => formatMoney(value, "USD")
 
-const Stepper = ({ value, onChange, label, max }: { value: number; onChange: (v: number) => void; label: string; max?: number }) => (
-  <div className="flex items-center rounded-md border">
-    <Button type="button" variant="ghost" size="icon" className="size-10 md:size-8" disabled={value <= 0} onClick={() => onChange(value - 1)}>
-      <MinusIcon aria-hidden />
-      <span className="sr-only">Uno menos de {label}</span>
-    </Button>
-    <span className="w-8 text-center text-sm tabular-nums" aria-live="polite">
-      {value}
-    </span>
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      className="size-10 md:size-8"
-      disabled={max !== undefined && value >= max}
-      onClick={() => onChange(value + 1)}
-    >
-      <PlusIcon aria-hidden />
-      <span className="sr-only">Uno más de {label}</span>
-    </Button>
-  </div>
-)
 
 // Origen de una pieza: de inventario si hay; si el producto se hace por encargo (o no hay), por encargo.
 const sourceFor = (variant: SellableVariant, wanted: number, available: number): ComboSelection["components"][number]["source"] =>
@@ -164,7 +143,7 @@ const ComboPickerDialog = ({ combo, variants, available, priceMethodId, onCancel
 
         <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
           <span className="text-sm font-medium">Cantidad de combos</span>
-          <Stepper value={quantity} onChange={(v) => setQuantity(Math.max(1, v))} label="combos" />
+          <QuantityStepper value={quantity} onChange={setQuantity} label="combos" />
         </div>
 
         <div className="grid gap-4">
@@ -221,7 +200,8 @@ const ComboPickerDialog = ({ combo, variants, available, priceMethodId, onCancel
                         </span>
                       </div>
                       {!single && (
-                        <Stepper
+                        <QuantityStepper
+                          min={0}
                           value={amount}
                           label={`${variant.productName} ${variant.variantLabel}`}
                           max={required - chosen + amount}

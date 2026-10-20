@@ -12,7 +12,7 @@ export type QuoteMathLine = {
   pieces: number
 }
 
-export type QuoteMathCustomization = { typeId: string; quantity: number }
+export type QuoteMathCustomization = { typeId: string; quantity: number; charged?: boolean }
 
 type Tier = { minQuantity: number; percent: number }
 
@@ -23,7 +23,8 @@ export function customizationTotal(
   tiers: readonly Tier[]
 ): number {
   const perType = new Map<string, number>()
-  for (const c of customizations) perType.set(c.typeId, (perType.get(c.typeId) ?? 0) + c.quantity)
+  // Solo las cobradas: la incluida en el precio solo queda anotada.
+  for (const c of customizations) if (c.charged !== false) perType.set(c.typeId, (perType.get(c.typeId) ?? 0) + c.quantity)
   return round(
     [...perType].reduce((sum, [typeId, qty]) => sum + round(qty * unitPrice(typeId) * (1 - volumePercent(tiers, qty) / 100)), 0)
   )

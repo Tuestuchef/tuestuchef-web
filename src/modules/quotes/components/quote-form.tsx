@@ -1,6 +1,6 @@
 "use client"
 
-import { Loader2Icon, MinusIcon, PaletteIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
+import { Loader2Icon, PaletteIcon, Trash2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useId, useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import ChoiceChips from "@/common/components/choice-chips"
 import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
+import QuantityStepper from "@/common/components/quantity-stepper"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
 import { Button } from "@/common/components/ui/button"
@@ -23,6 +24,8 @@ import CustomerPicker, { type PickedCustomer } from "@/modules/customers/compone
 import { CUSTOMER_KIND_LABELS } from "@/modules/customers/lib/constants/customers.constants"
 import { formatPhone, formatTaxId } from "@/modules/customers/lib/utils/normalize-contact.util"
 import CustomizationDialog, { type LineCustomization } from "@/modules/orders/components/customization-dialog"
+import CustomizationList from "@/modules/orders/components/customization-list"
+import { customizingTarget, lineCustomizations, pieceTarget } from "@/modules/orders/lib/utils/customization.util"
 import ComboPickerDialog, { type ComboSelection } from "@/modules/sales/components/combo-picker-dialog"
 import ProductPicker from "@/modules/sales/components/product-picker"
 import { useCustomerPricing } from "@/modules/sales/lib/hooks/use-customer-pricing.hook"
@@ -30,7 +33,7 @@ import type { SellableVariant } from "@/modules/sales/lib/types/sales.types"
 
 import { saveQuoteDraftAction } from "../lib/actions/quotes.action"
 import { QUOTE_CURRENCIES_LABELS } from "../lib/constants/quotes.constants"
-import type { CustomerKind, DiscountType, QuoteCurrencies, QuoteDetail, QuoteFormData } from "../lib/types/quotes.types"
+import type { CustomerKind, DiscountType, QuoteCurrencies, QuoteDetail, QuoteFormData, QuoteItemCustomization } from "../lib/types/quotes.types"
 import { customizationTotal, quoteTotals } from "../lib/utils/quote-math.util"
 import QuoteHeaderField from "./quote-header-field"
 import QuoteImagesField, { type QuoteImageDraft } from "./quote-images-field"
@@ -40,9 +43,33 @@ type QuoteLine = {
   variantId: string
   quantity: number
   discountPercent: string
-  components?: ComboSelection["components"]
+  // En un combo, la personalización va en cada pieza.
+  components?: (ComboSelection["components"][number] & { customizations: LineCustomization[] })[]
   customizations: LineCustomization[]
 }
+
+// La personalización guardada de una línea o pieza, para editarla.
+const fromSaved = (c: QuoteItemCustomization): LineCustomization => ({
+  key: c.id,
+  typeId: c.typeId,
+  quantity: c.quantity,
+  text: c.text ?? undefined,
+  position: c.position ?? undefined,
+  sizeCm: c.sizeCm ?? undefined,
+  note: c.note ?? undefined,
+  charged: c.charged,
+})
+
+// Lo que se envía a la base (en el presupuesto no van nombres ni logo: se piden en el pedido).
+const toPayload = (c: LineCustomization) => ({
+  type_id: c.typeId,
+  quantity: c.quantity,
+  size_cm: c.sizeCm ?? null,
+  position: c.position ?? null,
+  text: c.text ?? null,
+  note: c.note ?? null,
+  charged: c.charged,
+})
 
 type CustomerDraft = {
   kind: CustomerKind
@@ -86,17 +113,9 @@ function linesFromQuote(quote: QuoteDetail): QuoteLine[] {
       ...(item.kind === "combo" && {
         components: quote.items
           .filter((c) => c.parentId === item.id)
-          .map((c) => ({ variantId: c.variantId, quantity: c.quantity, source: "made_to_order" as const })),
+          .map((c) => ({ variantId: c.variantId, quantity: c.quantity, source: "made_to_order" as const, customizations: c.customizations.map(fromSaved) })),
       }),
-      customizations: item.customizations.map((c) => ({
-        key: c.id,
-        typeId: c.typeId,
-        quantity: c.quantity,
-        text: c.text ?? undefined,
-        position: c.position ?? undefined,
-        sizeCm: c.sizeCm ?? undefined,
-        note: c.note ?? undefined,
-      })),
+      customizations: item.customizations.map(fromSaved),
     }))
 }
 
@@ -202,7 +221,7 @@ const QuoteForm = ({
   const vesList = vesLists.find((l) => l.id === vesListId)
 
   // ---- Totales (vista previa; la base decide) ----
-  const allCustomizations = lines.flatMap((l) => l.customizations)
+  const allCustomizations = lines.flatMap(lineCustomizations)
   const custom = customizationTotal(allCustomizations, (id) => typeById.get(id)?.unitPriceUsd ?? 0, customizationTiers)
   // Un combo lleva además una línea por cada pieza con recargo (talla o color), con su mismo descuento.
   const mathLines = (listId: string | undefined) =>
@@ -286,8 +305,28 @@ const QuoteForm = ({
   const updateLine = (key: string, patch: Partial<QuoteLine>) => setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)))
   const setQuantity = (key: string, quantity: number) =>
     setLines((prev) => (quantity <= 0 ? prev.filter((l) => l.key !== key) : prev.map((l) => (l.key === key ? { ...l, quantity } : l))))
-  const customizingLine = lines.find((l) => l.key === customizing)
+  // Lo que se está personalizando: una línea suelta o una pieza de un combo.
+  const target = customizingTarget(customizing)
+  const customizingLine = lines.find((l) => l.key === target?.lineKey)
   const customizingVariant = customizingLine ? variantById.get(customizingLine.variantId) : undefined
+  const customizingPiece = target?.pieceIndex != null ? customizingLine?.components?.[target.pieceIndex] : undefined
+  const customizingPieceVariant = customizingPiece ? variantById.get(customizingPiece.variantId) : undefined
+  const addCustomization = (c: LineCustomization) =>
+    setLines((prev) =>
+      prev.map((l) => {
+        if (l.key !== target?.lineKey) return l
+        if (target.pieceIndex === null) return { ...l, customizations: [...l.customizations, c] }
+        return { ...l, components: l.components?.map((p, i) => (i === target.pieceIndex ? { ...p, customizations: [...p.customizations, c] } : p)) }
+      })
+    )
+  const removeCustomization = (lineKey: string, pieceIndex: number | null, key: string) =>
+    setLines((prev) =>
+      prev.map((l) => {
+        if (l.key !== lineKey) return l
+        if (pieceIndex === null) return { ...l, customizations: l.customizations.filter((x) => x.key !== key) }
+        return { ...l, components: l.components?.map((p, i) => (i === pieceIndex ? { ...p, customizations: p.customizations.filter((x) => x.key !== key) } : p)) }
+      })
+    )
 
   const submit = () => {
     setError(null)
@@ -326,15 +365,10 @@ const QuoteForm = ({
           variant_id: l.variantId,
           quantity: l.quantity,
           discount_percent: parseAmount(l.discountPercent) ?? 0,
-          ...(l.components && { components: l.components.map((c) => ({ variant_id: c.variantId, quantity: c.quantity })) }),
-          customizations: l.customizations.map((c) => ({
-            type_id: c.typeId,
-            quantity: c.quantity,
-            size_cm: c.sizeCm ?? null,
-            position: c.position ?? null,
-            text: c.text ?? null,
-            note: c.note ?? null,
-          })),
+          ...(l.components && {
+            components: l.components.map((c) => ({ variant_id: c.variantId, quantity: c.quantity, customizations: c.customizations.map(toPayload) })),
+          }),
+          customizations: l.customizations.map(toPayload),
         })),
       })
       if (!result.ok) {
@@ -455,12 +489,25 @@ const QuoteForm = ({
                     </span>
                     {line.components && (
                       <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
-                        {line.components.map((c) => {
+                        {line.components.map((c, index) => {
                           const piece = variantById.get(c.variantId)
                           return (
-                            <li key={c.variantId}>
-                              {c.quantity} × {piece?.productName} · {piece?.variantLabel}
-                              {piece && piece.extraUsd > 0 && ` · +${usd(piece.extraUsd * c.quantity)}`}
+                            <li key={`${c.variantId}-${index}`} className="grid gap-1">
+                              <span className="flex flex-wrap items-center gap-x-2">
+                                <span>
+                                  {c.quantity} × {piece?.productName} · {piece?.variantLabel}
+                                  {piece && piece.extraUsd > 0 && ` · +${usd(piece.extraUsd * c.quantity)}`}
+                                </span>
+                                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setCustomizing(pieceTarget(line.key, index))}>
+                                  <PaletteIcon aria-hidden />
+                                  Personalizar
+                                </Button>
+                              </span>
+                              <CustomizationList
+                                customizations={c.customizations}
+                                typeName={(id) => typeById.get(id)?.name}
+                                onRemove={(key) => removeCustomization(line.key, index, key)}
+                              />
                             </li>
                           )
                         })}
@@ -480,23 +527,7 @@ const QuoteForm = ({
                       </>
                     ) : (
                       <>
-                        <div className="flex items-center rounded-md border">
-                          <Button type="button" variant="ghost" size="icon" className="size-10 md:size-8" onClick={() => setQuantity(line.key, line.quantity - 1)}>
-                            {line.quantity === 1 ? <Trash2Icon aria-hidden /> : <MinusIcon aria-hidden />}
-                            <span className="sr-only">Uno menos</span>
-                          </Button>
-                          <Input
-                            aria-label="Cantidad"
-                            inputMode="numeric"
-                            value={line.quantity}
-                            onChange={(e) => setQuantity(line.key, Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-                            className="h-10 w-16 border-0 text-center tabular-nums shadow-none md:h-8"
-                          />
-                          <Button type="button" variant="ghost" size="icon" className="size-10 md:size-8" onClick={() => setQuantity(line.key, line.quantity + 1)}>
-                            <PlusIcon aria-hidden />
-                            <span className="sr-only">Uno más</span>
-                          </Button>
-                        </div>
+                        <QuantityStepper removable value={line.quantity} onChange={(q) => setQuantity(line.key, q)} />
                         <Button type="button" variant="outline" size="sm" onClick={() => setCustomizing(line.key)}>
                           <PaletteIcon aria-hidden />
                           Personalizar
@@ -515,29 +546,11 @@ const QuoteForm = ({
                       <span className="text-xs text-muted-foreground">% desc.</span>
                     </div>
                   </div>
-                  {line.customizations.length > 0 && (
-                    <ul className="grid gap-1 border-l-2 pl-2 text-xs">
-                      {line.customizations.map((c) => (
-                        <li key={c.key} className="flex items-center gap-2">
-                          <span className="min-w-0 flex-1 truncate">
-                            {c.quantity} × {typeById.get(c.typeId)?.name}
-                            {c.text ? ` · "${c.text}"` : ""}
-                            {c.sizeCm ? ` · ${c.sizeCm} cm` : ""}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-7"
-                            onClick={() => updateLine(line.key, { customizations: line.customizations.filter((x) => x.key !== c.key) })}
-                          >
-                            <XIcon aria-hidden />
-                            <span className="sr-only">Quitar personalización</span>
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <CustomizationList
+                    customizations={line.customizations}
+                    typeName={(id) => typeById.get(id)?.name}
+                    onRemove={(key) => removeCustomization(line.key, null, key)}
+                  />
                 </li>
               )
             })}
@@ -664,7 +677,14 @@ const QuoteForm = ({
           if (!combo) return
           setLines((prev) => [
             ...prev,
-            { key: crypto.randomUUID(), variantId: combo.id, quantity: selection.quantity, discountPercent: "", components: selection.components, customizations: [] },
+            {
+              key: crypto.randomUUID(),
+              variantId: combo.id,
+              quantity: selection.quantity,
+              discountPercent: "",
+              components: selection.components.map((c) => ({ ...c, customizations: [] })),
+              customizations: [],
+            },
           ])
         }}
       />
@@ -672,13 +692,19 @@ const QuoteForm = ({
         key={customizing ?? "none"}
         open={Boolean(customizingLine)}
         mode="quote"
-        lineLabel={customizingLine && customizingVariant ? `${customizingLine.quantity} × ${customizingVariant.productName} · ${customizingVariant.variantLabel}` : ""}
-        lineQuantity={customizingLine?.quantity ?? 1}
+        lineLabel={
+          customizingPiece
+            ? `${customizingPiece.quantity} × ${customizingPieceVariant?.productName} · ${customizingPieceVariant?.variantLabel} (${customizingVariant?.productName})`
+            : customizingLine && customizingVariant
+              ? `${customizingLine.quantity} × ${customizingVariant.productName} · ${customizingVariant.variantLabel}`
+              : ""
+        }
+        lineQuantity={customizingPiece?.quantity ?? customizingLine?.quantity ?? 1}
         types={customizationTypes}
         storageEnabled={false}
         onClose={() => setCustomizing(null)}
         onSave={(c) => {
-          if (customizing) updateLine(customizing, { customizations: [...(customizingLine?.customizations ?? []), c] })
+          addCustomization(c)
           setCustomizing(null)
         }}
       />

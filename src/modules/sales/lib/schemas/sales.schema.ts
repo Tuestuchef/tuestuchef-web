@@ -18,13 +18,7 @@ const amountText = (label: string, { allowZero = false } = {}) =>
     return parsed
   })
 
-const comboComponentSchema = z.object({
-  variant_id: z.uuid(),
-  quantity: z.number().positive().max(10_000),
-  source: z.enum(["stock", "made_to_order"]),
-})
-
-// Personalización de una línea suelta: cobrada aparte o solo anotada.
+// Personalización de una línea suelta o de una pieza de un combo: cobrada aparte o solo anotada.
 const saleCustomizationSchema = z.object({
   type_id: z.uuid(),
   quantity: z.number().int().positive().max(10_000),
@@ -35,6 +29,13 @@ const saleCustomizationSchema = z.object({
   size_cm: z.number().positive().max(100).optional(),
   note: z.string().trim().max(300).optional(),
   charged: z.boolean(),
+})
+
+const comboComponentSchema = z.object({
+  variant_id: z.uuid(),
+  quantity: z.number().positive().max(10_000),
+  source: z.enum(["stock", "made_to_order"]),
+  customizations: z.array(saleCustomizationSchema).max(10).optional(),
 })
 
 // Una línea suelta, o un combo con la talla y el color de cada pieza.

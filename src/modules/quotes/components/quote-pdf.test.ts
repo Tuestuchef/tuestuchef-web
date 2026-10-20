@@ -78,7 +78,7 @@ const quote = (over: Partial<QuoteDetail> = {}): QuoteDetail => ({
       colorName: null,
       usdUnitPrice: 20,
       customizations: [
-        { id: "c", typeId: "t", typeName: "Nombre bordado", quantity: 12, sizeCm: null, position: "Pecho", text: null, note: null, unitPriceUsd: 4, discountPercent: 0, lineTotalUsd: 48 },
+        { id: "c", typeId: "t", typeName: "Nombre bordado", quantity: 12, sizeCm: null, position: "Pecho", text: null, note: null, unitPriceUsd: 4, discountPercent: 0, lineTotalUsd: 48, charged: true },
       ],
     }),
   ],

@@ -37,5 +37,7 @@ describe("customizationTotal", () => {
     const price = () => 4
     expect(customizationTotal([{ typeId: "a", quantity: 6 }, { typeId: "a", quantity: 6 }], price, tiers)).toBe(45.6)
     expect(customizationTotal([{ typeId: "a", quantity: 2 }], price, tiers)).toBe(8)
+    // La incluida en el precio no suma.
+    expect(customizationTotal([{ typeId: "a", quantity: 2 }, { typeId: "a", quantity: 4, charged: false }], price, tiers)).toBe(8)
   })
 })

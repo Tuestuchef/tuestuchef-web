@@ -68,13 +68,22 @@ const orderCustomizationSchema = z.object({
   size_cm: z.number().positive().max(100).optional(),
   note: z.string().trim().max(300).optional(),
   names: z.array(z.string().trim().min(1).max(40)).max(1000).optional(),
+  // Cobrada aparte (por defecto) o incluida en el precio (solo anotada).
+  charged: z.boolean().optional(),
 })
 
 const orderItemSchema = z.object({
   variant_id: z.uuid(),
   quantity: z.number().positive().max(10_000),
   components: z
-    .array(z.object({ variant_id: z.uuid(), quantity: z.number().positive().max(10_000), source: z.enum(["stock", "made_to_order"]) }))
+    .array(
+      z.object({
+        variant_id: z.uuid(),
+        quantity: z.number().positive().max(10_000),
+        source: z.enum(["stock", "made_to_order"]),
+        customizations: z.array(orderCustomizationSchema).max(10).optional(),
+      })
+    )
     .max(500)
     .optional(),
   customizations: z.array(orderCustomizationSchema).max(10).optional(),

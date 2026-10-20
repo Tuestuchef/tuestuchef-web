@@ -174,6 +174,7 @@ export async function getQuoteDetail(id: string): Promise<QuoteDetail | null> {
       unitPriceUsd: num(c.unit_price_usd),
       discountPercent: num(c.discount_percent),
       lineTotalUsd: num(c.line_total_usd),
+      charged: c.charged,
     })),
   }))
 

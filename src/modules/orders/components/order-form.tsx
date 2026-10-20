@@ -1,6 +1,6 @@
 "use client"
 
-import { Loader2Icon, MinusIcon, PaletteIcon, PercentIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
+import { Loader2Icon, PaletteIcon, PercentIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import ChoiceChips from "@/common/components/choice-chips"
 import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
+import QuantityStepper from "@/common/components/quantity-stepper"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
 import { Button } from "@/common/components/ui/button"
@@ -40,13 +41,19 @@ import { lineTotal, round, usdToMethodAmount, volumePercent } from "@/modules/sa
 import { createOrderAction } from "../lib/actions/orders.action"
 import { STOCK_MODE_LABELS, type OrderStockMode } from "../lib/constants/orders.constants"
 import type { OrderFormData } from "../lib/types/orders.types"
+import { customizationPayload, customizingTarget, lineCustomizations, pieceTarget } from "../lib/utils/customization.util"
 import CustomizationDialog, { type LineCustomization } from "./customization-dialog"
+import CustomizationList from "./customization-list"
+
+// Una pieza de un combo, con su personalización.
+type ComboPiece = ComboSelection["components"][number] & { customizations: LineCustomization[] }
 
 type OrderLine = {
   key: string
   variantId: string
   quantity: number
-  components?: ComboSelection["components"]
+  components?: ComboPiece[]
+  // En un combo, la personalización va en cada pieza (components).
   customizations: LineCustomization[]
 }
 
@@ -122,9 +129,15 @@ const OrderForm = ({
   const volume = round((productsSubtotal * volumePercent(volumeTiers, pieces)) / 100)
 
   const perType = new Map<string, number>()
-  for (const line of lines) for (const c of line.customizations) perType.set(c.typeId, (perType.get(c.typeId) ?? 0) + c.quantity)
+  // El mínimo cuenta todas las piezas personalizadas; el precio, solo las cobradas.
+  const chargedPerType = new Map<string, number>()
+  for (const line of lines)
+    for (const c of lineCustomizations(line)) {
+      perType.set(c.typeId, (perType.get(c.typeId) ?? 0) + c.quantity)
+      if (c.charged) chargedPerType.set(c.typeId, (chargedPerType.get(c.typeId) ?? 0) + c.quantity)
+    }
   const customizationTotal = round(
-    [...perType].reduce((sum, [typeId, qty]) => {
+    [...chargedPerType].reduce((sum, [typeId, qty]) => {
       const type = typeById.get(typeId)
       const pct = volumePercent(customizationTiers, qty)
       return sum + round(qty * (type?.unitPriceUsd ?? 0) * (1 - pct / 100))
@@ -179,7 +192,27 @@ const OrderForm = ({
     })
   const setQuantity = (key: string, quantity: number) =>
     setLines((prev) => (quantity <= 0 ? prev.filter((l) => l.key !== key) : prev.map((l) => (l.key === key ? { ...l, quantity } : l))))
-  const customizingLine = priced.find((l) => l.key === customizing)
+  // Lo que se está personalizando: una línea suelta o una pieza de un combo.
+  const target = customizingTarget(customizing)
+  const customizingLine = priced.find((l) => l.key === target?.lineKey)
+  const customizingPiece = target?.pieceIndex != null ? customizingLine?.components?.[target.pieceIndex] : undefined
+  const customizingPieceVariant = customizingPiece ? variantById.get(customizingPiece.variantId) : undefined
+  const addCustomization = (c: LineCustomization) =>
+    setLines((prev) =>
+      prev.map((l) => {
+        if (l.key !== target?.lineKey) return l
+        if (target.pieceIndex === null) return { ...l, customizations: [...l.customizations, c] }
+        return { ...l, components: l.components?.map((p, i) => (i === target.pieceIndex ? { ...p, customizations: [...p.customizations, c] } : p)) }
+      })
+    )
+  const removeCustomization = (lineKey: string, pieceIndex: number | null, key: string) =>
+    setLines((prev) =>
+      prev.map((l) => {
+        if (l.key !== lineKey) return l
+        if (pieceIndex === null) return { ...l, customizations: l.customizations.filter((x) => x.key !== key) }
+        return { ...l, components: l.components?.map((p, i) => (i === pieceIndex ? { ...p, customizations: p.customizations.filter((x) => x.key !== key) } : p)) }
+      })
+    )
 
   const submit = () => {
     setError(null)
@@ -197,18 +230,14 @@ const OrderForm = ({
           variant_id: l.variantId,
           quantity: l.quantity,
           ...(l.components && {
-            components: l.components.map((c) => ({ variant_id: c.variantId, quantity: c.quantity, source: c.source })),
+            components: l.components.map((c) => ({
+              variant_id: c.variantId,
+              quantity: c.quantity,
+              source: c.source,
+              customizations: c.customizations.map(customizationPayload),
+            })),
           }),
-          customizations: l.customizations.map((c) => ({
-            type_id: c.typeId,
-            quantity: c.quantity,
-            text: c.text,
-            names: c.names,
-            logo_path: c.logoPath,
-            position: c.position,
-            size_cm: c.sizeCm,
-            note: c.note,
-          })),
+          customizations: l.customizations.map(customizationPayload),
         })),
         payments: paymentsToSend,
         delivery_fee_usd: fee,
@@ -259,12 +288,25 @@ const OrderForm = ({
                     </span>
                     {line.components && (
                       <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
-                        {line.components.map((c) => {
+                        {line.components.map((c, index) => {
                           const piece = variantById.get(c.variantId)
                           return (
-                            <li key={c.variantId}>
-                              {c.quantity} × {piece?.productName} · {piece?.variantLabel}
-                              {piece && piece.extraUsd > 0 && ` · +${usd(round(piece.extraUsd * c.quantity))}`}
+                            <li key={`${c.variantId}-${index}`} className="grid gap-1">
+                              <span className="flex flex-wrap items-center gap-x-2">
+                                <span>
+                                  {c.quantity} × {piece?.productName} · {piece?.variantLabel}
+                                  {piece && piece.extraUsd > 0 && ` · +${usd(round(piece.extraUsd * c.quantity))}`}
+                                </span>
+                                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setCustomizing(pieceTarget(line.key, index))}>
+                                  <PaletteIcon aria-hidden />
+                                  Personalizar
+                                </Button>
+                              </span>
+                              <CustomizationList
+                                customizations={c.customizations}
+                                typeName={(id) => typeById.get(id)?.name}
+                                onRemove={(key) => removeCustomization(line.key, index, key)}
+                              />
                             </li>
                           )
                         })}
@@ -286,23 +328,7 @@ const OrderForm = ({
                   </div>
                 ) : (
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center rounded-md border">
-                      <Button type="button" variant="ghost" size="icon" className="size-10 md:size-8" onClick={() => setQuantity(line.key, line.quantity - 1)}>
-                        {line.quantity === 1 ? <Trash2Icon aria-hidden /> : <MinusIcon aria-hidden />}
-                        <span className="sr-only">Uno menos</span>
-                      </Button>
-                      <Input
-                        aria-label="Cantidad"
-                        inputMode="numeric"
-                        value={line.quantity}
-                        onChange={(e) => setQuantity(line.key, Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-                        className="h-10 w-14 border-0 text-center tabular-nums shadow-none md:h-8"
-                      />
-                      <Button type="button" variant="ghost" size="icon" className="size-10 md:size-8" onClick={() => setQuantity(line.key, line.quantity + 1)}>
-                        <PlusIcon aria-hidden />
-                        <span className="sr-only">Uno más</span>
-                      </Button>
-                    </div>
+                    <QuantityStepper removable value={line.quantity} onChange={(q) => setQuantity(line.key, q)} />
                     <Button type="button" variant="outline" size="sm" onClick={() => setCustomizing(line.key)}>
                       <PaletteIcon aria-hidden />
                       Personalizar
@@ -310,34 +336,11 @@ const OrderForm = ({
                   </div>
                 )}
 
-                {line.customizations.length > 0 && (
-                  <ul className="grid gap-1 border-l-2 pl-2 text-xs">
-                    {line.customizations.map((c) => (
-                      <li key={c.key} className="flex items-center gap-2">
-                        <span className="min-w-0 flex-1 truncate">
-                          {c.quantity} × {typeById.get(c.typeId)?.name}
-                          {c.names ? ` · ${c.names.length} nombres` : c.text ? ` · "${c.text}"` : ""}
-                          {c.logoPath && " · logo"}
-                          {c.sizeCm && ` · ${c.sizeCm} cm`}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          onClick={() =>
-                            setLines((prev) =>
-                              prev.map((l) => (l.key === line.key ? { ...l, customizations: l.customizations.filter((x) => x.key !== c.key) } : l))
-                            )
-                          }
-                        >
-                          <XIcon aria-hidden />
-                          <span className="sr-only">Quitar personalización</span>
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <CustomizationList
+                  customizations={line.customizations}
+                  typeName={(id) => typeById.get(id)?.name}
+                  onRemove={(key) => removeCustomization(line.key, null, key)}
+                />
               </li>
             ))}
           </ul>
@@ -564,20 +567,32 @@ const OrderForm = ({
           if (!combo) return
           setLines((prev) => [
             ...prev,
-            { key: `${combo.id}-${Date.now()}`, variantId: combo.id, quantity: selection.quantity, components: selection.components, customizations: [] },
+            {
+              key: `${combo.id}-${Date.now()}`,
+              variantId: combo.id,
+              quantity: selection.quantity,
+              components: selection.components.map((c) => ({ ...c, customizations: [] })),
+              customizations: [],
+            },
           ])
         }}
       />
       <CustomizationDialog
         key={customizing ?? "none"}
         open={Boolean(customizingLine)}
-        lineLabel={customizingLine ? `${customizingLine.quantity} × ${customizingLine.variant.productName} · ${customizingLine.variant.variantLabel}` : ""}
-        lineQuantity={customizingLine?.quantity ?? 1}
+        lineLabel={
+          customizingPiece
+            ? `${customizingPiece.quantity} × ${customizingPieceVariant?.productName} · ${customizingPieceVariant?.variantLabel} (${customizingLine?.variant.productName})`
+            : customizingLine
+              ? `${customizingLine.quantity} × ${customizingLine.variant.productName} · ${customizingLine.variant.variantLabel}`
+              : ""
+        }
+        lineQuantity={customizingPiece?.quantity ?? customizingLine?.quantity ?? 1}
         types={customizationTypes}
         storageEnabled={storageEnabled}
         onClose={() => setCustomizing(null)}
         onSave={(c) => {
-          setLines((prev) => prev.map((l) => (l.key === customizing ? { ...l, customizations: [...l.customizations, c] } : l)))
+          addCustomization(c)
           setCustomizing(null)
         }}
       />

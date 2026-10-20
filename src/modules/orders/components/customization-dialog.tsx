@@ -33,8 +33,8 @@ export type LineCustomization = {
   position?: string
   sizeCm?: number
   note?: string
-  // Solo en ventas: si se cobra aparte o solo queda anotada.
-  charged?: boolean
+  // Si se cobra aparte o va incluida en el precio (solo queda anotada).
+  charged: boolean
 }
 
 type CustomizationDialogProps = {
@@ -43,8 +43,8 @@ type CustomizationDialogProps = {
   lineQuantity: number
   types: CustomizationType[]
   storageEnabled: boolean
-  // En un presupuesto, los nombres y el logo se piden después, en el pedido. En una venta rápida
-  // cobrarla es opcional, sin mínimo de piezas ni archivo de logo obligatorio.
+  // En un presupuesto, los nombres y el logo se piden después, en el pedido. En una venta rápida no
+  // hay mínimo de piezas ni archivo de logo obligatorio. En todos se cobra aparte o va incluida.
   mode?: "order" | "quote" | "sale"
   onClose: () => void
   onSave: (customization: LineCustomization) => void
@@ -54,8 +54,8 @@ type CustomizationDialogProps = {
 const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnabled, mode = "order", onClose, onSave }: CustomizationDialogProps) => {
   const isQuote = mode === "quote"
   const isSale = mode === "sale"
-  // En ventas se puede anotar aunque el tipo no tenga precio (sin cobrarla).
-  const usable = isSale ? types : types.filter((t) => t.unitPriceUsd !== null)
+  // Se puede anotar como incluida aunque el tipo no tenga precio.
+  const usable = types
   const [typeId, setTypeId] = useState(usable[0]?.id ?? "")
   const [charged, setCharged] = useState(true)
   const [quantity, setQuantity] = useState(String(lineQuantity))
@@ -120,7 +120,7 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
       position: position.trim() || undefined,
       sizeCm,
       note: note.trim() || undefined,
-      charged: isSale ? charged && canCharge : undefined,
+      charged: charged && canCharge,
     })
     reset()
   }
@@ -142,8 +142,8 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
         </DialogHeader>
 
         {usable.length === 0 ? (
-          <StatusAlert tone="warning" title="No hay personalizaciones con precio">
-            Owner o admin debe cargar los precios en Configuración → Pedidos y personalización.
+          <StatusAlert tone="warning" title="No hay tipos de personalización activos">
+            Owner o admin los configuran en Configuración → Pedidos y personalización.
           </StatusAlert>
         ) : (
           <div className="grid gap-4">
@@ -156,14 +156,14 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
                 options={usable.map((t) => ({ value: t.id, label: t.name }))}
               />
             </FormField>
-            {type && isSale && (
+            {type && (
               <label className="flex items-center justify-between gap-3 text-sm">
                 <span>
                   Cobrarla aparte
                   <span className="block text-xs text-muted-foreground">
                     {canCharge
-                      ? `${formatMoney(type.unitPriceUsd ?? 0, "USD")} c/u. Apagado, solo queda anotada.`
-                      : "Sin precio cargado: solo queda anotada."}
+                      ? `${formatMoney(type.unitPriceUsd ?? 0, "USD")} c/u. Apagado, va incluida en el precio (solo queda anotada).`
+                      : "Sin precio cargado: va incluida (solo queda anotada)."}
                   </span>
                 </span>
                 <Switch checked={charged && canCharge} disabled={!canCharge} onCheckedChange={setCharged} />
@@ -171,7 +171,7 @@ const CustomizationDialog = ({ open, lineLabel, lineQuantity, types, storageEnab
             )}
             {type && !isSale && (
               <p className="text-xs text-muted-foreground">
-                {formatMoney(type.unitPriceUsd ?? 0, "USD")} c/u · desde {type.minQuantity} {type.minQuantity === 1 ? "pieza" : "piezas"} por pedido
+                Desde {type.minQuantity} {type.minQuantity === 1 ? "pieza" : "piezas"} por pedido
                 {type.maxSizeCm !== null && ` · hasta ${type.maxSizeCm} cm`}
               </p>
             )}

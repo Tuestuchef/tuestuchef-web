@@ -93,7 +93,7 @@ export const HELP_TOPICS = {
         heading: "Pasos",
         items: [
           "Busca el producto (también por color, talla o SKU) y tócalo: eliges género, color y talla con botones y la cantidad. 'Agregar y elegir otra' suma otra combinación sin cerrar.",
-          "En el carrito ajustas la cantidad con + y −.",
+          "En el carrito ajustas la cantidad con + y −, o tocas el número y la escribes (útil para cantidades grandes).",
           "Elige el método de pago: define el precio de cada producto.",
           "Cliente opcional: búscalo o créalo sin salir. Sin cliente = venta rápida.",
           "Elige canal y entrega: retira, delivery o envío nacional. En delivery y envío nacional puedes agregar su cobro aparte y la fecha de envío.",
@@ -121,7 +121,8 @@ export const HELP_TOPICS = {
       {
         heading: "Personalización",
         items: [
-          "Toca Personalizar en la línea (productos sueltos, no combos): elige el tipo (nombre bordado, logo…), cuántas piezas y escribe el nombre o qué logo lleva. El archivo del logo es opcional.",
+          "Toca Personalizar en la línea: elige el tipo (nombre bordado, logo…), cuántas piezas y escribe el nombre o qué logo lleva. El archivo del logo es opcional.",
+          "En un combo (ej.: 10x10), cada pieza tiene su propio Personalizar: el logo en los delantales, los nombres en los gorros…",
           "Cobrarla aparte suma el precio del tipo al total. Apágalo si ya iba incluida: queda anotada sin monto.",
           "En ventas no hay mínimo de piezas. Un tipo sin precio cargado solo se puede anotar.",
           "Se ve en el detalle de la venta y en la nota de entrega.",
@@ -915,7 +916,8 @@ export const HELP_TOPICS = {
         heading: "Pasos",
         items: [
           "Elige el cliente (obligatorio). Un cliente bloqueado no puede pedir.",
-          "Agrega productos (tocas el producto y eliges género, color y talla con botones) o combos (en un combo eliges el modelo, el género, la talla y el color de cada pieza; los recargos se suman). 'Personalizar' añade nombres bordados o logos a una línea.",
+          "Agrega productos (tocas el producto y eliges género, color y talla con botones) o combos (en un combo eliges el modelo, el género, la talla y el color de cada pieza; los recargos se suman). 'Personalizar' añade nombres bordados o logos a una línea; en un combo, a cada pieza (ej.: logo en los delantales y nombres en los gorros del 10x10).",
+          "Cada personalización se cobra aparte o va incluida en el precio (solo anotada). El mínimo de piezas por tipo cuenta las dos.",
           "Inventario: 'reservar y producir lo que falta' aparta lo que hay; 'producir todo' no toca el stock (misma tela).",
           "Revisa la fecha prometida (por defecto 5 días) y registra el pago inicial.",
           "Agregar IVA (opcional): se suma al total después de descuentos, sin el delivery. La tasa es la de Configuración → Presupuestos.",
@@ -1150,6 +1152,7 @@ export const HELP_TOPICS = {
           "Cliente: elige uno guardado o escribe solo el nombre. A un cliente bloqueado no se le hacen presupuestos.",
           "Monedas: USD, Bs o ambas. Cada moneda sale de la lista de precios de un método de pago; los Bs, a la tasa BCV del día.",
           "Productos con género, color y talla (se eligen con botones al tocar el producto), combos y personalización. En un combo, la pieza con recargo (talla o color) sale aparte como 'Recargo'. Los nombres y el logo se piden en el pedido.",
+          "En un combo, cada pieza se personaliza aparte. Cada personalización se cobra o va incluida (sale como 'Incluida', sin precio).",
           "Descuento por línea o del presupuesto, siempre con motivo; staff tiene el mismo límite que en ventas.",
           "IVA opcional sobre el total. La nota de IGTF es solo texto.",
           "Imagen del encabezado: por defecto la de Datos de la empresa; puedes subir otra solo para este presupuesto.",

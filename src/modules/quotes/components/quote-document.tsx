@@ -31,6 +31,11 @@ const QuoteDocument = ({ quote, business, headerImageUrl, draft }: QuoteDocument
     ? groupQuoteItemsBySize(quote.items)
     : quote.items.filter((i) => !i.parentId).map((item) => ({ kind: "line", item }))
   const childrenOf = (id: string) => quote.items.filter((i) => i.parentId === id)
+  // La personalización de una línea y la de las piezas de su combo (con el nombre de la pieza).
+  const customizationsOf = (item: QuoteItem, detail: QuoteItem[]) => [
+    ...item.customizations.map((c) => ({ c, piece: null as string | null })),
+    ...detail.flatMap((p) => p.customizations.map((c) => ({ c, piece: p.productName }))),
+  ]
   const companyName = business.tradeName ?? brandConfig.name
   const mainTotal = showUsd ? usd(quote.usd.total) : formatMoney(quote.ves.totalBs, "VES")
 
@@ -199,20 +204,22 @@ const QuoteDocument = ({ quote, business, headerImageUrl, draft }: QuoteDocument
                       {showVes && <td className="py-2 text-right tabular-nums">{bs(c.vesLineTotal)}</td>}
                     </tr>
                   )),
-                ...item.customizations.map((c) => (
+                // Personalización de la línea y de cada pieza del combo (la incluida no tiene precio).
+                ...customizationsOf(item, detail).map(({ c, piece }) => (
                   <tr key={c.id} className="border-b border-dashed align-top text-muted-foreground">
                     <td className="py-2 pl-4">
+                      {piece ? `${piece}: ` : ""}
                       {c.typeName}
                       {c.text ? ` · "${c.text}"` : ""}
                       {c.sizeCm ? ` · ${c.sizeCm} cm` : ""}
                       {c.position ? ` · ${c.position}` : ""}
-                      {c.discountPercent > 0 && <div className="text-xs">Precio al mayor {c.discountPercent}%</div>}
+                      {c.charged && c.discountPercent > 0 && <div className="text-xs">Precio al mayor {c.discountPercent}%</div>}
                     </td>
-                    {showUsd && <td className="py-2 text-right tabular-nums">{usd(c.unitPriceUsd)}</td>}
-                    {showVes && <td className="py-2 text-right tabular-nums">{bs(c.unitPriceUsd)}</td>}
+                    {showUsd && <td className="py-2 text-right tabular-nums">{c.charged ? usd(c.unitPriceUsd) : "Incluida"}</td>}
+                    {showVes && <td className="py-2 text-right tabular-nums">{c.charged ? bs(c.unitPriceUsd) : "Incluida"}</td>}
                     <td className="py-2 text-right tabular-nums">{quantityFormat.format(c.quantity)}</td>
-                    {showUsd && <td className="py-2 text-right tabular-nums">{usd(c.lineTotalUsd)}</td>}
-                    {showVes && <td className="py-2 text-right tabular-nums">{bs(c.lineTotalUsd)}</td>}
+                    {showUsd && <td className="py-2 text-right tabular-nums">{c.charged ? usd(c.lineTotalUsd) : ""}</td>}
+                    {showVes && <td className="py-2 text-right tabular-nums">{c.charged ? bs(c.lineTotalUsd) : ""}</td>}
                   </tr>
                 )),
               ]
