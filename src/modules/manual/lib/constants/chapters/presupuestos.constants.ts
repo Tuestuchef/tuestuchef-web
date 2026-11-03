@@ -45,6 +45,11 @@ export const QUOTES_CHAPTER: ManualChapter = {
       heading: "Cómo se hace",
       blocks: [
         {
+          kind: "text",
+          body:
+            "Se arma en **4 pasos**: **Cliente** (con las monedas y listas de precios) → **Productos** (y las imágenes) → **Condiciones** (vencimiento, descuento, IVA, IGTF, agrupar por talla, encabezado y notas) → **Revisar** (resumen con **Cambiar** y los totales) y **Guardar**. Al editar un presupuesto guardado puedes saltar a cualquier paso.",
+        },
+        {
           kind: "steps",
           items: [
             { title: "Cliente", body: "Elige uno guardado o escribe solo el nombre (el resto es opcional). A un cliente bloqueado no se le hacen presupuestos." },

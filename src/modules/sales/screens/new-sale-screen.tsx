@@ -1,4 +1,4 @@
-import PageHeader from "@/common/components/page-header"
+import MobileFormSheet from "@/common/components/mobile-form-sheet"
 import { isRoleIn, ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { isStorageEnabled } from "@/common/lib/services/storage.service"
 import type { SessionUser } from "@/common/lib/types/session.types"
@@ -12,8 +12,8 @@ const NewSaleScreen = async ({ user }: { user: SessionUser }) => {
   const [data, customization] = await Promise.all([getSaleFormData(), getCustomizationOptions()])
 
   return (
-    <div className="mx-auto grid w-full max-w-2xl gap-4">
-      <PageHeader help="newSale" title="Nueva venta" />
+    // En el celular ocupa toda la pantalla, como una app (con su X para cerrar).
+    <MobileFormSheet title="Nueva venta" help="newSale" discardLabel="la venta">
       {!data.rates?.isCurrent && <TodayRateBanner />}
       <SaleForm
         {...data}
@@ -21,7 +21,7 @@ const NewSaleScreen = async ({ user }: { user: SessionUser }) => {
         storageEnabled={isStorageEnabled()}
         canManage={isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)}
       />
-    </div>
+    </MobileFormSheet>
   )
 }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { Loader2Icon, PaletteIcon, Trash2Icon } from "lucide-react"
+import { ClipboardCheckIcon, PaletteIcon, ShoppingBagIcon, SlidersHorizontalIcon, Trash2Icon, UserRoundIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useId, useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import ChoiceChips from "@/common/components/choice-chips"
 import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
+import { type FormStep, FormStepPanel, FormStepper, FormStepperFooter } from "@/common/components/form-stepper"
 import QuantityStepper from "@/common/components/quantity-stepper"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
@@ -18,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/common/components/ui/switch"
 import { Textarea } from "@/common/components/ui/textarea"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
+import { useFormSteps } from "@/common/lib/hooks/use-form-steps.hook"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import { parseAmount } from "@/common/lib/utils/parse-amount.util"
 import CustomerPicker, { type PickedCustomer } from "@/modules/customers/components/customer-picker"
@@ -141,7 +143,16 @@ type QuoteFormProps = QuoteFormData & {
   quoteHeaderUrl: string | null
 }
 
-// Crear o editar un presupuesto (borrador). La base vuelve a calcular precios y totales al guardar.
+// Los pasos del presupuesto.
+const QUOTE_STEPS: FormStep[] = [
+  { title: "Cliente", icon: UserRoundIcon },
+  { title: "Productos", icon: ShoppingBagIcon },
+  { title: "Condiciones", icon: SlidersHorizontalIcon },
+  { title: "Revisar", icon: ClipboardCheckIcon },
+]
+const [CUSTOMER_STEP, PRODUCTS_STEP, CONDITIONS_STEP, REVIEW_STEP] = [0, 1, 2, 3]
+
+// Crear o editar un presupuesto (borrador), por pasos. La base vuelve a calcular precios y totales al guardar.
 const QuoteForm = ({
   variants,
   rates,
@@ -281,19 +292,32 @@ const QuoteForm = ({
     return null
   })()
 
-  const blockers = [
-    !customer && !draft.name.trim() && "Elige un cliente o escribe su nombre.",
-    customer?.blockedReason && `Cliente bloqueado: no puede recibir presupuestos (${customer.blockedReason}).`,
-    exclusiveLine && `"${variantById.get(exclusiveLine.variantId)?.productName}" es exclusivo de otro cliente: quítalo o elige su cliente.`,
-    lines.length === 0 && "Agrega al menos un producto.",
-    useUsd && !usdList && "Elige la lista de precios en USD.",
-    useVes && !vesList && "Elige la lista de precios en Bs.",
-    missingPrice,
-    belowMinimum,
-    validUntil < today && "La fecha de vencimiento no puede ser pasada.",
-    needsReason && !discountReason.trim() && "Indica el motivo del descuento.",
-    staffLimit !== null && lines.some((l) => (parseAmount(l.discountPercent) ?? 0) > staffLimit) && `El descuento máximo sin owner o admin es ${staffLimit}%.`,
-  ].filter(Boolean) as string[]
+  // Lo que impide seguir, por paso (en el último se revisan todos antes de guardar).
+  const stepBlockers = [
+    [
+      !customer && !draft.name.trim() && "Elige un cliente o escribe su nombre.",
+      customer?.blockedReason && `Cliente bloqueado: no puede recibir presupuestos (${customer.blockedReason}).`,
+      useUsd && !usdList && "Elige la lista de precios en USD.",
+      useVes && !vesList && "Elige la lista de precios en Bs.",
+    ],
+    [
+      lines.length === 0 && "Agrega al menos un producto.",
+      exclusiveLine && `"${variantById.get(exclusiveLine.variantId)?.productName}" es exclusivo de otro cliente: quítalo o elige su cliente.`,
+      missingPrice,
+      belowMinimum,
+      staffLimit !== null && lines.some((l) => (parseAmount(l.discountPercent) ?? 0) > staffLimit) && `El descuento máximo sin owner o admin es ${staffLimit}%.`,
+    ],
+    [
+      validUntil < today && "La fecha de vencimiento no puede ser pasada.",
+      needsReason && !discountReason.trim() && "Indica el motivo del descuento.",
+    ],
+    [],
+  ].map((list) => list.filter(Boolean) as string[])
+  const blockers = stepBlockers.flat()
+  // Al editar un presupuesto, todo ya está cargado: se puede saltar a cualquier paso.
+  const steps = useFormSteps(QUOTE_STEPS.length, { allReached: Boolean(quote) })
+  // Primer paso con algo pendiente (para llevar ahí desde el último).
+  const firstBlockedStep = stepBlockers.findIndex((list) => list.length > 0)
 
   // Una variante elegida (género, color y talla) con su cantidad; si ya está, suma.
   const addVariant = (variant: SellableVariant, quantity: number) =>
@@ -395,275 +419,377 @@ const QuoteForm = ({
     </Select>
   )
 
+  // Resumen de lo elegido en un paso, con su botón para volver a cambiarlo.
+  const reviewRow = (label: string, value: string, step: number) => (
+    <div className="flex items-start justify-between gap-3 py-2">
+      <div className="grid min-w-0 gap-0.5">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-sm">{value}</span>
+      </div>
+      <Button type="button" variant="ghost" size="sm" onClick={() => steps.goTo(step)}>
+        Cambiar
+      </Button>
+    </div>
+  )
+  const currentBlockers = steps.isLast ? blockers : stepBlockers[steps.step]
+
   return (
     <div className="grid gap-5">
-      {/* Cliente */}
-      <section className="grid gap-2">
-        <Label>Cliente</Label>
-        <CustomerPicker value={customer} onChange={setCustomer} canManage={canManage} emptyLabel="Elegir un cliente guardado" />
-        {customer?.blockedReason && <StatusAlert tone="error" title={`Cliente bloqueado: ${customer.blockedReason}`} />}
-        {!customer && (
-          <div className="grid gap-3 rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">O escribe solo el nombre: el resto es opcional. Para convertirlo en pedido se pedirá un cliente guardado.</p>
-            <ChoiceChips label="Tipo de cliente" options={KIND_OPTIONS} value={draft.kind} onChange={(v) => setDraft((d) => ({ ...d, kind: v as CustomerKind }))} />
-            <FormField label={draft.kind === "company" ? "Nombre (como lo conocen)" : "Nombre"} htmlFor="q-customer-name">
-              <Input id="q-customer-name" value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} placeholder="Restaurante Litoral" className="h-11 md:h-9" />
-            </FormField>
-            <details className="text-sm">
-              <summary className="cursor-pointer text-muted-foreground">Más datos del cliente (opcional)</summary>
-              <div className="mt-3 grid gap-3">
-                {draft.kind === "company" && (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <FormField label="Razón social" htmlFor="q-legal" optional>
-                      <Input id="q-legal" value={draft.legalName} onChange={(e) => setDraft((d) => ({ ...d, legalName: e.target.value }))} className="h-11 md:h-9" />
-                    </FormField>
-                    <FormField label="RIF" htmlFor="q-rif" optional>
-                      <Input id="q-rif" value={draft.taxId} onChange={(e) => setDraft((d) => ({ ...d, taxId: e.target.value }))} placeholder="J-12345678-9" className="h-11 md:h-9" />
-                    </FormField>
-                    <FormField label="Persona de contacto" htmlFor="q-contact" optional>
-                      <Input id="q-contact" value={draft.contactPerson} onChange={(e) => setDraft((d) => ({ ...d, contactPerson: e.target.value }))} className="h-11 md:h-9" />
-                    </FormField>
-                  </div>
-                )}
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <FormField label="Teléfono" htmlFor="q-phone" optional>
-                    <Input id="q-phone" type="tel" inputMode="tel" value={draft.phone} onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))} placeholder="0414-123.45.67" className="h-11 md:h-9" />
-                  </FormField>
-                  <FormField label="Correo" htmlFor="q-email" optional>
-                    <Input id="q-email" type="email" inputMode="email" value={draft.email} onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))} className="h-11 md:h-9" />
-                  </FormField>
-                </div>
-                <FormField label="Dirección" htmlFor="q-address" optional>
-                  <Input id="q-address" value={draft.address} onChange={(e) => setDraft((d) => ({ ...d, address: e.target.value }))} className="h-11 md:h-9" />
+      <FormStepper steps={QUOTE_STEPS} current={steps.step} reached={steps.reached} onSelect={steps.goTo} />
+
+      {/* 1. Cliente, monedas y listas de precios */}
+      {steps.step === CUSTOMER_STEP && (
+        <FormStepPanel step={steps.step} direction={steps.direction}>
+          <section className="grid gap-2">
+            <Label>Cliente</Label>
+            <CustomerPicker value={customer} onChange={setCustomer} canManage={canManage} emptyLabel="Elegir un cliente guardado" />
+            {customer?.blockedReason && <StatusAlert tone="error" title={`Cliente bloqueado: ${customer.blockedReason}`} />}
+            {!customer && (
+              <div className="grid gap-3 rounded-lg border p-3">
+                <p className="text-xs text-muted-foreground">O escribe solo el nombre: el resto es opcional. Para convertirlo en pedido se pedirá un cliente guardado.</p>
+                <ChoiceChips label="Tipo de cliente" options={KIND_OPTIONS} value={draft.kind} onChange={(v) => setDraft((d) => ({ ...d, kind: v as CustomerKind }))} />
+                <FormField label={draft.kind === "company" ? "Nombre (como lo conocen)" : "Nombre"} htmlFor="q-customer-name">
+                  <Input id="q-customer-name" value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} placeholder="Restaurante Litoral" className="h-11 md:h-9" />
                 </FormField>
-              </div>
-            </details>
-          </div>
-        )}
-      </section>
-
-      {/* Monedas y listas */}
-      <section className="grid gap-3">
-        <FormField label="Monedas" htmlFor="q-currencies">
-          <ChoiceChips id="q-currencies" label="Monedas" options={CURRENCY_OPTIONS} value={currencies} onChange={(v) => setCurrencies(v as QuoteCurrencies)} />
-        </FormField>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {useUsd && (
-            <FormField label="Lista de precios en USD" htmlFor="q-usd-list">
-              {listSelect("q-usd-list", usdListId, setUsdListId, usdLists)}
-            </FormField>
-          )}
-          {useVes && (
-            <FormField label="Lista de precios en Bs" htmlFor="q-ves-list" hint="Montos en Bs a la tasa BCV del día (referencial).">
-              {listSelect("q-ves-list", vesListId, setVesListId, vesLists)}
-            </FormField>
-          )}
-        </div>
-      </section>
-
-      {/* Productos */}
-      <section className="grid gap-2">
-        <Label>Productos</Label>
-        {/* En un presupuesto no se aparta inventario: sin stock. Precio de la lista en USD (o en Bs). */}
-        <ProductPicker variants={pricing.visible} priceMethodId={usdList?.id ?? vesList?.id} onAdd={addVariant} onCombo={setComboToPick} />
-
-        {lines.length > 0 && (
-          <ul className="divide-y rounded-lg border">
-            {lines.map((line) => {
-              const variant = variantById.get(line.variantId)
-              const usdPrice = usdList ? variant?.pricesUsd[usdList.id] : undefined
-              const vesPrice = vesList ? variant?.pricesUsd[vesList.id] : undefined
-              return (
-                <li key={line.key} className="grid gap-2 p-3">
-                  <div className="grid min-w-0 gap-0.5">
-                    <span className="text-sm font-medium">
-                      {variant?.productName ?? "Producto"} <span className="font-normal text-muted-foreground">· {variant?.variantLabel}</span>
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {[
-                        useUsd && (usdPrice === undefined ? "Sin precio USD" : `${usd(usdPrice)} c/u`),
-                        useVes && (vesPrice === undefined ? "Sin precio Bs" : `${bs(vesPrice * bcv)} c/u`),
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
-                    {line.components && (
-                      <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
-                        {line.components.map((c, index) => {
-                          const piece = variantById.get(c.variantId)
-                          return (
-                            <li key={`${c.variantId}-${index}`} className="grid gap-1">
-                              <span className="flex flex-wrap items-center gap-x-2">
-                                <span>
-                                  {c.quantity} × {piece?.productName} · {piece?.variantLabel}
-                                  {piece && piece.extraUsd > 0 && ` · +${usd(piece.extraUsd * c.quantity)}`}
-                                </span>
-                                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setCustomizing(pieceTarget(line.key, index))}>
-                                  <PaletteIcon aria-hidden />
-                                  Personalizar
-                                </Button>
-                              </span>
-                              <CustomizationList
-                                customizations={c.customizations}
-                                typeName={(id) => typeById.get(id)?.name}
-                                onRemove={(key) => removeCustomization(line.key, index, key)}
-                              />
-                            </li>
-                          )
-                        })}
-                      </ul>
+                <details className="text-sm">
+                  <summary className="cursor-pointer text-muted-foreground">Más datos del cliente (opcional)</summary>
+                  <div className="mt-3 grid gap-3">
+                    {draft.kind === "company" && (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <FormField label="Razón social" htmlFor="q-legal" optional>
+                          <Input id="q-legal" value={draft.legalName} onChange={(e) => setDraft((d) => ({ ...d, legalName: e.target.value }))} className="h-11 md:h-9" />
+                        </FormField>
+                        <FormField label="RIF" htmlFor="q-rif" optional>
+                          <Input id="q-rif" value={draft.taxId} onChange={(e) => setDraft((d) => ({ ...d, taxId: e.target.value }))} placeholder="J-12345678-9" className="h-11 md:h-9" />
+                        </FormField>
+                        <FormField label="Persona de contacto" htmlFor="q-contact" optional>
+                          <Input id="q-contact" value={draft.contactPerson} onChange={(e) => setDraft((d) => ({ ...d, contactPerson: e.target.value }))} className="h-11 md:h-9" />
+                        </FormField>
+                      </div>
                     )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {line.components ? (
-                      <>
-                        <StatusBadge tone="info">
-                          {line.quantity} {line.quantity === 1 ? "combo" : "combos"}
-                        </StatusBadge>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setQuantity(line.key, 0)}>
-                          <Trash2Icon aria-hidden />
-                          Quitar
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <QuantityStepper removable value={line.quantity} onChange={(q) => setQuantity(line.key, q)} />
-                        <Button type="button" variant="outline" size="sm" onClick={() => setCustomizing(line.key)}>
-                          <PaletteIcon aria-hidden />
-                          Personalizar
-                        </Button>
-                      </>
-                    )}
-                    <div className="flex items-center gap-1">
-                      <Input
-                        aria-label="Descuento de la línea (%)"
-                        inputMode="decimal"
-                        value={line.discountPercent}
-                        onChange={(e) => updateLine(line.key, { discountPercent: e.target.value })}
-                        placeholder="0"
-                        className="h-10 w-16 text-right tabular-nums md:h-8"
-                      />
-                      <span className="text-xs text-muted-foreground">% desc.</span>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <FormField label="Teléfono" htmlFor="q-phone" optional>
+                        <Input id="q-phone" type="tel" inputMode="tel" value={draft.phone} onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))} placeholder="0414-123.45.67" className="h-11 md:h-9" />
+                      </FormField>
+                      <FormField label="Correo" htmlFor="q-email" optional>
+                        <Input id="q-email" type="email" inputMode="email" value={draft.email} onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))} className="h-11 md:h-9" />
+                      </FormField>
                     </div>
+                    <FormField label="Dirección" htmlFor="q-address" optional>
+                      <Input id="q-address" value={draft.address} onChange={(e) => setDraft((d) => ({ ...d, address: e.target.value }))} className="h-11 md:h-9" />
+                    </FormField>
                   </div>
-                  <CustomizationList
-                    customizations={line.customizations}
-                    typeName={(id) => typeById.get(id)?.name}
-                    onRemove={(key) => removeCustomization(line.key, null, key)}
-                  />
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </section>
-
-      {/* Imágenes: después de los artículos, en el documento y el PDF */}
-      <section className="grid gap-2">
-        <Label>
-          Imágenes <span className="font-normal text-muted-foreground">(opcional)</span>
-        </Label>
-        <QuoteImagesField
-          images={images}
-          onChange={setImages}
-          catalog={catalogImages}
-          productIds={[...new Set(lines.flatMap((l) => [variantById.get(l.variantId)?.productId ?? "", ...(l.components ?? []).map((c) => variantById.get(c.variantId)?.productId ?? "")]))]}
-          storageEnabled={storageEnabled}
-        />
-      </section>
-
-      {/* Vencimiento y descuento */}
-      <FormField label="Vence el" htmlFor="q-valid" hint={`Por defecto, ${settings.validityDays} días.`}>
-        <DateField id="q-valid" min={today} value={validUntil} onChange={setValidUntil} className="max-w-80" />
-      </FormField>
-
-      <section className="grid gap-3">
-        <FormField label="Descuento del presupuesto" htmlFor="q-discount">
-          <ChoiceChips id="q-discount" label="Descuento" options={DISCOUNT_OPTIONS} value={discountMode} onChange={(v) => setDiscountMode(v as DiscountMode)} />
-        </FormField>
-        {discountMode !== "none" && (
-          <FormField label={discountMode === "percent" ? "Porcentaje" : "Monto en USD"} htmlFor="q-discount-value">
-            <Input id="q-discount-value" inputMode="decimal" value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} className="h-11 max-w-32 md:h-9" />
-          </FormField>
-        )}
-        {needsReason && (
-          <FormField
-            label="Motivo del descuento"
-            htmlFor="q-discount-reason"
-            hint={staffLimit !== null ? `Sin owner o admin, hasta ${staffLimit}% (por línea o en total).` : undefined}
-          >
-            <Input id="q-discount-reason" value={discountReason} onChange={(e) => setDiscountReason(e.target.value)} placeholder="Pedido grande" className="h-11 md:h-9" />
-          </FormField>
-        )}
-      </section>
-
-      {/* Opciones */}
-      <section className="grid gap-2">
-        <SwitchRow label={`Agregar IVA (${settings.vatPercent}%)`} description="Se suma al total, después de descuentos." checked={vatEnabled} onChange={setVatEnabled} />
-        <SwitchRow label="Nota de IGTF" description="Solo texto para pagos en divisas." checked={igtfEnabled} onChange={setIgtfEnabled} />
-        <SwitchRow label="Agrupar por talla" description="Para pedidos grandes: una fila por producto con el desglose de tallas." checked={groupBySize} onChange={setGroupBySize} />
-      </section>
-
-      {storageEnabled && (
-        <FormField label="Imagen del encabezado" htmlFor="q-header">
-          <QuoteHeaderField imageUrl={header?.url ?? companyHeaderUrl} hasCustomImage={Boolean(header)} enabled={storageEnabled} onChange={setHeader} />
-        </FormField>
+                </details>
+              </div>
+            )}
+          </section>
+          {pricing.agreement && (
+            <p className="rounded-lg border p-3 text-sm">
+              Tiene acuerdo: sus precios especiales y sus productos exclusivos se aplican solos, sin descuento al mayor.
+              {pricing.eurRate && " Sus Bs van a tasa euro."}
+            </p>
+          )}
+          <section className="grid gap-3">
+            <FormField label="Monedas" htmlFor="q-currencies">
+              <ChoiceChips id="q-currencies" label="Monedas" options={CURRENCY_OPTIONS} value={currencies} onChange={(v) => setCurrencies(v as QuoteCurrencies)} />
+            </FormField>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {useUsd && (
+                <FormField label="Lista de precios en USD" htmlFor="q-usd-list">
+                  {listSelect("q-usd-list", usdListId, setUsdListId, usdLists)}
+                </FormField>
+              )}
+              {useVes && (
+                <FormField label="Lista de precios en Bs" htmlFor="q-ves-list" hint="Montos en Bs a la tasa BCV del día (referencial).">
+                  {listSelect("q-ves-list", vesListId, setVesListId, vesLists)}
+                </FormField>
+              )}
+            </div>
+          </section>
+        </FormStepPanel>
       )}
 
-      <FormField label="Notas y condiciones" htmlFor="q-terms">
-        <Textarea id="q-terms" rows={6} maxLength={3000} value={terms} onChange={(e) => setTerms(e.target.value)} />
-      </FormField>
+      {/* 2. Productos (con su descuento por línea) e imágenes */}
+      {steps.step === PRODUCTS_STEP && (
+        <FormStepPanel step={steps.step} direction={steps.direction}>
+          <section className="grid gap-2">
+            <Label>Productos</Label>
+            {/* En un presupuesto no se aparta inventario: sin stock. Precio de la lista en USD (o en Bs). */}
+            <ProductPicker variants={pricing.visible} priceMethodId={usdList?.id ?? vesList?.id} onAdd={addVariant} onCombo={setComboToPick} />
 
-      {/* Resumen */}
-      <div className="sticky bottom-(--bottom-nav-h) -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
-        {[
-          usdTotals && { label: "USD", totals: usdTotals, fmt: usd },
-          vesTotals && { label: "Bs", totals: vesTotals, fmt: (v: number) => bs(v * bcv) },
-        ]
-          .filter(Boolean)
-          .map((block) => {
-            const { label, totals, fmt } = block as { label: string; totals: NonNullable<typeof usdTotals>; fmt: (v: number) => string }
-            return (
-              <dl key={label} className="grid gap-1 text-sm tabular-nums">
-                {currencies === "both" && <dt className="text-xs font-semibold text-muted-foreground">{label}</dt>}
-                <div className="flex justify-between text-muted-foreground">
-                  <dt>Subtotal</dt>
-                  <dd>{fmt(totals.subtotal)}</dd>
-                </div>
-                {totals.volumeDiscount > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <dt>
-                      Al mayor ({totals.pieces} piezas, {totals.volumePercent}%)
-                    </dt>
-                    <dd>−{fmt(totals.volumeDiscount)}</dd>
-                  </div>
-                )}
-                {totals.discount > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <dt>Descuento</dt>
-                    <dd>−{fmt(totals.discount)}</dd>
-                  </div>
-                )}
-                {totals.vat > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <dt>IVA {settings.vatPercent}%</dt>
-                    <dd>{fmt(totals.vat)}</dd>
-                  </div>
-                )}
-                <div className="flex justify-between font-semibold">
-                  <dt>Total {label}</dt>
-                  <dd>{fmt(totals.total)}</dd>
-                </div>
-              </dl>
-            )
-          })}
-        {useVes && !bcv && <p className="text-xs text-muted-foreground">Falta la tasa de hoy: el monto en Bs se calcula al registrarla.</p>}
-        {error ? <StatusAlert tone="error" title={error} /> : lines.length > 0 && blockers[0] && <StatusAlert tone="warning" title={blockers[0]} />}
-        <Button type="button" className="h-12 text-base" disabled={pending || blockers.length > 0} onClick={submit}>
-          {pending && <Loader2Icon className="animate-spin" aria-hidden />}
-          {pending ? "Guardando…" : quote ? "Guardar cambios" : "Guardar borrador"}
-        </Button>
-      </div>
+            {lines.length > 0 && (
+              <ul className="divide-y rounded-lg border">
+                {lines.map((line) => {
+                  const variant = variantById.get(line.variantId)
+                  const usdPrice = usdList ? variant?.pricesUsd[usdList.id] : undefined
+                  const vesPrice = vesList ? variant?.pricesUsd[vesList.id] : undefined
+                  return (
+                    <li key={line.key} className="grid gap-2 p-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-200">
+                      <div className="grid min-w-0 gap-0.5">
+                        <span className="text-sm font-medium">
+                          {variant?.productName ?? "Producto"} <span className="font-normal text-muted-foreground">· {variant?.variantLabel}</span>
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {[
+                            useUsd && (usdPrice === undefined ? "Sin precio USD" : `${usd(usdPrice)} c/u`),
+                            useVes && (vesPrice === undefined ? "Sin precio Bs" : `${bs(vesPrice * bcv)} c/u`),
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                        {line.components && (
+                          <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
+                            {line.components.map((c, index) => {
+                              const piece = variantById.get(c.variantId)
+                              return (
+                                <li key={`${c.variantId}-${index}`} className="grid gap-1">
+                                  <span className="flex flex-wrap items-center gap-x-2">
+                                    <span>
+                                      {c.quantity} × {piece?.productName} · {piece?.variantLabel}
+                                      {piece && piece.extraUsd > 0 && ` · +${usd(piece.extraUsd * c.quantity)}`}
+                                    </span>
+                                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setCustomizing(pieceTarget(line.key, index))}>
+                                      <PaletteIcon aria-hidden />
+                                      Personalizar
+                                    </Button>
+                                  </span>
+                                  <CustomizationList
+                                    customizations={c.customizations}
+                                    typeName={(id) => typeById.get(id)?.name}
+                                    onRemove={(key) => removeCustomization(line.key, index, key)}
+                                  />
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {line.components ? (
+                          <>
+                            <StatusBadge tone="info">
+                              {line.quantity} {line.quantity === 1 ? "combo" : "combos"}
+                            </StatusBadge>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => setQuantity(line.key, 0)}>
+                              <Trash2Icon aria-hidden />
+                              Quitar
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <QuantityStepper removable value={line.quantity} onChange={(q) => setQuantity(line.key, q)} />
+                            <Button type="button" variant="outline" size="sm" onClick={() => setCustomizing(line.key)}>
+                              <PaletteIcon aria-hidden />
+                              Personalizar
+                            </Button>
+                          </>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <Input
+                            aria-label="Descuento de la línea (%)"
+                            inputMode="decimal"
+                            value={line.discountPercent}
+                            onChange={(e) => updateLine(line.key, { discountPercent: e.target.value })}
+                            placeholder="0"
+                            className="h-10 w-16 text-right tabular-nums md:h-8"
+                          />
+                          <span className="text-xs text-muted-foreground">% desc.</span>
+                        </div>
+                      </div>
+                      <CustomizationList
+                        customizations={line.customizations}
+                        typeName={(id) => typeById.get(id)?.name}
+                        onRemove={(key) => removeCustomization(line.key, null, key)}
+                      />
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </section>
+
+          <section className="grid gap-2">
+            <Label>
+              Imágenes <span className="font-normal text-muted-foreground">(opcional)</span>
+            </Label>
+            <QuoteImagesField
+              images={images}
+              onChange={setImages}
+              catalog={catalogImages}
+              productIds={[...new Set(lines.flatMap((l) => [variantById.get(l.variantId)?.productId ?? "", ...(l.components ?? []).map((c) => variantById.get(c.variantId)?.productId ?? "")]))]}
+              storageEnabled={storageEnabled}
+            />
+          </section>
+        </FormStepPanel>
+      )}
+
+      {/* 3. Condiciones: vencimiento, descuento, opciones, encabezado y notas */}
+      {steps.step === CONDITIONS_STEP && (
+        <FormStepPanel step={steps.step} direction={steps.direction}>
+          <FormField label="Vence el" htmlFor="q-valid" hint={`Por defecto, ${settings.validityDays} días.`}>
+            <DateField id="q-valid" min={today} value={validUntil} onChange={setValidUntil} className="max-w-80" />
+          </FormField>
+
+          <section className="grid gap-3">
+            <FormField label="Descuento del presupuesto" htmlFor="q-discount">
+              <ChoiceChips id="q-discount" label="Descuento" options={DISCOUNT_OPTIONS} value={discountMode} onChange={(v) => setDiscountMode(v as DiscountMode)} />
+            </FormField>
+            {discountMode !== "none" && (
+              <FormField label={discountMode === "percent" ? "Porcentaje" : "Monto en USD"} htmlFor="q-discount-value">
+                <Input id="q-discount-value" inputMode="decimal" value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} className="h-11 max-w-32 md:h-9" />
+              </FormField>
+            )}
+            {needsReason && (
+              <FormField
+                label="Motivo del descuento"
+                htmlFor="q-discount-reason"
+                hint={staffLimit !== null ? `Sin owner o admin, hasta ${staffLimit}% (por línea o en total).` : undefined}
+              >
+                <Input id="q-discount-reason" value={discountReason} onChange={(e) => setDiscountReason(e.target.value)} placeholder="Pedido grande" className="h-11 md:h-9" />
+              </FormField>
+            )}
+          </section>
+
+          {/* Opciones */}
+          <section className="grid gap-2">
+            <SwitchRow label={`Agregar IVA (${settings.vatPercent}%)`} description="Se suma al total, después de descuentos." checked={vatEnabled} onChange={setVatEnabled} />
+            <SwitchRow label="Nota de IGTF" description="Solo texto para pagos en divisas." checked={igtfEnabled} onChange={setIgtfEnabled} />
+            <SwitchRow label="Agrupar por talla" description="Para pedidos grandes: una fila por producto con el desglose de tallas." checked={groupBySize} onChange={setGroupBySize} />
+          </section>
+
+          {storageEnabled && (
+            <FormField label="Imagen del encabezado" htmlFor="q-header">
+              <QuoteHeaderField imageUrl={header?.url ?? companyHeaderUrl} hasCustomImage={Boolean(header)} enabled={storageEnabled} onChange={setHeader} />
+            </FormField>
+          )}
+
+          <FormField label="Notas y condiciones" htmlFor="q-terms">
+            <Textarea id="q-terms" rows={6} maxLength={3000} value={terms} onChange={(e) => setTerms(e.target.value)} />
+          </FormField>
+        </FormStepPanel>
+      )}
+
+      {/* 4. Revisar y guardar */}
+      {steps.step === REVIEW_STEP && (
+        <FormStepPanel step={steps.step} direction={steps.direction}>
+          <div className="divide-y rounded-lg border px-3">
+            {reviewRow(
+              "Cliente y listas",
+              [
+                customer?.name ?? (draft.name.trim() || "—"),
+                QUOTE_CURRENCIES_LABELS[currencies],
+                useUsd && usdList?.name,
+                useVes && vesList?.name,
+              ]
+                .filter(Boolean)
+                .join(" · "),
+              CUSTOMER_STEP
+            )}
+            {reviewRow(
+              "Productos",
+              [
+                lines.map((l) => `${l.quantity} × ${variantById.get(l.variantId)?.productName ?? "Producto"}`).join(", ") || "—",
+                images.length > 0 && `${images.length} ${images.length === 1 ? "imagen" : "imágenes"}`,
+              ]
+                .filter(Boolean)
+                .join(" · "),
+              PRODUCTS_STEP
+            )}
+            {reviewRow(
+              "Condiciones",
+              [
+                `vence el ${validUntil.split("-").reverse().join("/")}`,
+                vatEnabled && `IVA ${settings.vatPercent}%`,
+                igtfEnabled && "nota de IGTF",
+                groupBySize && "agrupado por talla",
+              ]
+                .filter(Boolean)
+                .join(" · "),
+              CONDITIONS_STEP
+            )}
+          </div>
+          <div className="grid gap-3 rounded-lg border p-3">
+            {[
+              usdTotals && { label: "USD", totals: usdTotals, fmt: usd },
+              vesTotals && { label: "Bs", totals: vesTotals, fmt: (v: number) => bs(v * bcv) },
+            ]
+              .filter(Boolean)
+              .map((block) => {
+                const { label, totals, fmt } = block as { label: string; totals: NonNullable<typeof usdTotals>; fmt: (v: number) => string }
+                return (
+                  <dl key={label} className="grid gap-1 text-sm tabular-nums">
+                    {currencies === "both" && <dt className="text-xs font-semibold text-muted-foreground">{label}</dt>}
+                    <div className="flex justify-between text-muted-foreground">
+                      <dt>Subtotal</dt>
+                      <dd>{fmt(totals.subtotal)}</dd>
+                    </div>
+                    {totals.volumeDiscount > 0 && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <dt>
+                          Al mayor ({totals.pieces} piezas, {totals.volumePercent}%)
+                        </dt>
+                        <dd>−{fmt(totals.volumeDiscount)}</dd>
+                      </div>
+                    )}
+                    {totals.discount > 0 && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <dt>Descuento</dt>
+                        <dd>−{fmt(totals.discount)}</dd>
+                      </div>
+                    )}
+                    {totals.vat > 0 && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <dt>IVA {settings.vatPercent}%</dt>
+                        <dd>{fmt(totals.vat)}</dd>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-semibold">
+                      <dt>Total {label}</dt>
+                      <dd>{fmt(totals.total)}</dd>
+                    </div>
+                  </dl>
+                )
+              })}
+            {useVes && !bcv && <p className="text-xs text-muted-foreground">Falta la tasa de hoy: el monto en Bs se calcula al registrarla.</p>}
+          </div>
+        </FormStepPanel>
+      )}
+
+      {/* Barra de abajo: lo que falta y avanzar o guardar. */}
+      <FormStepperFooter
+        steps={QUOTE_STEPS}
+        current={steps.step}
+        onBack={steps.back}
+        onNext={steps.next}
+        nextDisabled={stepBlockers[steps.step].length > 0}
+        submitLabel={pending ? "Guardando…" : quote ? "Guardar cambios" : "Guardar borrador"}
+        submitting={pending}
+        submitDisabled={pending || blockers.length > 0}
+        onSubmit={submit}
+        total={
+          usdTotals || vesTotals
+            ? [usdTotals && usd(usdTotals.total), vesTotals && bcv > 0 && bs(vesTotals.total * bcv)].filter(Boolean).join(" · ")
+            : undefined
+        }
+        alert={
+          <>
+            {error ? (
+              <StatusAlert tone="error" title={error} />
+            ) : (
+              (lines.length > 0 || steps.step !== PRODUCTS_STEP) &&
+              currentBlockers[0] && (
+                <StatusAlert tone="warning" title={currentBlockers[0]}>
+                  {steps.isLast && firstBlockedStep >= 0 && firstBlockedStep < REVIEW_STEP && (
+                    <Button type="button" variant="link" className="h-auto p-0" onClick={() => steps.goTo(firstBlockedStep)}>
+                      Ir a {QUOTE_STEPS[firstBlockedStep].title}
+                    </Button>
+                  )}
+                </StatusAlert>
+              )
+            )}
+          </>
+        }
+      />
 
       <ComboPickerDialog
         combo={comboToPick}

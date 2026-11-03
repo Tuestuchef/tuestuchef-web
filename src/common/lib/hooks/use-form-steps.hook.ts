@@ -9,17 +9,23 @@ const historyState = () => (window.history.state as Record<string, unknown> | nu
 // Pasos de un formulario largo (registrar una venta…). El botón atrás del teléfono vuelve un paso
 // en vez de salir de la página (y perder lo cargado): fuera del primer paso hay una sola entrada
 // extra en el historial; al volver con el botón, se rearma mientras queden pasos atrás.
-// `reached` es el paso más lejano visitado: hasta ahí se puede saltar.
-export function useFormSteps(count: number) {
+// `reached` es el paso más lejano visitado: hasta ahí se puede saltar (al editar algo ya completo,
+// `allReached` deja saltar a cualquiera desde el inicio).
+export function useFormSteps(count: number, { allReached = false }: { allReached?: boolean } = {}) {
   const [step, setStep] = useState(0)
-  const [reached, setReached] = useState(0)
+  const [reached, setReached] = useState(allReached ? count - 1 : 0)
+  // Hacia dónde fue el último cambio (para animar la entrada del paso).
+  const [direction, setDirection] = useState<1 | -1>(1)
   const stepRef = useRef(0)
 
   const show = useCallback((next: number) => {
+    setDirection(next >= stepRef.current ? 1 : -1)
     stepRef.current = next
     setStep(next)
     setReached((r) => Math.max(r, next))
+    // Arriba: la página o, en el celular, la hoja a pantalla completa que contiene el formulario.
     window.scrollTo({ top: 0 })
+    document.querySelector("[data-form-scroll]")?.scrollTo({ top: 0 })
   }, [])
 
   useEffect(() => {
@@ -61,12 +67,13 @@ export function useFormSteps(count: number) {
   // Empezar de nuevo (p. ej. tras guardar sin conexión).
   const reset = useCallback(() => {
     goTo(0)
-    setReached(0)
-  }, [goTo])
+    setReached(allReached ? count - 1 : 0)
+  }, [allReached, count, goTo])
 
   return {
     step,
     reached,
+    direction,
     goTo,
     next: () => goTo(step + 1),
     back: () => goTo(step - 1),

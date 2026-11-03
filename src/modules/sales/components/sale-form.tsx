@@ -2,9 +2,10 @@
 
 import {
   CheckIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  Loader2Icon,
+  ShoppingBagIcon,
+  TruckIcon,
+  UserRoundIcon,
+  WalletIcon,
   PlusIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -15,7 +16,8 @@ import { toast } from "sonner"
 import ChoiceChips from "@/common/components/choice-chips"
 import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
-import FormStepper from "@/common/components/form-stepper"
+import { type FormStep, FormStepPanel, FormStepper, FormStepperFooter } from "@/common/components/form-stepper"
+import { useFormSheetDirty } from "@/common/components/mobile-form-sheet"
 import QuantityStepper from "@/common/components/quantity-stepper"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
@@ -64,6 +66,7 @@ import {
 } from "../lib/utils/sale-math.util"
 import { isNetworkError, queueSale } from "../lib/utils/offline-queue.util"
 import BackdateField from "./backdate-field"
+import PaymentRows, { type PaymentRow } from "./payment-rows"
 import { comboExtraUsd } from "../lib/utils/combo.util"
 import ComboPickerDialog, { type ComboSelection } from "./combo-picker-dialog"
 import ProductPicker from "./product-picker"
@@ -82,7 +85,6 @@ type CartLine = {
   customizations: LineCustomization[]
 }
 type PaymentMode = "full" | "custom" | "none"
-type PaymentRow = { key: number; methodId: string; amount: string }
 
 type SaleFormProps = SaleFormData & CustomizationOptions & { canManage: boolean; storageEnabled: boolean }
 
@@ -105,7 +107,12 @@ const PAYMENT_MODES = [
 ] as const
 
 // Los pasos: primero el cliente y la lista de precios (el acuerdo cambia precios y productos).
-const SALE_STEPS = ["Cliente", "Productos", "Entrega", "Cobro"] as const
+const SALE_STEPS: FormStep[] = [
+  { title: "Cliente", icon: UserRoundIcon },
+  { title: "Productos", icon: ShoppingBagIcon },
+  { title: "Entrega", icon: TruckIcon },
+  { title: "Cobro", icon: WalletIcon },
+]
 const [CUSTOMER_STEP, PRODUCTS_STEP, DELIVERY_STEP, PAYMENT_STEP] = [0, 1, 2, 3]
 
 // Registrar una venta por pasos, pensada para el celular.
@@ -288,6 +295,7 @@ const SaleForm = ({
   ].map((list) => list.filter(Boolean) as string[])
   const blockers = stepBlockers.flat()
   const steps = useFormSteps(SALE_STEPS.length)
+  useFormSheetDirty(cart.length > 0 || customer !== null)
   // Primer paso con algo pendiente (para llevar ahí desde el resumen).
   const firstBlockedStep = stepBlockers.findIndex((list) => list.length > 0)
 
@@ -457,7 +465,7 @@ const SaleForm = ({
 
       {/* 1. Cliente y lista de precios: el acuerdo del cliente cambia precios y productos. */}
       {steps.step === CUSTOMER_STEP && (
-        <div className="grid gap-5">
+        <FormStepPanel step={steps.step} direction={steps.direction}>
           <div className="grid gap-2">
             <Label>
               Cliente <span className="font-normal text-muted-foreground">(opcional)</span>
@@ -481,12 +489,12 @@ const SaleForm = ({
             />
           </FormField>
 
-        </div>
+        </FormStepPanel>
       )}
 
       {/* 2. Productos */}
       {steps.step === PRODUCTS_STEP && (
-        <div className="grid gap-2">
+        <FormStepPanel step={steps.step} direction={steps.direction} className="gap-2">
           <section className="grid gap-2">
             <Label>Productos</Label>
             <ProductPicker
@@ -501,7 +509,7 @@ const SaleForm = ({
             {lines.length > 0 && (
               <ul className="divide-y rounded-lg border">
                 {lines.map((line) => (
-                  <li key={line.key} className="grid gap-2 p-3">
+                  <li key={line.key} className="grid gap-2 p-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-200">
                     <div className="flex items-start gap-2">
                       <div className="grid min-w-0 flex-1 gap-0.5">
                         <span className="text-sm font-medium">
@@ -599,12 +607,12 @@ const SaleForm = ({
               {nextTier && ` · con ${quantityFormat.format(nextTier.minQuantity - pieces)} más: ${nextTier.percent}% al mayor`}
             </p>
           )}
-        </div>
+        </FormStepPanel>
       )}
 
       {/* 3. Entrega: canal, entrega, fecha y notas */}
       {steps.step === DELIVERY_STEP && (
-        <div className="grid gap-5">
+        <FormStepPanel step={steps.step} direction={steps.direction}>
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField label="Canal" htmlFor="sale-channel">
               <ChoiceChips
@@ -669,12 +677,12 @@ const SaleForm = ({
             placeholder="Notas (opcional)"
             className="h-11 md:h-9"
           />
-        </div>
+        </FormStepPanel>
       )}
 
       {/* 4. Cobro: resumen, descuento y pago */}
       {steps.step === PAYMENT_STEP && (
-        <div className="grid gap-5">
+        <FormStepPanel step={steps.step} direction={steps.direction}>
           <div className="divide-y rounded-lg border px-3">
             {reviewRow("Cliente y precios", `${customer?.name ?? "Venta rápida (sin cliente)"} · ${priceMethod?.name ?? ""}`, CUSTOMER_STEP)}
             {reviewRow(
@@ -759,47 +767,7 @@ const SaleForm = ({
           </FormField>
           {paymentMode === "custom" && (
             <div className="grid gap-2">
-              {paymentRows.map((row) => {
-                const method = methodById.get(row.methodId)!
-                return (
-                  <div key={row.key} className="grid grid-cols-[1fr_8rem_auto] gap-2">
-                    <select
-                      aria-label="Método del pago"
-                      value={row.methodId}
-                      onChange={(e) =>
-                        setPaymentRows((rows) => rows.map((r) => (r.key === row.key ? { ...r, methodId: e.target.value } : r)))
-                      }
-                      className="h-11 rounded-md border bg-background px-2 text-sm md:h-9"
-                    >
-                      {methods.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name}
-                        </option>
-                      ))}
-                    </select>
-                    <Input
-                      aria-label={`Monto en ${method.currency}`}
-                      inputMode="decimal"
-                      value={row.amount}
-                      onChange={(e) =>
-                        setPaymentRows((rows) => rows.map((r) => (r.key === row.key ? { ...r, amount: e.target.value } : r)))
-                      }
-                      placeholder={method.currency}
-                      className="h-11 text-right tabular-nums md:h-9"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-11 md:size-9"
-                      onClick={() => setPaymentRows((rows) => rows.filter((r) => r.key !== row.key))}
-                    >
-                      <Trash2Icon aria-hidden />
-                      <span className="sr-only">Quitar pago</span>
-                    </Button>
-                  </div>
-                )
-              })}
+              <PaymentRows rows={paymentRows} methods={methods} onChange={setPaymentRows} />
               {paymentRows.length < 5 && (
                 <Button type="button" variant="outline" size="sm" className="w-fit" onClick={addPaymentRow}>
                   <PlusIcon aria-hidden />
@@ -869,7 +837,7 @@ const SaleForm = ({
               )}
             </dl>
           </div>
-        </div>
+        </FormStepPanel>
       )}
 
       <CustomizationDialog
@@ -896,47 +864,34 @@ const SaleForm = ({
       <ComboPickerDialog combo={comboToPick} variants={pricing.visible} available={availableFor} priceMethodId={priceMethodId} onCancel={() => setComboToPick(null)} onConfirm={addCombo} />
 
       {/* Barra de abajo: lo que falta, el total y avanzar o registrar. */}
-      <div className="sticky bottom-(--bottom-nav-h) -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
-        {error ? (
-          <StatusAlert tone="error" title={error} />
-        ) : (
-          (cart.length > 0 || steps.step !== PRODUCTS_STEP) &&
-          currentBlockers[0] && (
-            <StatusAlert tone="warning" title={currentBlockers[0]}>
-              {steps.isLast && firstBlockedStep >= 0 && firstBlockedStep < PAYMENT_STEP && (
-                <Button type="button" variant="link" className="h-auto p-0" onClick={() => steps.goTo(firstBlockedStep)}>
-                  Ir a {SALE_STEPS[firstBlockedStep]}
-                </Button>
-              )}
-            </StatusAlert>
-          )
-        )}
-        {!steps.isLast && (
-          <div className="flex items-baseline justify-between text-sm tabular-nums">
-            <span className="text-muted-foreground">Total</span>
-            <span className="font-semibold">{usd(total)}</span>
-          </div>
-        )}
-        <div className="flex gap-2">
-          {!steps.isFirst && (
-            <Button type="button" variant="outline" className="h-12" onClick={steps.back}>
-              <ChevronLeftIcon aria-hidden />
-              Atrás
-            </Button>
-          )}
-          {steps.isLast ? (
-            <Button type="button" className="h-12 flex-1 text-base" disabled={pending || blockers.length > 0} onClick={submit}>
-              {pending && <Loader2Icon className="animate-spin" aria-hidden />}
-              {pending ? "Registrando…" : `Registrar venta${isBackdated ? " retroactiva" : ""} · ${usd(total)}`}
-            </Button>
+      <FormStepperFooter
+        steps={SALE_STEPS}
+        current={steps.step}
+        onBack={steps.back}
+        onNext={steps.next}
+        nextDisabled={stepBlockers[steps.step].length > 0}
+        submitLabel={pending ? "Registrando…" : `Registrar venta${isBackdated ? " retroactiva" : ""} · ${usd(total)}`}
+        submitting={pending}
+        submitDisabled={pending || blockers.length > 0}
+        onSubmit={submit}
+        total={usd(total)}
+        alert={
+          error ? (
+            <StatusAlert tone="error" title={error} />
           ) : (
-            <Button type="button" className="h-12 flex-1 text-base" disabled={stepBlockers[steps.step].length > 0} onClick={steps.next}>
-              Siguiente: {SALE_STEPS[steps.step + 1]}
-              <ChevronRightIcon aria-hidden />
-            </Button>
-          )}
-        </div>
-      </div>
+            (cart.length > 0 || steps.step !== PRODUCTS_STEP) &&
+            currentBlockers[0] && (
+              <StatusAlert tone="warning" title={currentBlockers[0]}>
+                {steps.isLast && firstBlockedStep >= 0 && firstBlockedStep < PAYMENT_STEP && (
+                  <Button type="button" variant="link" className="h-auto p-0" onClick={() => steps.goTo(firstBlockedStep)}>
+                    Ir a {SALE_STEPS[firstBlockedStep].title}
+                  </Button>
+                )}
+              </StatusAlert>
+            )
+          )
+        }
+      />
     </div>
   )
 }

@@ -81,7 +81,7 @@ export const SALES_CHAPTER: ManualChapter = {
       blocks: [
         {
           kind: "text",
-          body: "Está pensado para hacerse desde el celular en menos de 20 segundos, en **4 pasos**. Arriba se ve en qué paso vas (con una barra de progreso) y abajo, el total y **Siguiente**. Toca **Registrar venta**, el botón principal arriba del menú (también está en Inicio):",
+          body: "Está pensado para hacerse desde el celular en menos de 20 segundos, en **4 pasos**. Arriba se ve en qué paso vas (una barra de progreso y un ícono por paso) y abajo, el total y **Continuar a…**. En el celular ocupa toda la pantalla, como una app; la **X** la cierra. Toca **Registrar venta**, el botón principal arriba del menú (también está en Inicio):",
         },
         {
           kind: "steps",
@@ -89,7 +89,7 @@ export const SALES_CHAPTER: ManualChapter = {
             {
               title: "1. Cliente y método de pago",
               body:
-                "El cliente es opcional: búscalo o créalo sin salir; sin cliente es una venta rápida (solo toca Siguiente). Va primero porque cambia los precios: con un **acuerdo**, sus precios y sus exclusivos se aplican solos. El método de pago define el precio: cada producto tiene un [[precio-por-metodo|precio por método]] (la filipina puede salir en 28 por pago móvil y en 25 en efectivo).",
+                "El cliente es opcional: búscalo o créalo sin salir; sin cliente es una venta rápida (solo toca **Continuar a Productos**). Va primero porque cambia los precios: con un **acuerdo**, sus precios y sus exclusivos se aplican solos. El método de pago define el precio: cada producto tiene un [[precio-por-metodo|precio por método]] (la filipina puede salir en 28 por pago móvil y en 25 en efectivo).",
             },
             {
               title: "2. Productos",
@@ -114,7 +114,7 @@ export const SALES_CHAPTER: ManualChapter = {
           tone: "info",
           title: "Volver atrás sin perder nada",
           body:
-            "**Atrás**, el nombre de un paso ya visto o el botón atrás del teléfono vuelven un paso; todo lo cargado se mantiene hasta registrar.",
+            "La flecha de abajo, el ícono de un paso ya visto o el botón atrás del teléfono vuelven atrás; todo lo cargado se mantiene hasta registrar. Si cierras con la X habiendo cargado algo, pregunta antes de descartar.",
         },
         {
           kind: "callout",

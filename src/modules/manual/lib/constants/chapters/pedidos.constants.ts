@@ -63,6 +63,11 @@ export const ORDERS_CHAPTER: ManualChapter = {
       heading: "Cómo registrar un pedido",
       blocks: [
         {
+          kind: "text",
+          body:
+            "Se registra en **4 pasos**, como una venta: **Cliente** (y la lista de precios) → **Productos** (con su personalización) → **Entrega** (inventario, fecha prometida, fecha del pedido, canal, entrega y notas) → **Inicial** (resumen con **Cambiar**, pago inicial, IVA y **Registrar pedido**). Arriba se ve en qué paso vas; la flecha de abajo o el botón atrás del teléfono vuelven un paso sin perder nada.",
+        },
+        {
           kind: "steps",
           items: [
             { title: "Abre Registrar → Pedido", body: "Desde la flecha junto a Registrar venta, o en Producción → Pedidos." },

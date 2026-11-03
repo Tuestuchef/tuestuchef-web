@@ -1,6 +1,16 @@
 "use client"
 
-import { Loader2Icon, PaletteIcon, PercentIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
+import {
+  HandCoinsIcon,
+  PaletteIcon,
+  PercentIcon,
+  PlusIcon,
+  ShoppingBagIcon,
+  Trash2Icon,
+  TruckIcon,
+  UserRoundIcon,
+  XIcon,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -8,6 +18,7 @@ import { toast } from "sonner"
 import ChoiceChips from "@/common/components/choice-chips"
 import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
+import { type FormStep, FormStepPanel, FormStepper, FormStepperFooter } from "@/common/components/form-stepper"
 import QuantityStepper from "@/common/components/quantity-stepper"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
@@ -16,11 +27,13 @@ import { Input } from "@/common/components/ui/input"
 import { Label } from "@/common/components/ui/label"
 import { Switch } from "@/common/components/ui/switch"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
+import { useFormSteps } from "@/common/lib/hooks/use-form-steps.hook"
 import { formatMoney } from "@/common/lib/utils/format-money.util"
 import { parseAmount } from "@/common/lib/utils/parse-amount.util"
 import CustomerPicker, { type PickedCustomer } from "@/modules/customers/components/customer-picker"
 import BackdateField from "@/modules/sales/components/backdate-field"
 import ComboPickerDialog, { type ComboSelection } from "@/modules/sales/components/combo-picker-dialog"
+import PaymentRows, { type PaymentRow } from "@/modules/sales/components/payment-rows"
 import ProductPicker from "@/modules/sales/components/product-picker"
 import { useCustomerPricing } from "@/modules/sales/lib/hooks/use-customer-pricing.hook"
 import { methodsForCustomer } from "@/modules/sales/lib/utils/agreement-pricing.util"
@@ -57,7 +70,6 @@ type OrderLine = {
   customizations: LineCustomization[]
 }
 
-type PaymentRow = { key: number; methodId: string; amount: string }
 
 const usd = (value: number) => formatMoney(value, "USD")
 const addDays = (iso: string, days: number) => {
@@ -66,7 +78,16 @@ const addDays = (iso: string, days: number) => {
   return date.toISOString().slice(0, 10)
 }
 
-// Registrar un pedido: cliente, productos con su personalización, modo de stock, fecha y abono.
+// Los pasos: primero el cliente y la lista de precios (el acuerdo cambia precios y productos).
+const ORDER_STEPS: FormStep[] = [
+  { title: "Cliente", icon: UserRoundIcon },
+  { title: "Productos", icon: ShoppingBagIcon },
+  { title: "Entrega", icon: TruckIcon },
+  { title: "Inicial", icon: HandCoinsIcon },
+]
+const [CUSTOMER_STEP, PRODUCTS_STEP, DELIVERY_STEP, DEPOSIT_STEP] = [0, 1, 2, 3]
+
+// Registrar un pedido por pasos: cliente, productos con su personalización, entrega y abono.
 const OrderForm = ({
   variants,
   methods,
@@ -170,18 +191,28 @@ const OrderForm = ({
   )
 
   const missingPrice = priced.find((l) => l.price === undefined)
-  const blockers = [
-    !customer && "Elige el cliente: un pedido necesita cliente.",
-    customer?.blockedReason && `Cliente bloqueado: no se le puede vender (${customer.blockedReason}).`,
-    exclusiveLine && `"${variantById.get(exclusiveLine.variantId)?.productName}" es exclusivo de otro cliente: quítalo o elige su cliente.`,
-    lines.length === 0 && "Agrega al menos un producto.",
-    missingPrice && `"${missingPrice.variant.productName}" no tiene precio para ${methodById.get(priceMethodId)?.name ?? ""}.`,
-    belowMinimum[0],
-    paidUsd > total + 0.01 && "Los pagos superan el total.",
-    promisedDate < today && "La fecha prometida no puede ser pasada.",
-    depositPercentInvalid && "La inicial va de 0 a 100%.",
-    backdateWithoutRate && "No hay tasas registradas para esa fecha. Owner o admin debe cargarlas.",
-  ].filter(Boolean) as string[]
+  // Lo que impide seguir, por paso (en el último se revisan todos antes de registrar).
+  const stepBlockers = [
+    [
+      !customer && "Elige el cliente: un pedido necesita cliente.",
+      customer?.blockedReason && `Cliente bloqueado: no se le puede vender (${customer.blockedReason}).`,
+    ],
+    [
+      lines.length === 0 && "Agrega al menos un producto.",
+      exclusiveLine && `"${variantById.get(exclusiveLine.variantId)?.productName}" es exclusivo de otro cliente: quítalo o elige su cliente.`,
+      missingPrice && `"${missingPrice.variant.productName}" no tiene precio para ${methodById.get(priceMethodId)?.name ?? ""}.`,
+      belowMinimum[0],
+    ],
+    [
+      promisedDate < today && "La fecha prometida no puede ser pasada.",
+      backdateWithoutRate && "No hay tasas registradas para esa fecha. Owner o admin debe cargarlas.",
+    ],
+    [paidUsd > total + 0.01 && "Los pagos superan el total.", depositPercentInvalid && "La inicial va de 0 a 100%."],
+  ].map((list) => list.filter(Boolean) as string[])
+  const blockers = stepBlockers.flat()
+  const steps = useFormSteps(ORDER_STEPS.length)
+  // Primer paso con algo pendiente (para llevar ahí desde el último).
+  const firstBlockedStep = stepBlockers.findIndex((list) => list.length > 0)
 
   // Una variante elegida (género, color y talla) con su cantidad; si ya está, suma.
   const addVariant = (variant: SellableVariant, quantity: number) =>
@@ -253,307 +284,360 @@ const OrderForm = ({
     })
   }
 
+  // Resumen de lo elegido en un paso, con su botón para volver a cambiarlo.
+  const reviewRow = (label: string, value: string, step: number) => (
+    <div className="flex items-start justify-between gap-3 py-2">
+      <div className="grid min-w-0 gap-0.5">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-sm">{value}</span>
+      </div>
+      <Button type="button" variant="ghost" size="sm" onClick={() => steps.goTo(step)}>
+        Cambiar
+      </Button>
+    </div>
+  )
+  const currentBlockers = steps.isLast ? blockers : stepBlockers[steps.step]
+
   return (
     <div className="grid gap-5">
-      {/* Cliente */}
-      <div className="grid gap-2">
-        <Label>Cliente</Label>
-        <CustomerPicker value={customer} onChange={setCustomer} canManage={canManage} emptyLabel="Elige el cliente" />
-        {customer?.blockedReason && <StatusAlert tone="error" title={`Cliente bloqueado: ${customer.blockedReason}`} />}
-      </div>
+      <FormStepper steps={ORDER_STEPS} current={steps.step} reached={steps.reached} onSelect={steps.goTo} />
 
-      {/* Productos */}
-      <section className="grid gap-2">
-        <Label>Productos</Label>
-        <ProductPicker
-          variants={pricing.visible}
-          priceMethodId={priceMethodId}
-          available={(id) => variantById.get(id)?.stock ?? 0}
-          onAdd={addVariant}
-          onCombo={setComboToPick}
-        />
+      {/* 1. Cliente y lista de precios: el acuerdo del cliente cambia precios y productos. */}
+      {steps.step === CUSTOMER_STEP && (
+        <FormStepPanel step={steps.step} direction={steps.direction}>
+          <div className="grid gap-2">
+            <Label>Cliente</Label>
+            <CustomerPicker value={customer} onChange={setCustomer} canManage={canManage} emptyLabel="Elige el cliente" />
+            {customer?.blockedReason && <StatusAlert tone="error" title={`Cliente bloqueado: ${customer.blockedReason}`} />}
+          </div>
+          {pricing.agreement && (
+            <p className="rounded-lg border p-3 text-sm">
+              Tiene acuerdo: sus precios especiales y sus productos exclusivos se aplican solos, sin descuento al mayor.
+              {pricing.eurRate && " Paga sus Bs a tasa euro."}
+              {pricing.agreement.depositPercent !== null && ` Su inicial habitual es ${pricing.agreement.depositPercent}%.`}
+            </p>
+          )}
+          <FormField label="Lista de precios" htmlFor="order-method" hint="El método de pago define el precio de cada producto.">
+            <ChoiceChips id="order-method" label="Lista de precios" value={priceMethodId} onChange={setPriceMethodId} options={methods.map((m) => ({ value: m.id, label: m.name }))} />
+          </FormField>
+        </FormStepPanel>
+      )}
 
-        {priced.length > 0 && (
-          <ul className="divide-y rounded-lg border">
-            {priced.map((line) => (
-              <li key={line.key} className="grid gap-2 p-3">
-                <div className="flex items-start gap-2">
-                  <div className="grid min-w-0 flex-1 gap-0.5">
-                    <span className="text-sm font-medium">
-                      {line.variant.productName} <span className="font-normal text-muted-foreground">· {line.variant.variantLabel}</span>
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {line.price === undefined ? "Sin precio para este método" : `${usd(line.price)} c/u${line.variant.agreementPrice ? " · precio acuerdo" : ""}`}
-                      {!line.components && line.variant.fulfillmentType !== "made_to_order" && ` · hay ${line.variant.stock} en inventario`}
-                    </span>
-                    {line.components && (
-                      <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
-                        {line.components.map((c, index) => {
-                          const piece = variantById.get(c.variantId)
-                          return (
-                            <li key={`${c.variantId}-${index}`} className="grid gap-1">
-                              <span className="flex flex-wrap items-center gap-x-2">
-                                <span>
-                                  {c.quantity} × {piece?.productName} · {piece?.variantLabel}
-                                  {piece && piece.extraUsd > 0 && ` · +${usd(round(piece.extraUsd * c.quantity))}`}
-                                </span>
-                                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setCustomizing(pieceTarget(line.key, index))}>
-                                  <PaletteIcon aria-hidden />
-                                  Personalizar
-                                </Button>
-                              </span>
-                              <CustomizationList
-                                customizations={c.customizations}
-                                typeName={(id) => typeById.get(id)?.name}
-                                onRemove={(key) => removeCustomization(line.key, index, key)}
-                              />
-                            </li>
-                          )
-                        })}
-                      </ul>
+      {/* 2. Productos y su personalización */}
+      {steps.step === PRODUCTS_STEP && (
+        <FormStepPanel step={steps.step} direction={steps.direction} className="gap-2">
+          <section className="grid gap-2">
+            <Label>Productos</Label>
+            <ProductPicker
+              variants={pricing.visible}
+              priceMethodId={priceMethodId}
+              available={(id) => variantById.get(id)?.stock ?? 0}
+              onAdd={addVariant}
+              onCombo={setComboToPick}
+            />
+
+            {priced.length > 0 && (
+              <ul className="divide-y rounded-lg border">
+                {priced.map((line) => (
+                  <li key={line.key} className="grid gap-2 p-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-200">
+                    <div className="flex items-start gap-2">
+                      <div className="grid min-w-0 flex-1 gap-0.5">
+                        <span className="text-sm font-medium">
+                          {line.variant.productName} <span className="font-normal text-muted-foreground">· {line.variant.variantLabel}</span>
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {line.price === undefined ? "Sin precio para este método" : `${usd(line.price)} c/u${line.variant.agreementPrice ? " · precio acuerdo" : ""}`}
+                          {!line.components && line.variant.fulfillmentType !== "made_to_order" && ` · hay ${line.variant.stock} en inventario`}
+                        </span>
+                        {line.components && (
+                          <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
+                            {line.components.map((c, index) => {
+                              const piece = variantById.get(c.variantId)
+                              return (
+                                <li key={`${c.variantId}-${index}`} className="grid gap-1">
+                                  <span className="flex flex-wrap items-center gap-x-2">
+                                    <span>
+                                      {c.quantity} × {piece?.productName} · {piece?.variantLabel}
+                                      {piece && piece.extraUsd > 0 && ` · +${usd(round(piece.extraUsd * c.quantity))}`}
+                                    </span>
+                                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setCustomizing(pieceTarget(line.key, index))}>
+                                      <PaletteIcon aria-hidden />
+                                      Personalizar
+                                    </Button>
+                                  </span>
+                                  <CustomizationList
+                                    customizations={c.customizations}
+                                    typeName={(id) => typeById.get(id)?.name}
+                                    onRemove={(key) => removeCustomization(line.key, index, key)}
+                                  />
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium tabular-nums">{usd(line.total)}</span>
+                    </div>
+
+                    {line.components ? (
+                      <div className="flex items-center gap-2">
+                        <StatusBadge tone="info">
+                          {line.quantity} {line.quantity === 1 ? "combo" : "combos"}
+                        </StatusBadge>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setQuantity(line.key, 0)}>
+                          <Trash2Icon aria-hidden />
+                          Quitar
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <QuantityStepper removable value={line.quantity} onChange={(q) => setQuantity(line.key, q)} />
+                        <Button type="button" variant="outline" size="sm" onClick={() => setCustomizing(line.key)}>
+                          <PaletteIcon aria-hidden />
+                          Personalizar
+                        </Button>
+                      </div>
                     )}
-                  </div>
-                  <span className="text-sm font-medium tabular-nums">{usd(line.total)}</span>
-                </div>
 
-                {line.components ? (
-                  <div className="flex items-center gap-2">
-                    <StatusBadge tone="info">
-                      {line.quantity} {line.quantity === 1 ? "combo" : "combos"}
-                    </StatusBadge>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setQuantity(line.key, 0)}>
-                      <Trash2Icon aria-hidden />
-                      Quitar
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <QuantityStepper removable value={line.quantity} onChange={(q) => setQuantity(line.key, q)} />
-                    <Button type="button" variant="outline" size="sm" onClick={() => setCustomizing(line.key)}>
-                      <PaletteIcon aria-hidden />
-                      Personalizar
-                    </Button>
-                  </div>
-                )}
-
-                <CustomizationList
-                  customizations={line.customizations}
-                  typeName={(id) => typeById.get(id)?.name}
-                  onRemove={(key) => removeCustomization(line.key, null, key)}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* Stock y fecha */}
-      <FormField label="Inventario" htmlFor="order-stock">
-        <ChoiceChips
-          id="order-stock"
-          label="Modo de inventario"
-          value={stockMode}
-          onChange={(v) => setStockMode(v as OrderStockMode)}
-          options={(Object.keys(STOCK_MODE_LABELS) as OrderStockMode[]).map((mode) => ({ value: mode, label: STOCK_MODE_LABELS[mode].title }))}
-        />
-        <p className="text-xs text-muted-foreground">{STOCK_MODE_LABELS[stockMode].description}</p>
-      </FormField>
-      <BackdateField
-        id="order-occurred-date"
-        today={today}
-        maxDaysBack={canManage ? null : staffMaxBackdateDays}
-        value={date}
-        onChange={(next, nextRates) => {
-          setDate(next)
-          setDateRates(nextRates)
-        }}
-      />
-      <FormField label="Fecha prometida" htmlFor="order-date" hint={`Por defecto, ${settings.defaultLeadDays} días.`}>
-        <DateField id="order-date" min={today} value={promisedDate} onChange={setPromisedDate} />
-      </FormField>
-
-      {/* Precio, canal y entrega */}
-      <FormField label="Lista de precios" htmlFor="order-method" hint="El método de pago define el precio de cada producto.">
-        <ChoiceChips id="order-method" label="Lista de precios" value={priceMethodId} onChange={setPriceMethodId} options={methods.map((m) => ({ value: m.id, label: m.name }))} />
-      </FormField>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label="Canal" htmlFor="order-channel">
-          <ChoiceChips
-            id="order-channel"
-            label="Canal"
-            value={channel}
-            onChange={(v) => setChannel(v as SaleChannel)}
-            options={MANUAL_CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))}
-          />
-        </FormField>
-        <FormField label="Entrega" htmlFor="order-delivery">
-          <ChoiceChips
-            id="order-delivery"
-            label="Entrega"
-            value={deliveryMethod}
-            onChange={(v) => setDeliveryMethod(v as DeliveryMethod)}
-            options={DELIVERY_METHODS.map((d) => ({ value: d, label: DELIVERY_LABELS[d] }))}
-          />
-        </FormField>
-      </div>
-      {chargesShipping(deliveryMethod) && (
-        <FormField label={`Cobro de ${SHIPPING_FEE_LABELS[deliveryMethod].toLowerCase()} (USD)`} htmlFor="order-fee" optional>
-          <Input id="order-fee" inputMode="decimal" value={deliveryFee} onChange={(e) => setDeliveryFee(e.target.value)} placeholder="0" className="h-11 md:h-9" />
-        </FormField>
-      )}
-
-      {/* Abono */}
-      <section className="grid gap-2">
-        <Label>Pago inicial</Label>
-        <p className="text-xs text-muted-foreground">
-          {customDepositPercent !== null
-            ? `Inicial pactada: ${depositPercent}% para empezar (${usd(depositRequired)}) y el resto al entregar.`
-            : overThreshold
-              ? `Desde ${usd(settings.depositThresholdUsd)}: ${depositPercent}%${pricing.agreement?.depositPercent != null ? " (la habitual del cliente)" : ""} para empezar (${usd(depositRequired)}) y el resto al entregar.`
-              : `Menos de ${usd(settings.depositThresholdUsd)}: se paga completo para empezar.`}
-          {pricing.eurRate && " Tasa euro: sus pagos en Bs van a la BCV euro (su acuerdo)."}
-        </p>
-        {canManage &&
-          (depositInput === null ? (
-            <Button type="button" variant="ghost" size="sm" className="w-fit px-0 text-muted-foreground" onClick={() => setDepositInput(String(depositPercent))}>
-              <PercentIcon aria-hidden />
-              Otra inicial para este pedido
-            </Button>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Label htmlFor="order-deposit" className="text-sm font-normal">
-                Inicial (%)
-              </Label>
-              <Input
-                id="order-deposit"
-                inputMode="decimal"
-                value={depositInput}
-                onChange={(e) => setDepositInput(e.target.value)}
-                className="h-11 w-24 text-right tabular-nums md:h-9"
-              />
-              <Button type="button" variant="ghost" size="icon" className="size-11 md:size-9" onClick={() => setDepositInput(null)}>
-                <XIcon aria-hidden />
-                <span className="sr-only">Volver a la inicial normal</span>
-              </Button>
-            </div>
-          ))}
-        {payments.map((row) => {
-          const method = methodById.get(row.methodId)!
-          return (
-            <div key={row.key} className="grid grid-cols-[1fr_8rem_auto] gap-2">
-              <select
-                aria-label="Método del pago"
-                value={row.methodId}
-                onChange={(e) => setPayments((rows) => rows.map((r) => (r.key === row.key ? { ...r, methodId: e.target.value } : r)))}
-                className="h-11 rounded-md border bg-background px-2 text-sm md:h-9"
-              >
-                {methods.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
+                    <CustomizationList
+                      customizations={line.customizations}
+                      typeName={(id) => typeById.get(id)?.name}
+                      onRemove={(key) => removeCustomization(line.key, null, key)}
+                    />
+                  </li>
                 ))}
-              </select>
-              <Input
-                aria-label={`Monto en ${method.currency}`}
-                inputMode="decimal"
-                value={row.amount}
-                onChange={(e) => setPayments((rows) => rows.map((r) => (r.key === row.key ? { ...r, amount: e.target.value } : r)))}
-                placeholder={method.currency}
-                className="h-11 text-right tabular-nums md:h-9"
-              />
-              <Button type="button" variant="ghost" size="icon" className="size-11 md:size-9" onClick={() => setPayments((rows) => rows.filter((r) => r.key !== row.key))}>
-                <Trash2Icon aria-hidden />
-                <span className="sr-only">Quitar pago</span>
-              </Button>
-            </div>
-          )
-        })}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="w-fit"
-          disabled={total <= 0}
-          onClick={() => {
-            const method = methodById.get(priceMethodId) ?? ratedMethods[0]
-            const missing = Math.max(depositRequired - paidUsd, 0)
-            setPayments((rows) => [...rows, { key: Date.now(), methodId: method.id, amount: missing > 0 ? String(usdToMethodAmount(missing, method, saleRates)) : "" }])
-          }}
-        >
-          <PlusIcon aria-hidden />
-          Agregar pago{paidUsd < depositRequired ? ` (faltan ${usd(depositRequired - paidUsd)} para empezar)` : ""}
-        </Button>
-      </section>
-
-      {vatPercent > 0 && (
-        <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
-          <div className="grid gap-0.5">
-            <Label htmlFor="order-vat">Agregar IVA ({vatPercent}%)</Label>
-            <p className="text-xs text-muted-foreground">Se suma al total, después de descuentos y sin el delivery.</p>
-          </div>
-          <Switch id="order-vat" checked={vatEnabled} onCheckedChange={setVatEnabled} />
-        </div>
+              </ul>
+            )}
+          </section>
+          {pieces > 0 && (
+            <p className="text-xs text-muted-foreground tabular-nums">
+              {pieces} {pieces === 1 ? "pieza" : "piezas"} · {usd(productsSubtotal + customizationTotal)}
+              {volume > 0 && " · con descuento al mayor"}
+            </p>
+          )}
+        </FormStepPanel>
       )}
 
-      <FormField label="Notas" htmlFor="order-notes" optional>
-        <Input id="order-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Entregar en la cocina" className="h-11 md:h-9" />
-      </FormField>
+      {/* 3. Entrega: inventario, fechas, canal, entrega y notas */}
+      {steps.step === DELIVERY_STEP && (
+        <FormStepPanel step={steps.step} direction={steps.direction}>
+          <FormField label="Inventario" htmlFor="order-stock">
+            <ChoiceChips
+              id="order-stock"
+              label="Modo de inventario"
+              value={stockMode}
+              onChange={(v) => setStockMode(v as OrderStockMode)}
+              options={(Object.keys(STOCK_MODE_LABELS) as OrderStockMode[]).map((mode) => ({ value: mode, label: STOCK_MODE_LABELS[mode].title }))}
+            />
+            <p className="text-xs text-muted-foreground">{STOCK_MODE_LABELS[stockMode].description}</p>
+          </FormField>
+          <BackdateField
+            id="order-occurred-date"
+            today={today}
+            maxDaysBack={canManage ? null : staffMaxBackdateDays}
+            value={date}
+            onChange={(next, nextRates) => {
+              setDate(next)
+              setDateRates(nextRates)
+            }}
+          />
+          <FormField label="Fecha prometida" htmlFor="order-date" hint={`Por defecto, ${settings.defaultLeadDays} días.`}>
+            <DateField id="order-date" min={today} value={promisedDate} onChange={setPromisedDate} />
+          </FormField>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField label="Canal" htmlFor="order-channel">
+              <ChoiceChips
+                id="order-channel"
+                label="Canal"
+                value={channel}
+                onChange={(v) => setChannel(v as SaleChannel)}
+                options={MANUAL_CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))}
+              />
+            </FormField>
+            <FormField label="Entrega" htmlFor="order-delivery">
+              <ChoiceChips
+                id="order-delivery"
+                label="Entrega"
+                value={deliveryMethod}
+                onChange={(v) => setDeliveryMethod(v as DeliveryMethod)}
+                options={DELIVERY_METHODS.map((d) => ({ value: d, label: DELIVERY_LABELS[d] }))}
+              />
+            </FormField>
+          </div>
+          {chargesShipping(deliveryMethod) && (
+            <FormField label={`Cobro de ${SHIPPING_FEE_LABELS[deliveryMethod].toLowerCase()} (USD)`} htmlFor="order-fee" optional>
+              <Input id="order-fee" inputMode="decimal" value={deliveryFee} onChange={(e) => setDeliveryFee(e.target.value)} placeholder="0" className="h-11 md:h-9" />
+            </FormField>
+          )}
+          <FormField label="Notas" htmlFor="order-notes" optional>
+            <Input id="order-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Entregar en la cocina" className="h-11 md:h-9" />
+          </FormField>
+        </FormStepPanel>
+      )}
 
-      {/* Resumen */}
-      <div className="sticky bottom-(--bottom-nav-h) -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
-        <dl className="grid gap-1 text-sm tabular-nums">
-          <div className="flex justify-between text-muted-foreground">
-            <dt>Productos</dt>
-            <dd>{usd(productsSubtotal)}</dd>
+      {/* 4. Inicial: resumen, pago inicial e IVA */}
+      {steps.step === DEPOSIT_STEP && (
+        <FormStepPanel step={steps.step} direction={steps.direction}>
+          <div className="divide-y rounded-lg border px-3">
+            {reviewRow("Cliente y precios", `${customer?.name ?? "—"} · ${methodById.get(priceMethodId)?.name ?? ""}`, CUSTOMER_STEP)}
+            {reviewRow("Productos", priced.map((l) => `${l.quantity} × ${l.variant.productName}`).join(", ") || "—", PRODUCTS_STEP)}
+            {reviewRow(
+              "Entrega",
+              [
+                STOCK_MODE_LABELS[stockMode].title,
+                `para el ${promisedDate.split("-").reverse().join("/")}`,
+                CHANNEL_LABELS[channel],
+                DELIVERY_LABELS[deliveryMethod],
+                date !== today && `pedido del ${date.split("-").reverse().join("/")}`,
+              ]
+                .filter(Boolean)
+                .join(" · "),
+              DELIVERY_STEP
+            )}
           </div>
-          {customizationTotal > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <dt>Personalización</dt>
-              <dd>{usd(customizationTotal)}</dd>
+          <section className="grid gap-2">
+            <Label>Pago inicial</Label>
+            <p className="text-xs text-muted-foreground">
+              {customDepositPercent !== null
+                ? `Inicial pactada: ${depositPercent}% para empezar (${usd(depositRequired)}) y el resto al entregar.`
+                : overThreshold
+                  ? `Desde ${usd(settings.depositThresholdUsd)}: ${depositPercent}%${pricing.agreement?.depositPercent != null ? " (la habitual del cliente)" : ""} para empezar (${usd(depositRequired)}) y el resto al entregar.`
+                  : `Menos de ${usd(settings.depositThresholdUsd)}: se paga completo para empezar.`}
+              {pricing.eurRate && " Tasa euro: sus pagos en Bs van a la BCV euro (su acuerdo)."}
+            </p>
+            {canManage &&
+              (depositInput === null ? (
+                <Button type="button" variant="ghost" size="sm" className="w-fit px-0 text-muted-foreground" onClick={() => setDepositInput(String(depositPercent))}>
+                  <PercentIcon aria-hidden />
+                  Otra inicial para este pedido
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="order-deposit" className="text-sm font-normal">
+                    Inicial (%)
+                  </Label>
+                  <Input
+                    id="order-deposit"
+                    inputMode="decimal"
+                    value={depositInput}
+                    onChange={(e) => setDepositInput(e.target.value)}
+                    className="h-11 w-24 text-right tabular-nums md:h-9"
+                  />
+                  <Button type="button" variant="ghost" size="icon" className="size-11 md:size-9" onClick={() => setDepositInput(null)}>
+                    <XIcon aria-hidden />
+                    <span className="sr-only">Volver a la inicial normal</span>
+                  </Button>
+                </div>
+              ))}
+            <PaymentRows rows={payments} methods={methods} onChange={setPayments} />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-fit"
+              disabled={total <= 0}
+              onClick={() => {
+                const method = methodById.get(priceMethodId) ?? ratedMethods[0]
+                const missing = Math.max(depositRequired - paidUsd, 0)
+                setPayments((rows) => [...rows, { key: Date.now(), methodId: method.id, amount: missing > 0 ? String(usdToMethodAmount(missing, method, saleRates)) : "" }])
+              }}
+            >
+              <PlusIcon aria-hidden />
+              Agregar pago{paidUsd < depositRequired ? ` (faltan ${usd(depositRequired - paidUsd)} para empezar)` : ""}
+            </Button>
+          </section>
+          {vatPercent > 0 && (
+            <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+              <div className="grid gap-0.5">
+                <Label htmlFor="order-vat">Agregar IVA ({vatPercent}%)</Label>
+                <p className="text-xs text-muted-foreground">Se suma al total, después de descuentos y sin el delivery.</p>
+              </div>
+              <Switch id="order-vat" checked={vatEnabled} onCheckedChange={setVatEnabled} />
             </div>
           )}
-          {volume > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <dt>Al mayor ({pieces} piezas)</dt>
-              <dd>−{usd(volume)}</dd>
-            </div>
-          )}
-          {fee > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <dt>{SHIPPING_FEE_LABELS[deliveryMethod]}</dt>
-              <dd>{usd(fee)}</dd>
-            </div>
-          )}
-          {vat > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <dt>IVA {vatPercent}%</dt>
-              <dd>{usd(vat)}</dd>
-            </div>
-          )}
-          <div className="flex justify-between text-base font-semibold">
-            <dt>Total</dt>
-            <dd>{usd(total)}</dd>
+          <div className="rounded-lg border p-3">
+            <dl className="grid gap-1 text-sm tabular-nums">
+              <div className="flex justify-between text-muted-foreground">
+                <dt>Productos</dt>
+                <dd>{usd(productsSubtotal)}</dd>
+              </div>
+              {customizationTotal > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>Personalización</dt>
+                  <dd>{usd(customizationTotal)}</dd>
+                </div>
+              )}
+              {volume > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>Al mayor ({pieces} piezas)</dt>
+                  <dd>−{usd(volume)}</dd>
+                </div>
+              )}
+              {fee > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>{SHIPPING_FEE_LABELS[deliveryMethod]}</dt>
+                  <dd>{usd(fee)}</dd>
+                </div>
+              )}
+              {vat > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>IVA {vatPercent}%</dt>
+                  <dd>{usd(vat)}</dd>
+                </div>
+              )}
+              <div className="flex justify-between text-base font-semibold">
+                <dt>Total</dt>
+                <dd>{usd(total)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt>Para empezar a producir ({depositPercent}%)</dt>
+                <dd>{usd(depositRequired)}</dd>
+              </div>
+              {paidUsd > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>Pagado ahora</dt>
+                  <dd>{usd(paidUsd)}</dd>
+                </div>
+              )}
+            </dl>
           </div>
-          <div className="flex justify-between">
-            <dt>Para empezar a producir ({depositPercent}%)</dt>
-            <dd>{usd(depositRequired)}</dd>
-          </div>
-          {paidUsd > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <dt>Pagado ahora</dt>
-              <dd>{usd(paidUsd)}</dd>
-            </div>
-          )}
-        </dl>
-        {error ? <StatusAlert tone="error" title={error} /> : lines.length > 0 && blockers[0] && <StatusAlert tone="warning" title={blockers[0]} />}
-        {paidUsd + 0.01 < depositRequired && lines.length > 0 && (
-          <p className="text-xs text-muted-foreground">Sin el pago inicial, el pedido queda registrado pero no se empieza a producir.</p>
-        )}
-        <Button type="button" className="h-12 text-base" disabled={pending || blockers.length > 0} onClick={submit}>
-          {pending && <Loader2Icon className="animate-spin" aria-hidden />}
-          {pending ? "Registrando…" : `Registrar pedido · ${usd(total)}`}
-        </Button>
-      </div>
+        </FormStepPanel>
+      )}
+
+      {/* Barra de abajo: lo que falta, el total y avanzar o registrar. */}
+      <FormStepperFooter
+        steps={ORDER_STEPS}
+        current={steps.step}
+        onBack={steps.back}
+        onNext={steps.next}
+        nextDisabled={stepBlockers[steps.step].length > 0}
+        submitLabel={pending ? "Registrando…" : `Registrar pedido · ${usd(total)}`}
+        submitting={pending}
+        submitDisabled={pending || blockers.length > 0}
+        onSubmit={submit}
+        total={usd(total)}
+        alert={
+          <>
+            {error ? (
+              <StatusAlert tone="error" title={error} />
+            ) : (
+              (lines.length > 0 || steps.step !== PRODUCTS_STEP) &&
+              currentBlockers[0] && (
+                <StatusAlert tone="warning" title={currentBlockers[0]}>
+                  {steps.isLast && firstBlockedStep >= 0 && firstBlockedStep < DEPOSIT_STEP && (
+                    <Button type="button" variant="link" className="h-auto p-0" onClick={() => steps.goTo(firstBlockedStep)}>
+                      Ir a {ORDER_STEPS[firstBlockedStep].title}
+                    </Button>
+                  )}
+                </StatusAlert>
+              )
+            )}
+            {steps.isLast && paidUsd + 0.01 < depositRequired && lines.length > 0 && (
+              <p className="text-xs text-muted-foreground">Sin el pago inicial, el pedido queda registrado pero no se empieza a producir.</p>
+            )}
+          </>
+        }
+      />
 
       <ComboPickerDialog
         combo={comboToPick}
