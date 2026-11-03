@@ -112,11 +112,12 @@ const MobileFormSheet = ({ title, help, description, desktopTop, discardLabel, c
             <DialogDescription>Lo que cargaste no se guarda.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setConfirming(false)}>
+            <Button type="button" variant="outline" className="h-11 md:h-9" onClick={() => setConfirming(false)}>
               Seguir aquí
             </Button>
             <Button
               type="button"
+              className="h-11 md:h-9"
               onClick={() => {
                 setConfirming(false)
                 leave()
