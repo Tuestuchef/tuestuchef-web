@@ -916,7 +916,7 @@ export const HELP_TOPICS = {
       {
         heading: "Pasos",
         items: [
-          "Va por pasos: 1. Cliente y lista de precios · 2. Productos · 3. Entrega (inventario, fechas, canal, entrega y notas) · 4. Inicial (resumen, pago inicial e IVA). Arriba ves en qué paso vas; el botón atrás del teléfono vuelve un paso sin perder nada.",
+          "Va por pasos: 1. Cliente y lista de precios · 2. Productos · 3. Entrega (inventario, fechas, canal, entrega y notas) · 4. Inicial (resumen, pago inicial e IVA). Arriba ves en qué paso vas; el botón atrás del teléfono vuelve un paso sin perder nada. En el celular ocupa toda la pantalla; la X lo cierra (si ya cargaste algo, pregunta antes).",
           "Elige el cliente (obligatorio). Un cliente bloqueado no puede pedir.",
           "Agrega productos (tocas el producto y eliges género, color y talla con botones) o combos (en un combo eliges el modelo, el género, la talla y el color de cada pieza; los recargos se suman). 'Personalizar' añade nombres bordados o logos a una línea; en un combo, a cada pieza (ej.: logo en los delantales y nombres en los gorros del 10x10).",
           "Cada personalización se cobra aparte o va incluida en el precio (solo anotada). El mínimo de piezas por tipo cuenta las dos.",
@@ -1151,7 +1151,7 @@ export const HELP_TOPICS = {
       {
         heading: "Cómo se arma",
         items: [
-          "Va por pasos: 1. Cliente, monedas y listas · 2. Productos e imágenes · 3. Condiciones (vencimiento, descuento, IVA, encabezado y notas) · 4. Revisar y guardar. Al editar uno guardado puedes saltar a cualquier paso.",
+          "Va por pasos: 1. Cliente, monedas y listas · 2. Productos e imágenes · 3. Condiciones (vencimiento, descuento, IVA, encabezado y notas) · 4. Revisar y guardar. Al editar uno guardado puedes saltar a cualquier paso. En el celular ocupa toda la pantalla; la X lo cierra (pregunta antes de descartar).",
           "Cliente: elige uno guardado o escribe solo el nombre. A un cliente bloqueado no se le hacen presupuestos.",
           "Monedas: USD, Bs o ambas. Cada moneda sale de la lista de precios de un método de pago; los Bs, a la tasa BCV del día.",
           "Productos con género, color y talla (se eligen con botones al tocar el producto), combos y personalización. En un combo, la pieza con recargo (talla o color) sale aparte como 'Recargo'. Los nombres y el logo se piden en el pedido.",

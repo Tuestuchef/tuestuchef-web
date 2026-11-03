@@ -32,6 +32,10 @@ const PHONE_QUERY = "(max-width: 767px)"
 type MobileFormSheetProps = {
   title: string
   help?: HelpTopicKey
+  // Bajo el título, en la computadora.
+  description?: React.ReactNode
+  // Arriba del título, solo en la computadora (p. ej. el enlace de vuelta al presupuesto).
+  desktopTop?: React.ReactNode
   // Qué se pierde al cerrar (en el aviso): "la venta", "el pedido"…
   discardLabel: string
   children: React.ReactNode
@@ -41,7 +45,7 @@ type MobileFormSheetProps = {
 // entra desde la derecha, tapa la barra de arriba y las pestañas, y se cierra con la X. Va directo
 // en el body (el contenedor de la página usa container queries y encerraría el "fixed").
 // En la computadora es una pantalla normal.
-const MobileFormSheet = ({ title, help, discardLabel, children }: MobileFormSheetProps) => {
+const MobileFormSheet = ({ title, help, description, desktopTop, discardLabel, children }: MobileFormSheetProps) => {
   const router = useRouter()
   const [phone, setPhone] = useState(false)
   const [dirty, setDirty] = useState(false)
@@ -73,7 +77,8 @@ const MobileFormSheet = ({ title, help, discardLabel, children }: MobileFormShee
 
   const body = (
     <div className="mx-auto grid w-full max-w-2xl gap-4">
-      {!phone && <PageHeader title={title} help={help} />}
+      {!phone && desktopTop}
+      {!phone && <PageHeader title={title} help={help} description={description} className={desktopTop ? "pt-0" : undefined} />}
       {children}
     </div>
   )

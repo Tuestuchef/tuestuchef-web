@@ -9,6 +9,7 @@ import ChoiceChips from "@/common/components/choice-chips"
 import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import { type FormStep, FormStepPanel, FormStepper, FormStepperFooter } from "@/common/components/form-stepper"
+import { useFormSheetDirty } from "@/common/components/mobile-form-sheet"
 import QuantityStepper from "@/common/components/quantity-stepper"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
@@ -316,6 +317,8 @@ const QuoteForm = ({
   const blockers = stepBlockers.flat()
   // Al editar un presupuesto, todo ya está cargado: se puede saltar a cualquier paso.
   const steps = useFormSteps(QUOTE_STEPS.length, { allReached: Boolean(quote) })
+  // Con algo cargado (o al editar uno guardado), la X del celular pregunta antes de descartar.
+  useFormSheetDirty(Boolean(quote) || lines.length > 0 || customer !== null || draft.name.trim() !== "")
   // Primer paso con algo pendiente (para llevar ahí desde el último).
   const firstBlockedStep = stepBlockers.findIndex((list) => list.length > 0)
 

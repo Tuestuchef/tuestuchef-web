@@ -1,4 +1,4 @@
-import PageHeader from "@/common/components/page-header"
+import MobileFormSheet from "@/common/components/mobile-form-sheet"
 import { isRoleIn, ROLE_GROUPS } from "@/common/lib/constants/roles.constants"
 import { isStorageEnabled } from "@/common/lib/services/storage.service"
 import type { SessionUser } from "@/common/lib/types/session.types"
@@ -9,10 +9,10 @@ import { getOrderFormData } from "../lib/services/orders.service"
 const NewOrderScreen = async ({ user }: { user: SessionUser }) => {
   const data = await getOrderFormData()
   return (
-    <div className="mx-auto grid w-full max-w-2xl gap-4">
-      <PageHeader help="newOrder" title="Nuevo pedido" description="Cliente, productos, personalización, fecha y abono." />
+    // En el celular ocupa toda la pantalla, como una app (con su X para cerrar).
+    <MobileFormSheet title="Nuevo pedido" help="newOrder" description="Cliente, productos, personalización, fecha y abono." discardLabel="el pedido">
       <OrderForm {...data} canManage={isRoleIn(user.role, ROLE_GROUPS.MANAGEMENT)} storageEnabled={isStorageEnabled()} />
-    </div>
+    </MobileFormSheet>
   )
 }
 

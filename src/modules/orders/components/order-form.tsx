@@ -19,6 +19,7 @@ import ChoiceChips from "@/common/components/choice-chips"
 import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
 import { type FormStep, FormStepPanel, FormStepper, FormStepperFooter } from "@/common/components/form-stepper"
+import { useFormSheetDirty } from "@/common/components/mobile-form-sheet"
 import QuantityStepper from "@/common/components/quantity-stepper"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
@@ -211,6 +212,8 @@ const OrderForm = ({
   ].map((list) => list.filter(Boolean) as string[])
   const blockers = stepBlockers.flat()
   const steps = useFormSteps(ORDER_STEPS.length)
+  // Con algo cargado, la X del celular pregunta antes de descartar.
+  useFormSheetDirty(lines.length > 0 || customer !== null)
   // Primer paso con algo pendiente (para llevar ahí desde el último).
   const firstBlockedStep = stepBlockers.findIndex((list) => list.length > 0)
 
