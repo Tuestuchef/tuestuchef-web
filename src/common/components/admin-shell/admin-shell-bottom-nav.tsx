@@ -185,16 +185,17 @@ const AdminShellBottomNav = ({ user }: { user: SessionUser }) => {
             <SheetTitle>{user.fullName || user.email}</SheetTitle>
             <SheetDescription>{ROLE_LABELS[user.role]}</SheetDescription>
           </SheetHeader>
-          <ul className="grid grid-cols-3 gap-2 px-4">
+          {/* Todas las tarjetas del mismo tamaño: la fila toma la altura de la más alta (nombres de dos líneas). */}
+          <ul className="grid auto-rows-fr grid-cols-3 gap-2 px-4">
             {more.map((item) => {
               const value = item.badge ? badges[item.badge] : undefined
               return (
-                <li key={item.url}>
+                <li key={item.url} className="min-w-0">
                   <Link
                     href={item.url}
                     onClick={() => setMoreOpen(false)}
                     className={cn(
-                      "relative flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center text-xs",
+                      "relative flex h-full min-h-20 flex-col items-center justify-center gap-1.5 rounded-xl border p-2 text-center text-xs leading-tight",
                       isActive(pathname, item.url) && "border-foreground font-semibold"
                     )}
                   >
@@ -202,7 +203,7 @@ const AdminShellBottomNav = ({ user }: { user: SessionUser }) => {
                       <item.icon className="size-5" aria-hidden />
                       <BadgeDot value={value} />
                     </span>
-                    {item.title}
+                    <span className="line-clamp-2">{item.title}</span>
                   </Link>
                 </li>
               )

@@ -32,6 +32,7 @@ export const HELP_TOPICS = {
         items: [
           "Para el día a día: en el celular, pestañas abajo como una app (Inicio, Ventas, + para registrar, Pedidos y Más); en la computadora, un menú lateral corto.",
           "El botón + abre una venta; manteniéndolo presionado eliges pedido o presupuesto.",
+          "En Más: presupuestos, calculadora, clientes, catálogo, stock y ventas pendientes; owner y admin también por cobrar y tasas y cuentas (para registrar la tasa del día).",
           "Se cambia en el menú de tu usuario (Modo simple) o en Más → Cambiar a modo completo. Cada quien elige el suyo; staff empieza en simple.",
           "No cambia permisos: solo qué se ve en el menú.",
         ],
@@ -87,18 +88,17 @@ export const HELP_TOPICS = {
   newSale: {
     title: "Nueva venta",
     chapter: "ventas",
-    summary: "Registra una venta en una sola pantalla, con o sin cliente.",
+    summary: "Registra una venta en 4 pasos, con o sin cliente.",
     sections: [
       {
         heading: "Pasos",
         items: [
-          "Busca el producto (también por color, talla o SKU) y tócalo: eliges género, color y talla con botones y la cantidad. 'Agregar y elegir otra' suma otra combinación sin cerrar.",
-          "En el carrito ajustas la cantidad con + y −, o tocas el número y la escribes (útil para cantidades grandes).",
-          "Elige el método de pago: define el precio de cada producto.",
-          "Cliente opcional: búscalo o créalo sin salir. Sin cliente = venta rápida.",
-          "Elige canal y entrega: retira, delivery o envío nacional. En delivery y envío nacional puedes agregar su cobro aparte y la fecha de envío.",
-          "Indica el pago: pagó todo, abono o mixto (varios métodos), o por cobrar.",
-          "Toca Registrar venta.",
+          "1. Cliente: búscalo o créalo sin salir (sin cliente = venta rápida) y elige el método de pago, que define el precio de cada producto. Si tiene acuerdo, sus precios se aplican solos.",
+          "2. Productos: busca el producto (también por color, talla o SKU) y tócalo: eliges género, color y talla con botones y la cantidad. En el carrito ajustas la cantidad con + y −, o tocas el número y la escribes.",
+          "3. Entrega: canal y entrega (retira, delivery o envío nacional, con su cobro y fecha de envío), si ya se entregó, la fecha de la venta y notas.",
+          "4. Cobro: revisa el resumen (Cambiar vuelve al paso), agrega un descuento si hace falta e indica el pago: pagó todo, abono o mixto, o por cobrar. Toca Registrar venta.",
+          "Arriba ves en qué paso vas; tocando el nombre de un paso ya visto vuelves a él. El botón atrás del teléfono vuelve un paso sin perder lo cargado.",
+          "Si Siguiente está apagado, abajo dice qué falta (sin productos, sin stock, sin precio…).",
         ],
       },
       {

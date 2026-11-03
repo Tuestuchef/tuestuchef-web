@@ -81,39 +81,47 @@ export const SALES_CHAPTER: ManualChapter = {
       blocks: [
         {
           kind: "text",
-          body: "Está pensado para hacerse desde el celular en menos de 20 segundos. Toca **Registrar venta**, el botón principal arriba del menú (también está en Inicio):",
+          body: "Está pensado para hacerse desde el celular en menos de 20 segundos, en **4 pasos**. Arriba se ve en qué paso vas (con una barra de progreso) y abajo, el total y **Siguiente**. Toca **Registrar venta**, el botón principal arriba del menú (también está en Inicio):",
         },
         {
           kind: "steps",
           items: [
             {
-              title: "Agrega los productos",
-              body: "Busca el producto (también por color, talla o código: \"filipina 3/4 dama negra\") y tócalo: eliges el **género**, el **color** y la **talla** con botones, ves el precio y el stock, y la cantidad. **Agregar y elegir otra** suma otra combinación sin cerrar. En el carrito ajustas la cantidad con + y −.",
+              title: "1. Cliente y método de pago",
+              body:
+                "El cliente es opcional: búscalo o créalo sin salir; sin cliente es una venta rápida (solo toca Siguiente). Va primero porque cambia los precios: con un **acuerdo**, sus precios y sus exclusivos se aplican solos. El método de pago define el precio: cada producto tiene un [[precio-por-metodo|precio por método]] (la filipina puede salir en 28 por pago móvil y en 25 en efectivo).",
+            },
+            {
+              title: "2. Productos",
+              body: "Busca el producto (también por color, talla o código: \"filipina 3/4 dama negra\") y tócalo: eliges el **género**, el **color** y la **talla** con botones, ves el precio y el stock, y la cantidad. **Agregar y elegir otra** suma otra combinación sin cerrar. En el carrito ajustas la cantidad con + y −, o tocas el número y la escribes.",
             },
             {
               title: "¿Lleva personalización?",
-              body: "Toca **Personalizar** en la línea: el tipo (nombre bordado, logo…), cuántas piezas y el nombre o qué logo lleva (el archivo es opcional). En un combo como el 10x10, cada pieza tiene su propio **Personalizar** (logo en los delantales, nombres en los gorros). **Cobrarla aparte** suma su precio al total; apágalo si ya iba incluida (p. ej. en el precio de la promo) y queda solo anotada. Sale en el detalle y en la nota de entrega.",
+              body: "En el paso de productos, toca **Personalizar** en la línea: el tipo (nombre bordado, logo…), cuántas piezas y el nombre o qué logo lleva (el archivo es opcional). En un combo como el 10x10, cada pieza tiene su propio **Personalizar** (logo en los delantales, nombres en los gorros). **Cobrarla aparte** suma su precio al total; apágalo si ya iba incluida (p. ej. en el precio de la promo) y queda solo anotada. Sale en el detalle y en la nota de entrega.",
             },
             {
-              title: "Elige el método de pago",
-              body:
-                "Define el precio: cada producto tiene un [[precio-por-metodo|precio por método]]. Por eso la filipina puede salir en 28 por pago móvil y en 25 en efectivo.",
+              title: "3. Entrega",
+              body: "Tienda, WhatsApp o Instagram; retiro, delivery o envío nacional (los dos últimos con su cobro aparte y, si sale otro día, la fecha de envío). Aquí también: **Ya se entregó**, la fecha de la venta (si fue otro día) y notas. Al dejar el paquete, anota el número de guía desde la venta con **Envío**; sale en la nota por WhatsApp.",
             },
-            { title: "Cliente (opcional)", body: "Búscalo o créalo sin salir. Sin cliente es una venta rápida." },
-            { title: "Canal y entrega", body: "Tienda, WhatsApp o Instagram; retiro, delivery o envío nacional (los dos últimos con su cobro aparte y, si sale otro día, la fecha de envío). Al dejar el paquete, anota el número de guía desde la venta con **Envío**; sale en la nota por WhatsApp. En las listas, el ícono de nota muestra la nota sin abrir la venta." },
             {
-              title: "Indica el pago",
-              body: "Pagó todo, abonó una parte, pagó con varios métodos (mixto) o queda [[por-cobrar]].",
+              title: "4. Cobro y registrar",
+              body: "Arriba, el resumen de lo elegido: **Cambiar** vuelve a ese paso. Agrega un descuento si hace falta e indica el pago: pagó todo, abonó una parte, pagó con varios métodos (mixto) o queda [[por-cobrar]]. Toca **Registrar venta**: el inventario, la cuenta y los reportes se actualizan solos.",
             },
-            { title: "Toca Registrar venta", body: "Listo: el inventario, la cuenta y los reportes se actualizan solos." },
           ],
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          title: "Volver atrás sin perder nada",
+          body:
+            "**Atrás**, el nombre de un paso ya visto o el botón atrás del teléfono vuelven un paso; todo lo cargado se mantiene hasta registrar.",
         },
         {
           kind: "callout",
           tone: "warning",
           title: "Si el botón está apagado",
           body:
-            "Encima del botón aparece por qué: falta stock, un producto no tiene precio para ese método, el descuento pasa el máximo o falta la tasa de hoy.",
+            "Encima del botón aparece por qué: falta stock, un producto no tiene precio para ese método, el descuento pasa el máximo o falta la tasa de hoy. En el último paso, **Ir a…** lleva al paso donde está lo pendiente.",
         },
       ],
     },

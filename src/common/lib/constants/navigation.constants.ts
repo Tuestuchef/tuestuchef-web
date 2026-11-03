@@ -134,7 +134,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     label: "Tesorería",
     items: [
       { title: "Movimientos", url: ROUTES.MOVEMENTS, icon: ListIcon, roles: ROLE_GROUPS.ALL },
-      { title: "Tasas y cuentas", url: ROUTES.TREASURY, icon: LandmarkIcon, roles: ROLE_GROUPS.MANAGEMENT, badge: "missingTodayRate" },
+      { title: "Tasas y cuentas", url: ROUTES.TREASURY, icon: LandmarkIcon, roles: ROLE_GROUPS.MANAGEMENT, badge: "missingTodayRate", simple: true },
     ],
   },
   {

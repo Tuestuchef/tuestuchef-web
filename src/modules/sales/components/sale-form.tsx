@@ -2,7 +2,8 @@
 
 import {
   CheckIcon,
-  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   Loader2Icon,
   PlusIcon,
   Trash2Icon,
@@ -14,6 +15,7 @@ import { toast } from "sonner"
 import ChoiceChips from "@/common/components/choice-chips"
 import DateField from "@/common/components/date-field"
 import FormField from "@/common/components/form-field"
+import FormStepper from "@/common/components/form-stepper"
 import QuantityStepper from "@/common/components/quantity-stepper"
 import StatusAlert from "@/common/components/status-alert"
 import StatusBadge from "@/common/components/status-badge"
@@ -22,7 +24,7 @@ import { Input } from "@/common/components/ui/input"
 import { Label } from "@/common/components/ui/label"
 import { Switch } from "@/common/components/ui/switch"
 import { ROUTES } from "@/common/lib/constants/routes.constants"
-import { cn } from "@/common/lib/utils"
+import { useFormSteps } from "@/common/lib/hooks/use-form-steps.hook"
 import { formatMoney, formatRate } from "@/common/lib/utils/format-money.util"
 import { parseAmount } from "@/common/lib/utils/parse-amount.util"
 import CustomerPicker, { type PickedCustomer } from "@/modules/customers/components/customer-picker"
@@ -102,7 +104,11 @@ const PAYMENT_MODES = [
   { value: "none", label: "Por cobrar" },
 ] as const
 
-// Registrar una venta en una sola pantalla, pensada para el celular.
+// Los pasos: primero el cliente y la lista de precios (el acuerdo cambia precios y productos).
+const SALE_STEPS = ["Cliente", "Productos", "Entrega", "Cobro"] as const
+const [CUSTOMER_STEP, PRODUCTS_STEP, DELIVERY_STEP, PAYMENT_STEP] = [0, 1, 2, 3]
+
+// Registrar una venta por pasos, pensada para el celular.
 const SaleForm = ({
   variants,
   methods,
@@ -261,20 +267,29 @@ const SaleForm = ({
     !isBackdated && payments.some((p) => needsCurrentRate(methodById.get(p.methodId)) && !rates?.isCurrent)
   const backdateWithoutRate = isBackdated && dateRates === null
 
-  const blockers = [
-    cart.length === 0 && SALES_MESSAGES.EMPTY_CART,
-    customer?.blockedReason && `Cliente bloqueado: no se le puede vender (${customer.blockedReason}).`,
-    exclusiveLine && `"${variantById.get(exclusiveLine.variantId)?.productName}" es exclusivo de otro cliente: quítalo o elige su cliente.`,
-    missingPrice[0] && SALES_MESSAGES.NO_PRICE(missingPrice[0].variant.productName, priceMethod?.name ?? ""),
-    customizationOverLine &&
-      `La personalización de "${variantById.get(customizationOverLine.variantId)?.productName}" tiene más piezas que la línea.`,
-    shortStock[0] && `No hay suficiente "${shortStock[0].productName}" (${shortStock[0].sku}) en inventario.`,
-    overDiscountLimit && `El descuento máximo sin owner o admin es ${staffMaxDiscountPercent}%.`,
-    showDiscount && discount > 0 && !discountReason.trim() && "Indica el motivo del descuento.",
-    overpaid && "Los pagos superan el total.",
-    bsWithoutRate && "Falta la tasa BCV de hoy para cobrar en Bs.",
-    backdateWithoutRate && "No hay tasas registradas para esa fecha. Owner o admin debe cargarlas.",
-  ].filter(Boolean) as string[]
+  // Lo que impide seguir, por paso (en el último se revisan todos antes de registrar).
+  const stepBlockers = [
+    [customer?.blockedReason && `Cliente bloqueado: no se le puede vender (${customer.blockedReason}).`],
+    [
+      cart.length === 0 && SALES_MESSAGES.EMPTY_CART,
+      exclusiveLine && `"${variantById.get(exclusiveLine.variantId)?.productName}" es exclusivo de otro cliente: quítalo o elige su cliente.`,
+      missingPrice[0] && SALES_MESSAGES.NO_PRICE(missingPrice[0].variant.productName, priceMethod?.name ?? ""),
+      customizationOverLine &&
+        `La personalización de "${variantById.get(customizationOverLine.variantId)?.productName}" tiene más piezas que la línea.`,
+      shortStock[0] && `No hay suficiente "${shortStock[0].productName}" (${shortStock[0].sku}) en inventario.`,
+    ],
+    [backdateWithoutRate && "No hay tasas registradas para esa fecha. Owner o admin debe cargarlas."],
+    [
+      overDiscountLimit && `El descuento máximo sin owner o admin es ${staffMaxDiscountPercent}%.`,
+      showDiscount && discount > 0 && !discountReason.trim() && "Indica el motivo del descuento.",
+      overpaid && "Los pagos superan el total.",
+      bsWithoutRate && "Falta la tasa BCV de hoy para cobrar en Bs.",
+    ],
+  ].map((list) => list.filter(Boolean) as string[])
+  const blockers = stepBlockers.flat()
+  const steps = useFormSteps(SALE_STEPS.length)
+  // Primer paso con algo pendiente (para llevar ahí desde el resumen).
+  const firstBlockedStep = stepBlockers.findIndex((list) => list.length > 0)
 
   // ---- Carrito ----
   // Una variante elegida (género, color y talla) con su cantidad; si ya está, suma.
@@ -353,6 +368,7 @@ const SaleForm = ({
     setNotes("")
     setDeliveryFee("")
     setShipDate("")
+    steps.reset()
   }
 
   const submit = () => {
@@ -421,321 +437,214 @@ const SaleForm = ({
     return <StatusAlert tone="warning" title="No hay métodos de pago activos. Owner o admin debe crearlos primero." />
   }
 
+  // Resumen de lo elegido en un paso, con su botón para volver a cambiarlo.
+  const reviewRow = (label: string, value: string, step: number) => (
+    <div className="flex items-start justify-between gap-3 py-2">
+      <div className="grid min-w-0 gap-0.5">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-sm">{value}</span>
+      </div>
+      <Button type="button" variant="ghost" size="sm" onClick={() => steps.goTo(step)}>
+        Cambiar
+      </Button>
+    </div>
+  )
+  const currentBlockers = steps.isLast ? blockers : stepBlockers[steps.step]
+
   return (
     <div className="grid gap-5">
-      {/* 1. Productos */}
-      <section className="grid gap-2">
-        <Label>Productos</Label>
-        <ProductPicker
-          variants={pricing.visible}
-          priceMethodId={priceMethodId}
-          available={availableFor}
-          placeholder="Filipina 3/4 dama negra…"
-          onAdd={addVariant}
-          onCombo={setComboToPick}
-        />
+      <FormStepper steps={SALE_STEPS} current={steps.step} reached={steps.reached} onSelect={steps.goTo} />
 
-        {lines.length > 0 && (
-          <ul className="divide-y rounded-lg border">
-            {lines.map((line) => (
-              <li key={line.key} className="grid gap-2 p-3">
-                <div className="flex items-start gap-2">
-                  <div className="grid min-w-0 flex-1 gap-0.5">
-                    <span className="text-sm font-medium">
-                      {line.variant.productName}{" "}
-                      <span className="font-normal text-muted-foreground">· {line.variant.variantLabel}</span>
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {line.price === undefined ? (
-                        <StatusBadge tone="error">Sin precio para {priceMethod?.name}</StatusBadge>
-                      ) : (
-                        <>
-                          {usd(line.price)} c/u
-                          {line.variant.agreementPrice && " · precio acuerdo"}
-                          {line.source === "stock" && ` · hay ${quantityFormat.format(line.variant.stock)}`}
-                        </>
-                      )}
-                    </span>
-                    {line.components && (
-                      <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
-                        {line.components.map((c, index) => {
-                          const piece = variantById.get(c.variantId)
-                          return (
-                            <li key={`${c.variantId}-${index}`} className="grid gap-1">
-                              <span className="flex flex-wrap items-center gap-x-2">
-                                <span>
-                                  {quantityFormat.format(c.quantity)} × {piece?.productName} · {piece?.variantLabel}
-                                  {c.source === "made_to_order" && " · por encargo"}
-                                  {piece && piece.extraUsd > 0 && ` · +${usd(round(piece.extraUsd * c.quantity))}`}
-                                </span>
-                                {customizationTypes.length > 0 && (
-                                  <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setCustomizing(pieceTarget(line.key, index))}>
-                                    <PlusIcon aria-hidden />
-                                    Personalizar
-                                  </Button>
-                                )}
-                              </span>
-                              <CustomizationList
-                                customizations={c.customizations}
-                                typeName={(id) => typeById.get(id)?.name}
-                                onRemove={(key) => removeCustomization(line.key, index, key)}
-                              />
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    )}
-                  </div>
-                  <span className="text-sm font-medium tabular-nums">{usd(line.total)}</span>
-                </div>
-                {line.components ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge tone="info">{quantityFormat.format(line.quantity)} {line.quantity === 1 ? "combo" : "combos"}</StatusBadge>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setQuantity(line.key, 0)}>
-                      <Trash2Icon aria-hidden />
-                      Quitar
-                    </Button>
-                  </div>
-                ) : (
-                <div className="flex flex-wrap items-center gap-2">
-                  <QuantityStepper removable value={line.quantity} onChange={(q) => setQuantity(line.key, q)} label={line.variant.productName} />
-                  {line.variant.fulfillmentType === "both" ? (
-                    <Button type="button" variant="outline" size="sm" onClick={() => toggleSource(line.key)}>
-                      {SOURCE_LABELS[line.source]}
-                      <span className="sr-only">(cambiar)</span>
-                    </Button>
-                  ) : (
-                    line.source === "made_to_order" && <StatusBadge tone="info">Por encargo</StatusBadge>
-                  )}
-                  {line.source === "stock" && line.quantity > line.variant.stock && (
-                    <StatusBadge tone="error">Stock insuficiente</StatusBadge>
-                  )}
-                  {customizationTypes.length > 0 && (
-                    <Button type="button" variant="outline" size="sm" onClick={() => setCustomizing(line.key)}>
-                      <PlusIcon aria-hidden />
-                      Personalizar
-                    </Button>
-                  )}
-                </div>
-                )}
-                <CustomizationList
-                  customizations={line.customizations}
-                  typeName={(id) => typeById.get(id)?.name}
-                  onRemove={(key) => removeCustomization(line.key, null, key)}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <CustomizationDialog
-        key={customizing ?? "none"}
-        mode="sale"
-        open={Boolean(customizingLine)}
-        lineLabel={
-          customizingPiece
-            ? `${customizingPiece.quantity} × ${customizingPieceVariant?.productName} · ${customizingPieceVariant?.variantLabel} (${customizingLine?.variant.productName})`
-            : customizingLine
-              ? `${customizingLine.quantity} × ${customizingLine.variant.productName} · ${customizingLine.variant.variantLabel}`
-              : ""
-        }
-        lineQuantity={customizingPiece?.quantity ?? customizingLine?.quantity ?? 1}
-        types={customizationTypes}
-        storageEnabled={storageEnabled}
-        onClose={() => setCustomizing(null)}
-        onSave={(c) => {
-          addCustomization(c)
-          setCustomizing(null)
-        }}
-      />
-
-      <ComboPickerDialog combo={comboToPick} variants={pricing.visible} available={availableFor} priceMethodId={priceMethodId} onCancel={() => setComboToPick(null)} onConfirm={addCombo} />
-
-      {/* 2. Método de pago (lista de precios) */}
-      <FormField label="Método de pago" htmlFor="sale-method" hint="Define el precio de cada producto.">
-        <ChoiceChips
-          id="sale-method"
-          label="Método de pago"
-          value={priceMethodId}
-          onChange={setPriceMethodId}
-          options={methods.map((m) => ({ value: m.id, label: m.name }))}
-        />
-      </FormField>
-
-      {/* 3. Cliente */}
-      <div className="grid gap-2">
-        <Label>
-          Cliente <span className="font-normal text-muted-foreground">(opcional)</span>
-        </Label>
-        <CustomerPicker value={customer} onChange={setCustomer} canManage={canManage} emptyLabel="Sin cliente (venta rápida)" />
-      </div>
-
-      {/* 4. Canal y entrega */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label="Canal" htmlFor="sale-channel">
-          <ChoiceChips
-            id="sale-channel"
-            label="Canal"
-            value={channel}
-            onChange={(v) => changeChannel(v as SaleChannel)}
-            options={MANUAL_CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))}
-          />
-        </FormField>
-        <FormField label="Entrega" htmlFor="sale-delivery">
-          <ChoiceChips
-            id="sale-delivery"
-            label="Entrega"
-            value={deliveryMethod}
-            onChange={(v) => {
-              setDeliveryMethod(v as DeliveryMethod)
-              setDelivered(channel === "in_person" && v === "pickup")
-            }}
-            options={DELIVERY_METHODS.map((d) => ({ value: d, label: DELIVERY_LABELS[d] }))}
-          />
-        </FormField>
-      </div>
-      {chargesShipping(deliveryMethod) && (
-        <FormField label={`Cobro de ${SHIPPING_FEE_LABELS[deliveryMethod].toLowerCase()} (USD)`} htmlFor="sale-fee" optional hint="Se suma al total de la venta.">
-          <Input
-            id="sale-fee"
-            inputMode="decimal"
-            value={deliveryFee}
-            onChange={(e) => setDeliveryFee(e.target.value)}
-            placeholder="0"
-            className="h-11 md:h-9"
-          />
-        </FormField>
-      )}
-      {chargesShipping(deliveryMethod) && (
-        <FormField label="Fecha de envío" htmlFor="sale-ship-date" optional hint="Si se envía otro día. La guía se anota luego, desde la venta.">
-          <DateField id="sale-ship-date" value={shipDate} onChange={setShipDate} min={today} clearable placeholder="Sin fecha" />
-        </FormField>
-      )}
-
-      {/* 5. Descuento */}
-      {showDiscount ? (
-        <div className="grid gap-3 rounded-lg border p-3">
-          <div className="flex items-center justify-between">
-            <Label>Descuento</Label>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setShowDiscount(false)}>
-              Quitar
-            </Button>
+      {/* 1. Cliente y lista de precios: el acuerdo del cliente cambia precios y productos. */}
+      {steps.step === CUSTOMER_STEP && (
+        <div className="grid gap-5">
+          <div className="grid gap-2">
+            <Label>
+              Cliente <span className="font-normal text-muted-foreground">(opcional)</span>
+            </Label>
+            <CustomerPicker value={customer} onChange={setCustomer} canManage={canManage} emptyLabel="Sin cliente (venta rápida)" />
           </div>
-          <div className="grid grid-cols-[auto_1fr] gap-2">
+
+          {pricing.agreement && (
+            <p className="rounded-lg border p-3 text-sm">
+              Tiene acuerdo: sus precios especiales y sus productos exclusivos se aplican solos, sin descuento al mayor.
+              {pricing.eurRate && " Paga sus Bs a tasa euro."}
+            </p>
+          )}
+          <FormField label="Método de pago" htmlFor="sale-method" hint="Define el precio de cada producto.">
             <ChoiceChips
-              label="Tipo de descuento"
-              value={discountType}
-              onChange={(v) => setDiscountType(v as DiscountType)}
-              options={[
-                { value: "percent", label: "%" },
-                { value: "amount", label: "USD" },
-              ]}
+              id="sale-method"
+              label="Método de pago"
+              value={priceMethodId}
+              onChange={setPriceMethodId}
+              options={methods.map((m) => ({ value: m.id, label: m.name }))}
             />
-            <Input
-              aria-label="Valor del descuento"
-              inputMode="decimal"
-              value={discountValue}
-              onChange={(e) => setDiscountValue(e.target.value)}
-              placeholder={discountType === "percent" ? "10" : "5"}
-              className="h-11 md:h-9"
-            />
-          </div>
-          <Input
-            aria-label="Motivo del descuento"
-            value={discountReason}
-            onChange={(e) => setDiscountReason(e.target.value)}
-            placeholder="Motivo (obligatorio)"
-            className="h-11 md:h-9"
-          />
-          {!canManage && (
-            <p className="text-xs text-muted-foreground">Hasta {staffMaxDiscountPercent}% sin owner o admin.</p>
-          )}
+          </FormField>
+
         </div>
-      ) : (
-        <Button
-          type="button"
-          variant="ghost"
-          className="h-auto w-fit justify-start px-0 text-muted-foreground"
-          onClick={() => setShowDiscount(true)}
-        >
-          <PlusIcon aria-hidden />
-          Agregar descuento
-        </Button>
       )}
 
-      {/* 6. Pago */}
-      <FormField label="Pago" htmlFor="sale-payment" hint={pricing.eurRate ? "Tasa euro: sus pagos en Bs van a la BCV euro (su acuerdo)." : undefined}>
-        <ChoiceChips
-          id="sale-payment"
-          label="Pago"
-          value={paymentMode}
-          onChange={(v) => {
-            setPaymentMode(v as PaymentMode)
-            if (v === "custom" && paymentRows.length === 0) addPaymentRow()
-          }}
-          options={PAYMENT_MODES}
-        />
-      </FormField>
-      {paymentMode === "custom" && (
+      {/* 2. Productos */}
+      {steps.step === PRODUCTS_STEP && (
         <div className="grid gap-2">
-          {paymentRows.map((row) => {
-            const method = methodById.get(row.methodId)!
-            return (
-              <div key={row.key} className="grid grid-cols-[1fr_8rem_auto] gap-2">
-                <select
-                  aria-label="Método del pago"
-                  value={row.methodId}
-                  onChange={(e) =>
-                    setPaymentRows((rows) => rows.map((r) => (r.key === row.key ? { ...r, methodId: e.target.value } : r)))
-                  }
-                  className="h-11 rounded-md border bg-background px-2 text-sm md:h-9"
-                >
-                  {methods.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                <Input
-                  aria-label={`Monto en ${method.currency}`}
-                  inputMode="decimal"
-                  value={row.amount}
-                  onChange={(e) =>
-                    setPaymentRows((rows) => rows.map((r) => (r.key === row.key ? { ...r, amount: e.target.value } : r)))
-                  }
-                  placeholder={method.currency}
-                  className="h-11 text-right tabular-nums md:h-9"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-11 md:size-9"
-                  onClick={() => setPaymentRows((rows) => rows.filter((r) => r.key !== row.key))}
-                >
-                  <Trash2Icon aria-hidden />
-                  <span className="sr-only">Quitar pago</span>
-                </Button>
-              </div>
-            )
-          })}
-          {paymentRows.length < 5 && (
-            <Button type="button" variant="outline" size="sm" className="w-fit" onClick={addPaymentRow}>
-              <PlusIcon aria-hidden />
-              Otro pago{balance > 0 ? ` (resta ${usd(balance)})` : ""}
-            </Button>
+          <section className="grid gap-2">
+            <Label>Productos</Label>
+            <ProductPicker
+              variants={pricing.visible}
+              priceMethodId={priceMethodId}
+              available={availableFor}
+              placeholder="Filipina 3/4 dama negra…"
+              onAdd={addVariant}
+              onCombo={setComboToPick}
+            />
+
+            {lines.length > 0 && (
+              <ul className="divide-y rounded-lg border">
+                {lines.map((line) => (
+                  <li key={line.key} className="grid gap-2 p-3">
+                    <div className="flex items-start gap-2">
+                      <div className="grid min-w-0 flex-1 gap-0.5">
+                        <span className="text-sm font-medium">
+                          {line.variant.productName}{" "}
+                          <span className="font-normal text-muted-foreground">· {line.variant.variantLabel}</span>
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {line.price === undefined ? (
+                            <StatusBadge tone="error">Sin precio para {priceMethod?.name}</StatusBadge>
+                          ) : (
+                            <>
+                              {usd(line.price)} c/u
+                              {line.variant.agreementPrice && " · precio acuerdo"}
+                              {line.source === "stock" && ` · hay ${quantityFormat.format(line.variant.stock)}`}
+                            </>
+                          )}
+                        </span>
+                        {line.components && (
+                          <ul className="mt-1 grid gap-0.5 border-l-2 pl-2 text-xs text-muted-foreground">
+                            {line.components.map((c, index) => {
+                              const piece = variantById.get(c.variantId)
+                              return (
+                                <li key={`${c.variantId}-${index}`} className="grid gap-1">
+                                  <span className="flex flex-wrap items-center gap-x-2">
+                                    <span>
+                                      {quantityFormat.format(c.quantity)} × {piece?.productName} · {piece?.variantLabel}
+                                      {c.source === "made_to_order" && " · por encargo"}
+                                      {piece && piece.extraUsd > 0 && ` · +${usd(round(piece.extraUsd * c.quantity))}`}
+                                    </span>
+                                    {customizationTypes.length > 0 && (
+                                      <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setCustomizing(pieceTarget(line.key, index))}>
+                                        <PlusIcon aria-hidden />
+                                        Personalizar
+                                      </Button>
+                                    )}
+                                  </span>
+                                  <CustomizationList
+                                    customizations={c.customizations}
+                                    typeName={(id) => typeById.get(id)?.name}
+                                    onRemove={(key) => removeCustomization(line.key, index, key)}
+                                  />
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium tabular-nums">{usd(line.total)}</span>
+                    </div>
+                    {line.components ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusBadge tone="info">{quantityFormat.format(line.quantity)} {line.quantity === 1 ? "combo" : "combos"}</StatusBadge>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setQuantity(line.key, 0)}>
+                          <Trash2Icon aria-hidden />
+                          Quitar
+                        </Button>
+                      </div>
+                    ) : (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <QuantityStepper removable value={line.quantity} onChange={(q) => setQuantity(line.key, q)} label={line.variant.productName} />
+                      {line.variant.fulfillmentType === "both" ? (
+                        <Button type="button" variant="outline" size="sm" onClick={() => toggleSource(line.key)}>
+                          {SOURCE_LABELS[line.source]}
+                          <span className="sr-only">(cambiar)</span>
+                        </Button>
+                      ) : (
+                        line.source === "made_to_order" && <StatusBadge tone="info">Por encargo</StatusBadge>
+                      )}
+                      {line.source === "stock" && line.quantity > line.variant.stock && (
+                        <StatusBadge tone="error">Stock insuficiente</StatusBadge>
+                      )}
+                      {customizationTypes.length > 0 && (
+                        <Button type="button" variant="outline" size="sm" onClick={() => setCustomizing(line.key)}>
+                          <PlusIcon aria-hidden />
+                          Personalizar
+                        </Button>
+                      )}
+                    </div>
+                    )}
+                    <CustomizationList
+                      customizations={line.customizations}
+                      typeName={(id) => typeById.get(id)?.name}
+                      onRemove={(key) => removeCustomization(line.key, null, key)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {pieces > 0 && (
+            <p className="text-xs text-muted-foreground tabular-nums">
+              {quantityFormat.format(pieces)} {pieces === 1 ? "pieza" : "piezas"} · {usd(subtotal)}
+              {volume > 0 && ` · al mayor ${volumePct}%`}
+              {nextTier && ` · con ${quantityFormat.format(nextTier.minQuantity - pieces)} más: ${nextTier.percent}% al mayor`}
+            </p>
           )}
         </div>
       )}
 
-      {/* Notas y entrega inmediata */}
-      <details className="group rounded-lg border p-3" open={isBackdated || undefined}>
-        <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium">
-          {isBackdated ? `Fecha: ${date.split("-").reverse().join("/")}` : "Más opciones (fecha, notas)"}
-          <ChevronDownIcon className="size-4 transition-transform group-open:rotate-180" aria-hidden />
-        </summary>
-        <div className="mt-3 grid gap-3">
+      {/* 3. Entrega: canal, entrega, fecha y notas */}
+      {steps.step === DELIVERY_STEP && (
+        <div className="grid gap-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField label="Canal" htmlFor="sale-channel">
+              <ChoiceChips
+                id="sale-channel"
+                label="Canal"
+                value={channel}
+                onChange={(v) => changeChannel(v as SaleChannel)}
+                options={MANUAL_CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))}
+              />
+            </FormField>
+            <FormField label="Entrega" htmlFor="sale-delivery">
+              <ChoiceChips
+                id="sale-delivery"
+                label="Entrega"
+                value={deliveryMethod}
+                onChange={(v) => {
+                  setDeliveryMethod(v as DeliveryMethod)
+                  setDelivered(channel === "in_person" && v === "pickup")
+                }}
+                options={DELIVERY_METHODS.map((d) => ({ value: d, label: DELIVERY_LABELS[d] }))}
+              />
+            </FormField>
+          </div>
+          {chargesShipping(deliveryMethod) && (
+            <FormField label={`Cobro de ${SHIPPING_FEE_LABELS[deliveryMethod].toLowerCase()} (USD)`} htmlFor="sale-fee" optional hint="Se suma al total de la venta.">
+              <Input
+                id="sale-fee"
+                inputMode="decimal"
+                value={deliveryFee}
+                onChange={(e) => setDeliveryFee(e.target.value)}
+                placeholder="0"
+                className="h-11 md:h-9"
+              />
+            </FormField>
+          )}
+          {chargesShipping(deliveryMethod) && (
+            <FormField label="Fecha de envío" htmlFor="sale-ship-date" optional hint="Si se envía otro día. La guía se anota luego, desde la venta.">
+              <DateField id="sale-ship-date" value={shipDate} onChange={setShipDate} min={today} clearable placeholder="Sin fecha" />
+            </FormField>
+          )}
           <BackdateField
             id="sale-date"
             today={today}
@@ -761,79 +670,272 @@ const SaleForm = ({
             className="h-11 md:h-9"
           />
         </div>
-      </details>
+      )}
 
-      {/* Resumen y registrar */}
-      <div className="sticky bottom-(--bottom-nav-h) -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
-        <dl className="grid gap-1 text-sm tabular-nums">
-          {(volume > 0 || discount > 0 || fee > 0 || customizationTotal > 0) && (
-            <div className="flex justify-between text-muted-foreground">
-              <dt>Subtotal</dt>
-              <dd>{usd(subtotal)}</dd>
-            </div>
-          )}
-          {customizationTotal > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <dt>Personalización</dt>
-              <dd>{usd(customizationTotal)}</dd>
-            </div>
-          )}
-          {volume > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <dt>
-                Al mayor {volumePct}% ({quantityFormat.format(pieces)} piezas)
-              </dt>
-              <dd>−{usd(volume)}</dd>
-            </div>
-          )}
-          {nextTier && pieces > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Con {quantityFormat.format(nextTier.minQuantity - pieces)} piezas más: {nextTier.percent}% al mayor.
-            </p>
-          )}
-          {discount > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <dt>Descuento</dt>
-              <dd>−{usd(discount)}</dd>
-            </div>
-          )}
-          {fee > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <dt>{SHIPPING_FEE_LABELS[deliveryMethod]}</dt>
-              <dd>{usd(fee)}</dd>
-            </div>
-          )}
-          <div className="flex items-baseline justify-between text-base font-semibold">
-            <dt>Total</dt>
-            <dd>{usd(total)}</dd>
+      {/* 4. Cobro: resumen, descuento y pago */}
+      {steps.step === PAYMENT_STEP && (
+        <div className="grid gap-5">
+          <div className="divide-y rounded-lg border px-3">
+            {reviewRow("Cliente y precios", `${customer?.name ?? "Venta rápida (sin cliente)"} · ${priceMethod?.name ?? ""}`, CUSTOMER_STEP)}
+            {reviewRow(
+              "Productos",
+              lines.map((l) => `${quantityFormat.format(l.quantity)} × ${l.variant.productName}`).join(", ") || "—",
+              PRODUCTS_STEP
+            )}
+            {reviewRow(
+              "Entrega",
+              [
+                CHANNEL_LABELS[channel],
+                DELIVERY_LABELS[deliveryMethod],
+                delivered ? "ya entregada" : "por entregar",
+                isBackdated && `fecha ${date.split("-").reverse().join("/")}`,
+              ]
+                .filter(Boolean)
+                .join(" · "),
+              DELIVERY_STEP
+            )}
           </div>
-          {priceMethod && priceMethod.rateKind !== "none" && total > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <dt>
-                En Bs (tasa {priceMethod.rateKind === "bcv_eur" ? "euro " : ""}
-                {formatRate(priceMethod.rateKind === "bcv_eur" ? saleRates.bcvEur : saleRates.bcvUsd)})
-              </dt>
-              <dd>{formatMoney(inMethodCurrency(priceMethod, total), "VES")}</dd>
+          {showDiscount ? (
+            <div className="grid gap-3 rounded-lg border p-3">
+              <div className="flex items-center justify-between">
+                <Label>Descuento</Label>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setShowDiscount(false)}>
+                  Quitar
+                </Button>
+              </div>
+              <div className="grid grid-cols-[auto_1fr] gap-2">
+                <ChoiceChips
+                  label="Tipo de descuento"
+                  value={discountType}
+                  onChange={(v) => setDiscountType(v as DiscountType)}
+                  options={[
+                    { value: "percent", label: "%" },
+                    { value: "amount", label: "USD" },
+                  ]}
+                />
+                <Input
+                  aria-label="Valor del descuento"
+                  inputMode="decimal"
+                  value={discountValue}
+                  onChange={(e) => setDiscountValue(e.target.value)}
+                  placeholder={discountType === "percent" ? "10" : "5"}
+                  className="h-11 md:h-9"
+                />
+              </div>
+              <Input
+                aria-label="Motivo del descuento"
+                value={discountReason}
+                onChange={(e) => setDiscountReason(e.target.value)}
+                placeholder="Motivo (obligatorio)"
+                className="h-11 md:h-9"
+              />
+              {!canManage && (
+                <p className="text-xs text-muted-foreground">Hasta {staffMaxDiscountPercent}% sin owner o admin.</p>
+              )}
             </div>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-auto w-fit justify-start px-0 text-muted-foreground"
+              onClick={() => setShowDiscount(true)}
+            >
+              <PlusIcon aria-hidden />
+              Agregar descuento
+            </Button>
           )}
-          {paymentMode !== "full" && total > 0 && (
-            <div className="flex justify-between">
-              <dt>{isSettled(total - paidUsd) ? "Pagado completo" : "Queda por cobrar"}</dt>
-              <dd>{isSettled(total - paidUsd) ? <CheckIcon className="size-4" aria-hidden /> : usd(balance)}</dd>
-            </div>
-          )}
-        </dl>
 
+          <FormField label="Pago" htmlFor="sale-payment" hint={pricing.eurRate ? "Tasa euro: sus pagos en Bs van a la BCV euro (su acuerdo)." : undefined}>
+            <ChoiceChips
+              id="sale-payment"
+              label="Pago"
+              value={paymentMode}
+              onChange={(v) => {
+                setPaymentMode(v as PaymentMode)
+                if (v === "custom" && paymentRows.length === 0) addPaymentRow()
+              }}
+              options={PAYMENT_MODES}
+            />
+          </FormField>
+          {paymentMode === "custom" && (
+            <div className="grid gap-2">
+              {paymentRows.map((row) => {
+                const method = methodById.get(row.methodId)!
+                return (
+                  <div key={row.key} className="grid grid-cols-[1fr_8rem_auto] gap-2">
+                    <select
+                      aria-label="Método del pago"
+                      value={row.methodId}
+                      onChange={(e) =>
+                        setPaymentRows((rows) => rows.map((r) => (r.key === row.key ? { ...r, methodId: e.target.value } : r)))
+                      }
+                      className="h-11 rounded-md border bg-background px-2 text-sm md:h-9"
+                    >
+                      {methods.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      aria-label={`Monto en ${method.currency}`}
+                      inputMode="decimal"
+                      value={row.amount}
+                      onChange={(e) =>
+                        setPaymentRows((rows) => rows.map((r) => (r.key === row.key ? { ...r, amount: e.target.value } : r)))
+                      }
+                      placeholder={method.currency}
+                      className="h-11 text-right tabular-nums md:h-9"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-11 md:size-9"
+                      onClick={() => setPaymentRows((rows) => rows.filter((r) => r.key !== row.key))}
+                    >
+                      <Trash2Icon aria-hidden />
+                      <span className="sr-only">Quitar pago</span>
+                    </Button>
+                  </div>
+                )
+              })}
+              {paymentRows.length < 5 && (
+                <Button type="button" variant="outline" size="sm" className="w-fit" onClick={addPaymentRow}>
+                  <PlusIcon aria-hidden />
+                  Otro pago{balance > 0 ? ` (resta ${usd(balance)})` : ""}
+                </Button>
+              )}
+            </div>
+          )}
+
+          <div className="rounded-lg border p-3">
+            <dl className="grid gap-1 text-sm tabular-nums">
+              {(volume > 0 || discount > 0 || fee > 0 || customizationTotal > 0) && (
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>Subtotal</dt>
+                  <dd>{usd(subtotal)}</dd>
+                </div>
+              )}
+              {customizationTotal > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>Personalización</dt>
+                  <dd>{usd(customizationTotal)}</dd>
+                </div>
+              )}
+              {volume > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>
+                    Al mayor {volumePct}% ({quantityFormat.format(pieces)} piezas)
+                  </dt>
+                  <dd>−{usd(volume)}</dd>
+                </div>
+              )}
+              {nextTier && pieces > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Con {quantityFormat.format(nextTier.minQuantity - pieces)} piezas más: {nextTier.percent}% al mayor.
+                </p>
+              )}
+              {discount > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>Descuento</dt>
+                  <dd>−{usd(discount)}</dd>
+                </div>
+              )}
+              {fee > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>{SHIPPING_FEE_LABELS[deliveryMethod]}</dt>
+                  <dd>{usd(fee)}</dd>
+                </div>
+              )}
+              <div className="flex items-baseline justify-between text-base font-semibold">
+                <dt>Total</dt>
+                <dd>{usd(total)}</dd>
+              </div>
+              {priceMethod && priceMethod.rateKind !== "none" && total > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>
+                    En Bs (tasa {priceMethod.rateKind === "bcv_eur" ? "euro " : ""}
+                    {formatRate(priceMethod.rateKind === "bcv_eur" ? saleRates.bcvEur : saleRates.bcvUsd)})
+                  </dt>
+                  <dd>{formatMoney(inMethodCurrency(priceMethod, total), "VES")}</dd>
+                </div>
+              )}
+              {paymentMode !== "full" && total > 0 && (
+                <div className="flex justify-between">
+                  <dt>{isSettled(total - paidUsd) ? "Pagado completo" : "Queda por cobrar"}</dt>
+                  <dd>{isSettled(total - paidUsd) ? <CheckIcon className="size-4" aria-hidden /> : usd(balance)}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        </div>
+      )}
+
+      <CustomizationDialog
+        key={customizing ?? "none"}
+        mode="sale"
+        open={Boolean(customizingLine)}
+        lineLabel={
+          customizingPiece
+            ? `${customizingPiece.quantity} × ${customizingPieceVariant?.productName} · ${customizingPieceVariant?.variantLabel} (${customizingLine?.variant.productName})`
+            : customizingLine
+              ? `${customizingLine.quantity} × ${customizingLine.variant.productName} · ${customizingLine.variant.variantLabel}`
+              : ""
+        }
+        lineQuantity={customizingPiece?.quantity ?? customizingLine?.quantity ?? 1}
+        types={customizationTypes}
+        storageEnabled={storageEnabled}
+        onClose={() => setCustomizing(null)}
+        onSave={(c) => {
+          addCustomization(c)
+          setCustomizing(null)
+        }}
+      />
+
+      <ComboPickerDialog combo={comboToPick} variants={pricing.visible} available={availableFor} priceMethodId={priceMethodId} onCancel={() => setComboToPick(null)} onConfirm={addCombo} />
+
+      {/* Barra de abajo: lo que falta, el total y avanzar o registrar. */}
+      <div className="sticky bottom-(--bottom-nav-h) -mx-4 grid gap-3 border-t bg-background p-4 md:static md:mx-0 md:rounded-lg md:border">
         {error ? (
           <StatusAlert tone="error" title={error} />
         ) : (
-          cart.length > 0 && blockers[0] && <StatusAlert tone="warning" title={blockers[0]} />
+          (cart.length > 0 || steps.step !== PRODUCTS_STEP) &&
+          currentBlockers[0] && (
+            <StatusAlert tone="warning" title={currentBlockers[0]}>
+              {steps.isLast && firstBlockedStep >= 0 && firstBlockedStep < PAYMENT_STEP && (
+                <Button type="button" variant="link" className="h-auto p-0" onClick={() => steps.goTo(firstBlockedStep)}>
+                  Ir a {SALE_STEPS[firstBlockedStep]}
+                </Button>
+              )}
+            </StatusAlert>
+          )
         )}
-
-        <Button type="button" className={cn("h-12 text-base")} disabled={pending || blockers.length > 0} onClick={submit}>
-          {pending && <Loader2Icon className="animate-spin" aria-hidden />}
-          {pending ? "Registrando…" : `Registrar venta${isBackdated ? " retroactiva" : ""} · ${usd(total)}`}
-        </Button>
+        {!steps.isLast && (
+          <div className="flex items-baseline justify-between text-sm tabular-nums">
+            <span className="text-muted-foreground">Total</span>
+            <span className="font-semibold">{usd(total)}</span>
+          </div>
+        )}
+        <div className="flex gap-2">
+          {!steps.isFirst && (
+            <Button type="button" variant="outline" className="h-12" onClick={steps.back}>
+              <ChevronLeftIcon aria-hidden />
+              Atrás
+            </Button>
+          )}
+          {steps.isLast ? (
+            <Button type="button" className="h-12 flex-1 text-base" disabled={pending || blockers.length > 0} onClick={submit}>
+              {pending && <Loader2Icon className="animate-spin" aria-hidden />}
+              {pending ? "Registrando…" : `Registrar venta${isBackdated ? " retroactiva" : ""} · ${usd(total)}`}
+            </Button>
+          ) : (
+            <Button type="button" className="h-12 flex-1 text-base" disabled={stepBlockers[steps.step].length > 0} onClick={steps.next}>
+              Siguiente: {SALE_STEPS[steps.step + 1]}
+              <ChevronRightIcon aria-hidden />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   )
